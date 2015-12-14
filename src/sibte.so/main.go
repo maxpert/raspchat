@@ -58,6 +58,7 @@ func _installHttpRoutes(mux *http.ServeMux) (err error) {
 	err = nil
 	router := httprouter.New()
 	router.GET("/", index)
+	router.GET("/gif", rica.FindRightGif)
 	router.GET("/_clear", clearCache)
 	router.ServeFiles("/static/*filepath", http.Dir("./static"))
 
