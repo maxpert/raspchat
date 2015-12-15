@@ -55,6 +55,8 @@ func _installSocketMux(ircAddr string, mux *http.ServeMux) (err error) {
 }
 
 func _installHttpRoutes(mux *http.ServeMux) (err error) {
+	rica.InitGifCache()
+
 	err = nil
 	router := httprouter.New()
 	router.GET("/", index)

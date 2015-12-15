@@ -85,7 +85,7 @@
 
         match = cmd.match(gifRegex);
         if (match) {
-          giphy.search(match[1], function (url, obj) {
+          giffer.search(match[1], function (url, obj) {
             var t = cmd;
             if (url) {
               t = "!["+cmd+"]("+url+")";

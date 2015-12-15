@@ -31,7 +31,7 @@ window.vxe = (function(win, doc) {
   };
 })(window, window.document);
 
-window.giphy = (function () {
+window.giffer = (function () {
   return {
     search: function (keywords, url_callback) {
       keywords = encodeURIComponent(keywords);
@@ -39,9 +39,16 @@ window.giphy = (function () {
       oReq.addEventListener("load", function (r) {
         var resp = JSON.parse(oReq.response);
         console.log(resp);
+        if (resp.attachments && resp.attachments.length > 0){
+          var atch = resp.attachments[0];
+          url_callback(atch.image_url, atch);
+          return;
+        }
+
+        url_callback(null, null);
       });
-      oReq.open("POST", "https://rightgif.com/search");
-      oReq.send("text="+keywords);
+      oReq.open("get", "/gif?q="+keywords);
+      oReq.send();
     }
   };
 })();
