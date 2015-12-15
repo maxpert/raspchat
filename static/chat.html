@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex">
+  <title>dotRica</title>
+  <style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  html {
+    height: 100%;
+  }
+
+  body {
+    height: 100%;
+    display: block;
+  }
+
+  .code-font {
+    font-family: "Courier New",Courier,"Lucida Sans Typewriter","Lucida Typewriter",monospace;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  div.meta-message {
+    color: #333;
+  }
+
+  div.incomingMessage {
+    margin: 10px;
+    box-sizing: border-box;
+    padding: 5px;
+    background: #efefef;
+  }
+
+  #dump {
+    display: block;
+    height: 90%;
+    max-height: 90%;
+    width: 100%;
+    overflow: auto;
+    color: black;
+    background: white;
+    padding: 10px;
+  }
+
+  #bottomBar {
+    position: relative;
+    margin: 2px;
+  }
+
+  #sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 9999;
+  }
+
+  .sidebarContainer {
+    position: relative;
+    background: #fff;
+    border: solid #9e9e9e;
+    border-width: 0 1px 0 0;
+  }
+
+  .burgerButton {
+    position: absolute;
+    background: #FB4C42;
+    color: white;
+    width: 42px;
+    height: 42px;
+    vertical-align: middle;
+    padding: 8px 0 0 0;
+    text-align: center;
+    border-radius: 32px;
+    text-decoration: none;
+    margin: 10px;
+  }
+
+  /* Mobile */
+  @media(max-width: 600px) {
+    #msg {
+      width: 80%;
+      height: 42px;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    #btn {
+      width: 17%;
+      height: 42px;
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
+
+    #bottomBar {
+      height: 42px;
+    }
+
+
+    .sidebarContainer {
+      max-width: 400px;
+      display: block;
+      overflow: auto;
+      color: black;
+      background: white;
+      padding: 10px;
+      height: 100%;
+    }
+  }
+
+  /* Desktop */
+  @media (min-width: 600px) {
+    #msg {
+      width: 100%;
+      padding: 0;
+      margin: 0;
+      display: block;
+    }
+
+    #btn {
+      display: none;
+    }
+
+    .sidebarContainer {
+      display: block;
+      overflow: auto;
+      color: black;
+      background: white;
+      padding: 10px;
+      max-width: 600px;
+      height: 100%;
+    }
+  }
+  </style>
+</head>
+<body>
+  <div id="root" style="width: 100%; height: 100%; margin: 0; padding: 0; position: relative;">
+    <div id="dump"></div>
+    <div id="bottomBar">
+      <textarea id='msg' class="code-font" type="text" placeholder="Type your message"></textarea>
+      <input id='btn' type="button" style="" value="send" />
+    </div>
+    <div id="sidebar">
+
+      <a href="#" class="burgerButton" style="">
+        ...
+      </a>
+
+      <div class="sidebarContainer" style="display: none;">
+        <div>
+          <input type="checkbox" id="mute" /> <span> Mute sounds </span>
+        </div>
+        <div>
+          <input type="text" id="maxhistory" value="200" /> Max history
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="template/mustache" id="messageTemplate">
+    <div class="incomingMessage {{#isMeta}}meta-message {{/isMeta}}code-font" style="">
+      {{#from}}{{from}}:{{/from}} {{{msg}}}
+    </div>
+  </script>
+
+</body>
+<script src="./socket.io-1.3.7.js"></script>
+<script src="./mustache.min.js"></script>
+<script src="./markdown-it.min.js"></script>
+<script src="./zepto.js"></script>
+<script src="./vxe.js"></script>
+<script src="./chatbox.js"></script>
+</html>

@@ -21,36 +21,43 @@ import (
 	"github.com/googollee/go-socket.io"
 )
 
+var message_delimeter string = "~~~~>"
+var from_server_prefix string = "SERVER" + message_delimeter
+
 type Relay struct {
 	sync.Mutex
 	sock         socketio.Socket
 	clientid     string
 	nick         string
 	groupsJoined []string
+	groupInfo    GroupInfoManager
 }
 
 type RelayService struct {
 	sync.Mutex
-	socketio *socketio.Server
-	relayMap map[string]*Relay
+	socketio  *socketio.Server
+	relayMap  map[string]*Relay
+	groupInfo GroupInfoManager
 }
 
 var _nickRegistry *NickRegistry = NewNickRegistry()
 
-func NewRelay(sock socketio.Socket) *Relay {
+func NewRelay(sock socketio.Socket, infoMan GroupInfoManager) *Relay {
 	log.Println("Creating new relay server")
 	return &Relay{
 		sock:         sock,
 		clientid:     sock.Id(),
 		nick:         sock.Id(),
 		groupsJoined: make([]string, 0),
+		groupInfo:    infoMan,
 	}
 }
 
 func NewRelayService(server *socketio.Server) *RelayService {
 	me := &RelayService{
-		socketio: server,
-		relayMap: make(map[string]*Relay),
+		socketio:  server,
+		relayMap:  make(map[string]*Relay),
+		groupInfo: NewInMemoryGroupInfo(),
 	}
 
 	server.On("connection", func(so socketio.Socket) {
@@ -79,7 +86,7 @@ func (me *RelayService) createNewRelay(so socketio.Socket) {
 	me.Lock()
 	r, ok := me.relayMap[sockid]
 	if !ok {
-		r = NewRelay(so)
+		r = NewRelay(so, me.groupInfo)
 		me.relayMap[sockid] = r
 	}
 	me.Unlock()
@@ -105,7 +112,7 @@ func (me *RelayService) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (me *Relay) Start() {
-	me.sock.Emit("new-msg", "SERVER~~~~>"+getWelcomeMessage())
+	me.sock.Emit("new-msg", from_server_prefix+getWelcomeMessage())
 	me.sock.On("send-msg", me.onClientSend)
 	me.sock.On("set-nick", me.onClientSetNick)
 	me.sock.On("join-group", me.onClientJoin)
@@ -116,7 +123,8 @@ func (me *Relay) Stop() {
 	_nickRegistry.Unregister(me.clientid)
 
 	for _, grp := range me.groupsJoined {
-		me.sock.BroadcastTo(grp, "group-message", "@"+me.clientid+"~~~~>left room")
+		me.sock.BroadcastTo(grp, "group-leave", me.nick+"@"+grp)
+		me.groupInfo.RemoveUser(grp, me.clientid)
 	}
 	me.sock = nil
 }
@@ -124,19 +132,19 @@ func (me *Relay) Stop() {
 func (me *Relay) onClientSetNick(msg string) {
 	invalidAliasRegex, _ := regexp.Compile("[^A-Za-z0-9]")
 	if invalidAliasRegex.MatchString(msg) || len(msg) > 42 {
-		me.sock.Emit("new-msg", "SERVER~~~~>A nick can only have alpha-numeric values")
+		me.sock.Emit("new-msg", from_server_prefix+"A nick can only have alpha-numeric values")
 		return
 	}
 
 	if _nickRegistry.Register(me.clientid, msg) == false {
-		me.sock.Emit("new-msg", "SERVER~~~~>Nick already registered")
+		me.sock.Emit("new-msg", from_server_prefix+"Nick already registered")
 		return
 	}
 
 	oldnick := me.nick
 	me.nick = msg
 
-	changeMsg := fmt.Sprintf("SERVER~~~~>%s changed nick to %s", oldnick, me.nick)
+	changeMsg := fmt.Sprintf("%s%s changed nick to %s", from_server_prefix, oldnick, me.nick)
 	for _, name := range me.groupsJoined {
 		me.sock.BroadcastTo(name, "group-message", changeMsg)
 	}
@@ -147,21 +155,24 @@ func (me *Relay) onClientSetNick(msg string) {
 func (me *Relay) onClientJoin(msg string) {
 	log.Println("command.join ---->", msg)
 	me.sock.Join(msg)
-	me.sock.BroadcastTo(msg, "group-message", "@"+me.clientid+"~~~~>joined room")
+	me.sock.BroadcastTo(msg, "group-join", me.nick+"@"+msg)
 
 	me.Lock()
 	me.groupsJoined = append(me.groupsJoined, msg)
+	me.groupInfo.AddUser(msg, me.clientid, true)
 	me.Unlock()
 }
 
 func (me *Relay) onClientSend(msg string) {
 	log.Println("command.send ----> ", msg)
-	info := strings.Split(msg, "~~~~>")
+
+	// Split message [channel]~~~~>[msg]
+	info := strings.Split(msg, message_delimeter)
 	if len(info) < 2 {
 		return
 	}
 
-	message := "@" + me.nick + "~~~~>" + info[1]
+	message := me.nick + "@" + info[0] + message_delimeter + info[1]
 	log.Println("Sending message", msg, "to", info[0])
 	me.sock.BroadcastTo(info[0], "group-message", message)
 	me.sock.Emit("new-msg", message)
