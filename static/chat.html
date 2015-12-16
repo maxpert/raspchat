@@ -180,7 +180,7 @@
           <input type="checkbox" id="mute" /> <span> Mute sounds </span>
         </div>
         <div>
-          <input type="text" id="maxhistory" value="200" /> Max history
+          Max history <input type="text" id="maxhistory" value="200" />
         </div>
       </div>
 
@@ -189,7 +189,8 @@
 
   <script type="template/mustache" id="messageTemplate">
     <div class="incomingMessage {{#isMeta}}meta-message {{/isMeta}}code-font" style="">
-      {{#from}}<div class="fromContainer"><span class="name">{{from}}</span> {{delivery_time}}</div>{{/from}} {{{msg}}}
+      {{#from}}<div class="fromContainer"><span class="name">{{from}}</span>
+      <span style="font-size: 12px">{{delivery_time}}</span></div>{{/from}} {{{msg}}}
     </div>
   </script>
 
