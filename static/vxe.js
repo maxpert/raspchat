@@ -5,8 +5,30 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-window.vxe = (function(win, doc) {
+window.vxe = (function(win, doc, $) {
   var md = new markdownit();
+  var nickRegex = /^\/nick\s+([A-Za-z0-9]+)$/i;
+  var gifRegex = /^\/gif\s+(.+)$/i;
+
+  var giffer = {
+    search: function (keywords, url_callback) {
+      keywords = encodeURIComponent(keywords);
+      var oReq = new XMLHttpRequest();
+      oReq.addEventListener("load", function (r) {
+        var resp = JSON.parse(oReq.response);
+        console.log("gif info", resp);
+        if (resp.attachments && resp.attachments.length > 0){
+          var atch = resp.attachments[0];
+          url_callback(atch.image_url, atch);
+          return;
+        }
+
+        url_callback(null, null);
+      });
+      oReq.open("get", "/gif?q="+keywords);
+      oReq.send();
+    }
+  };
 
   return {
     render: function (id, data) {
@@ -26,58 +48,36 @@ window.vxe = (function(win, doc) {
 
     renderMessage: function(template, data) {
       data.isMeta = !data.from;
+      if (!data.delivery_time) {
+        data.delivery_time = moment().format("MMMM Do, hh:mm");
+      }
+
       return "\n" + vxe.render(template, data);
-    }
+    },
+
+    processComand: function (s, channelName, cmd) {
+      var match = cmd.match(nickRegex);
+      if (match) {
+        s.emit("set-nick", match[1])
+        return true;
+      }
+
+      match = cmd.match(gifRegex);
+      if (match) {
+        giffer.search(match[1], function (url, obj) {
+          var t = cmd;
+          if (url) {
+            t = "!["+cmd+"]("+url+")";
+          }
+
+          s.emit("send-msg", channelName+"~~~~>"+t);
+        });
+
+        return true;
+      }
+
+      return false;
+    },
+
   };
-})(window, window.document);
-
-window.giffer = (function () {
-  return {
-    search: function (keywords, url_callback) {
-      keywords = encodeURIComponent(keywords);
-      var oReq = new XMLHttpRequest();
-      oReq.addEventListener("load", function (r) {
-        var resp = JSON.parse(oReq.response);
-        console.log(resp);
-        if (resp.attachments && resp.attachments.length > 0){
-          var atch = resp.attachments[0];
-          url_callback(atch.image_url, atch);
-          return;
-        }
-
-        url_callback(null, null);
-      });
-      oReq.open("get", "/gif?q="+keywords);
-      oReq.send();
-    }
-  };
-})();
-
-window.CommandProcessor = (function () {
-  var nickRegex = /^\/nick\s+([A-Za-z0-9]+)$/i;
-  var gifRegex = /^\/gif\s+(.+)$/i;
-
-  return function (s, cmd) {
-    var match = cmd.match(nickRegex);
-    if (match) {
-      s.emit("set-nick", match[1])
-      return true;
-    }
-
-    match = cmd.match(gifRegex);
-    if (match) {
-      giffer.search(match[1], function (url, obj) {
-        var t = cmd;
-        if (url) {
-          t = "!["+cmd+"]("+url+")";
-        }
-
-        s.emit("send-msg", channelName+"~~~~>"+t);
-      });
-
-      return true;
-    }
-
-    return false;
-  }
-})();
+})(window, window.document, Zepto);

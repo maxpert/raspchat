@@ -31,7 +31,7 @@ Zepto(function () {
       return;
     }
 
-    var cmdResult = CommandProcessor(s, msg.val());
+    var cmdResult = vxe.processComand(s, channelName, msg.val());
     if (!cmdResult){
       var m = {to: channelName, msg: msg.val()};
       if (m.msg.trim().length == 0){
@@ -86,8 +86,7 @@ Zepto(function () {
         first.remove();
       }
 
-      txtarea.append(currentMsg);
-      txtarea.scrollTop(txtarea[0].scrollHeight);
+      txtarea.prepend(currentMsg);
 
       if (!$("#mute").prop("checked")) {
         var audio = new Audio('/static/notif.mp3');

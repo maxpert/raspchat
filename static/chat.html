@@ -7,6 +7,14 @@
   <meta name="robots" content="noindex">
   <title>dotRica</title>
   <style>
+
+  .color-background-50  { background: #E0F2F1; }
+  .color-background-500 { background: #009688; }
+  .color-background-600 { background: #00897B; }
+  .color-background-700 { background: #00796B; }
+  .color-background-800 { background: #00695C; }
+  .color-background-900 { background: #004D40; }
+
   * {
     box-sizing: border-box;
     margin: 0;
@@ -36,8 +44,10 @@
   div.incomingMessage {
     margin: 10px;
     box-sizing: border-box;
-    padding: 5px;
-    background: #efefef;
+  }
+
+  .incomingMessage img {
+    width: 300px;
   }
 
   #dump {
@@ -66,14 +76,12 @@
 
   .sidebarContainer {
     position: relative;
-    background: #fff;
     border: solid #9e9e9e;
     border-width: 0 1px 0 0;
   }
 
   .burgerButton {
     position: absolute;
-    background: #FB4C42;
     color: white;
     width: 42px;
     height: 42px;
@@ -83,6 +91,19 @@
     border-radius: 32px;
     text-decoration: none;
     margin: 10px;
+    top: -24px;
+    left: -24px;
+  }
+
+  .fromContainer {
+    padding: 0 0 7px 0;
+  }
+
+  .fromContainer .name {
+    padding: 0px 10px 7px 0;
+    font-weight: 900;
+    font-style: normal;
+    color: #00695C;
   }
 
   /* Mobile */
@@ -107,13 +128,11 @@
       height: 42px;
     }
 
-
     .sidebarContainer {
       max-width: 400px;
       display: block;
       overflow: auto;
       color: black;
-      background: white;
       padding: 10px;
       height: 100%;
     }
@@ -136,7 +155,6 @@
       display: block;
       overflow: auto;
       color: black;
-      background: white;
       padding: 10px;
       max-width: 600px;
       height: 100%;
@@ -153,11 +171,11 @@
     </div>
     <div id="sidebar">
 
-      <a href="#" class="burgerButton" style="">
+      <a href="#" class="burgerButton color-background-800" style="">
         ...
       </a>
 
-      <div class="sidebarContainer" style="display: none;">
+      <div class="sidebarContainer color-background-50" style="display: none;">
         <div>
           <input type="checkbox" id="mute" /> <span> Mute sounds </span>
         </div>
@@ -171,7 +189,7 @@
 
   <script type="template/mustache" id="messageTemplate">
     <div class="incomingMessage {{#isMeta}}meta-message {{/isMeta}}code-font" style="">
-      {{#from}}{{from}}:{{/from}} {{{msg}}}
+      {{#from}}<div class="fromContainer"><span class="name">{{from}}</span> {{delivery_time}}</div>{{/from}} {{{msg}}}
     </div>
   </script>
 
@@ -180,6 +198,7 @@
 <script src="./mustache.min.js"></script>
 <script src="./markdown-it.min.js"></script>
 <script src="./zepto.js"></script>
+<script src="./moment.js"></script>
 <script src="./vxe.js"></script>
 <script src="./chatbox.js"></script>
 </html>

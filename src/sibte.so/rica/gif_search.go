@@ -68,6 +68,7 @@ func InitGifCache() {
 	s, err := gkvlite.NewStore(f)
 
 	if err != nil {
+		log.Println("Gif search error", err.Error())
 		return
 	}
 
