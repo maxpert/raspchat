@@ -23,6 +23,7 @@ Zepto(function () {
   var MSG_SENDER_REGEX = /^([^@]+)@+(.+)$/i;
 
   var getGroupHistoryLogger = function (name) {
+    name = name.toLowerCase();
     var logs = win.groupLogs = win.groupLogs || {};
     if (!logs[name]) {
       logs[name] = [];
@@ -32,7 +33,14 @@ Zepto(function () {
     return logs[name];
   };
 
+  var groupHistoryExists = function (name) {
+    name = name.toLowerCase();
+    var logs = win.groupLogs = win.groupLogs || {};
+    return !!logs[name];
+  };
+
   var setGroupHistoryLogger = function (name, log) {
+    name = name.toLowerCase();
     win.groupLogs = win.groupLogs || {};
     win.groupLogs[name] = log;
   };
@@ -48,7 +56,7 @@ Zepto(function () {
         return {from: matches[1], to: matches[2], msg: msg[1]};
       }
 
-      if (msg[0] != "SERVER") {
+      if (msg[0] != serverInfoGroup) {
         return null;
       }
 
@@ -63,7 +71,7 @@ Zepto(function () {
 
       var historyNodes = getGroupHistoryLogger(newGroup);
       $(historyNodes).each(function (i, el) {
-        txtarea.prepend(el);
+        txtarea.append(el);
       });
       txtarea.data("group", newGroup);
     }
@@ -112,7 +120,8 @@ Zepto(function () {
     var joinInfo = msg.split('@');
     if (joinInfo && joinInfo.length >= 2) {
       var logger = getGroupHistoryLogger(joinInfo[1]);
-      writeGroupMessage({from: serverInfoGroup, to: serverInfoGroup, msg: "Joined group "+joinInfo[1]});
+      writeGroupMessage({from: joinInfo[0], to: joinInfo[1], msg: joinInfo[0]+" joined group "+joinInfo[1]});
+      writeGroupMessage({from: joinInfo[0], to: serverInfoGroup, msg: joinInfo[0]+" joined group "+joinInfo[1]});
       return;
     }
 
@@ -157,7 +166,7 @@ Zepto(function () {
     // prepend the last message in the panel
     if (historyNodes.length && historyNodes[historyNodes.length - 1].parent().length == 0) {
       var currentMsg = historyNodes[historyNodes.length - 1];
-      txtarea.prepend(currentMsg);
+      txtarea.append(currentMsg);
     }
 
     while (~~maxhistory.val() < historyNodes.length){
@@ -191,17 +200,46 @@ Zepto(function () {
     }
   });
 
+  $(win).on("switch-group", function (e, name) {
+    if (!groupHistoryExists(name)) {
+      win.alert("You have not joined group "+name);
+      return;
+    }
+
+    currentGroup = name;
+    activateGroupPanel(name);
+  });
+
+  $(win).on("help-command", function () {
+    writeGroupMessage({
+      from: currentGroup,
+      to: currentGroup,
+      msg: "/nick <nick> to set a new nick\n\n"+
+           "/join <group> to join a group\n\n"+
+           "/gif <keywords> find and send a gif\n\n"+
+           "/switch <group> to switch a to a joined group\n\n"+
+           "/help this message"
+    });
+  });
+
   s.on('new-msg', onMessage);
   s.on('group-message', onMessage);
   s.on('group-join', onGroupJoined);
   s.on('connect', function() {
+    s.emit('join-group', 'lounge');
     s.on('disconnect', function(data) {
       writeGroupMessage({from: serverInfoGroup, to: serverInfoGroup, msg: "Disconnected..."});
     });
 
     writeGroupMessage({from: serverInfoGroup, to: serverInfoGroup, msg: "Connected..."});
+    win.setTimeout(function () {
+      $(win).trigger("help-command");
+    }, 1000);
   });
 
   writeGroupMessage({from: serverInfoGroup, to: serverInfoGroup, msg: "Connecting..."});
   msg.focus();
+  var autoScrollInterval = win.setInterval(function () {
+    txtarea.scrollTop(txtarea[0].scrollHeight);
+  }, 100);
 });
