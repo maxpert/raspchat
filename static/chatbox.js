@@ -8,19 +8,34 @@
 Zepto(function () {
   var s = io('http:///');
   var id = Date.now();
-  var channelName = "lounge";
-  var $ = window.Zepto;
-
+  var win = window;
+  var $ = win.Zepto;
+  var serverInfoGroup = 'SERVER';
+  var currentGroup = serverInfoGroup;
   var txtarea = $('#dump');
   var msg = $('#msg');
   var maxhistory = $("#maxhistory");
   var sidebar = $(".sidebarContainer");
-  var channelMessages = {};
   var notificationSounds = {
     'notification': '/static/notif.mp3',
   };
   var MSG_DELIMETER = "~~~~>";
   var MSG_SENDER_REGEX = /^([^@]+)@+(.+)$/i;
+
+  var getGroupHistoryLogger = function (name) {
+    var logs = win.groupLogs = win.groupLogs || {};
+    if (!logs[name]) {
+      logs[name] = [];
+      $(win).trigger("group-added", name);
+    }
+
+    return logs[name];
+  };
+
+  var setGroupHistoryLogger = function (name, log) {
+    win.groupLogs = win.groupLogs || {};
+    win.groupLogs[name] = log;
+  };
 
   var parseMessage = function (data) {
       var msg = data.split(MSG_DELIMETER);
@@ -33,32 +48,83 @@ Zepto(function () {
         return {from: matches[1], to: matches[2], msg: msg[1]};
       }
 
-      return {from:msg[0], msg:msg[1]};
+      if (msg[0] != "SERVER") {
+        return null;
+      }
+
+      return {from:msg[0], to: msg[0], msg:msg[1]};
   };
 
-  var buildMessage = function (from, to, message) {
-  };
+  var activateGroupPanel = function (newGroup) {
+    if (txtarea.data("group") != newGroup) {
+      txtarea.find(".incomingMessage").each(function (i, el) {
+        el.remove();
+      });
 
-  var trimHistory = function (name) {
-    channelMessages[name] = channelMessages[name] || [];
-    var historyNodes = channelMessages[name];
-    while (~~maxhistory.val() < historyNodes.length){
-      var first = historyNodes[0];
-      historyNodes = historyNodes.slice(1);
-      first.remove();
+      var historyNodes = getGroupHistoryLogger(newGroup);
+      $(historyNodes).each(function (i, el) {
+        txtarea.prepend(el);
+      });
+      txtarea.data("group", newGroup);
     }
   };
 
-  var notifyMessage = function (notificationType, message) {
-    if (!notificationSounds[notificationType]) {
+  var writeGroupMessage = function (dataObj) {
+    var msgTo = dataObj && dataObj.to;
+    if (!msgTo) {
+      console.warn("Invalid message", message);
       return;
     }
 
-    if (!$("#mute").prop("checked")) {
-      var audio = new Audio();
-      audio.play();
+    var historyNodes = getGroupHistoryLogger(msgTo);
+    var currentMsg = $(vxe.renderMessage('messageTemplate', dataObj));
+    currentMsg.data("raw-data", dataObj);
+
+    historyNodes.push(currentMsg);
+    if (currentGroup == msgTo) {
+      $(win).trigger("active-new-message", dataObj);
     }
+
+    $(win).trigger("new-message", dataObj);
   };
+
+  var sendMessage = function() {
+    if (!s || !s.connected) {
+      return;
+    }
+
+    var cmdResult = vxe.processComand(s, currentGroup, msg.val());
+
+    if (!cmdResult && currentGroup != serverInfoGroup) {
+      var m = {to: currentGroup, msg: msg.val()};
+      if (m.msg.trim().length == 0){
+        return;
+      }
+
+      s.emit("send-msg", m.to+MSG_DELIMETER+m.msg);
+    }
+
+    msg.val('');
+    msg.focus();
+  };
+
+  var onGroupJoined = function(msg) {
+    var joinInfo = msg.split('@');
+    if (joinInfo && joinInfo.length >= 2) {
+      var logger = getGroupHistoryLogger(joinInfo[1]);
+      writeGroupMessage({from: serverInfoGroup, to: serverInfoGroup, msg: "Joined group "+joinInfo[1]});
+      return;
+    }
+
+    console.error("Invalid join syntax", msg);
+  };
+
+  var onMessage = function(message) {
+    var dataObj = parseMessage(message);
+    writeGroupMessage(dataObj);
+  };
+
+  $("#btn").on("click", sendMessage);
 
   $("#dump, #bottomBar").on("click", function (){
     sidebar.hide();
@@ -70,25 +136,37 @@ Zepto(function () {
     e.stopPropagation();
   });
 
-  var sendMessage = function() {
-    if (!s || !s.connected) {
-      return;
+  $(win).on("group-added", function (e, name) {
+    var groupAnchor = $("<div class='groupName'><a href='#"+name+"'>"+name+"</a></div>");
+    $("#groupList").append(groupAnchor);
+    groupAnchor
+      .data("name", name)
+      .find("a")
+      .on("click", function (){
+        currentGroup = name;
+        activateGroupPanel(name);
+        e.preventDefault();
+        e.stopPropagation();
+      });
+  });
+
+  $(win).on("active-new-message", function (_, dataObj) {
+    var name = dataObj.to;
+    var historyNodes = getGroupHistoryLogger(name);
+
+    // prepend the last message in the panel
+    if (historyNodes.length && historyNodes[historyNodes.length - 1].parent().length == 0) {
+      var currentMsg = historyNodes[historyNodes.length - 1];
+      txtarea.prepend(currentMsg);
     }
 
-    var cmdResult = vxe.processComand(s, channelName, msg.val());
-    if (!cmdResult) {
-      var m = {to: channelName, msg: msg.val()};
-      if (m.msg.trim().length == 0){
-        return;
-      }
-
-      s.emit("send-msg", m.to+MSG_DELIMETER+m.msg);
+    while (~~maxhistory.val() < historyNodes.length){
+      var first = historyNodes[0];
+      historyNodes = historyNodes.slice(1);
+      setGroupHistoryLogger(name, historyNodes);
+      first.remove();
     }
-    msg.val('');
-    msg.focus();
-  };
-
-  $("#btn").on("click", sendMessage);
+  });
 
   msg.on("keydown", function (e) {
     var handled = false;
@@ -113,34 +191,17 @@ Zepto(function () {
     }
   });
 
-  var onMessage = function(message) {
-    var dataObj = parseMessage(message);
-    var msgTo = (dataObj && dataObj.to) || "SERVER";
-
-    channelMessages[msgTo] = channelMessages[msgTo] || [];
-    var historyNodes = channelMessages[msgTo];
-    var currentMsg =$(vxe.renderMessage('messageTemplate', dataObj));
-    currentMsg.data("raw-data", dataObj);
-    
-    historyNodes.push(currentMsg);
-    txtarea.prepend(currentMsg);
-    trimHistory(msgTo);
-    notifyMessage('notification', dataObj);
-  };
-
   s.on('new-msg', onMessage);
   s.on('group-message', onMessage);
+  s.on('group-join', onGroupJoined);
   s.on('connect', function() {
-    s.emit('join-group', channelName);
     s.on('disconnect', function(data) {
-      vxe.renderMessage(txtarea, 'messageTemplate', {msg: "Disconnected..."});
-      s.removeListener('.response', onMessage);
+      writeGroupMessage({from: serverInfoGroup, to: serverInfoGroup, msg: "Disconnected..."});
     });
 
-    vxe.renderMessage(txtarea, 'messageTemplate', {msg: "Connected..."});
+    writeGroupMessage({from: serverInfoGroup, to: serverInfoGroup, msg: "Connected..."});
   });
 
-  vxe.renderMessage(txtarea, 'messageTemplate', {msg: "Connecting..."});
+  writeGroupMessage({from: serverInfoGroup, to: serverInfoGroup, msg: "Connecting..."});
   msg.focus();
-  window.sock = s;
 });

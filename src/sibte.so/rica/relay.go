@@ -156,6 +156,7 @@ func (me *Relay) onClientJoin(msg string) {
 	log.Println("command.join ---->", msg)
 	me.sock.Join(msg)
 	me.sock.BroadcastTo(msg, "group-join", me.nick+"@"+msg)
+	me.sock.Emit("group-join", me.nick+"@"+msg)
 
 	me.Lock()
 	me.groupsJoined = append(me.groupsJoined, msg)

@@ -106,6 +106,10 @@
     color: #00695C;
   }
 
+  .sidebarContainer .sidebarRegion {
+    padding: 10px 0;
+  }
+
   /* Mobile */
   @media(max-width: 600px) {
     #msg {
@@ -176,12 +180,20 @@
       </a>
 
       <div class="sidebarContainer color-background-50" style="display: none;">
-        <div>
+        <div class="sidebarRegion">
           <input type="checkbox" id="mute" /> <span> Mute sounds </span>
         </div>
-        <div>
+
+        <div class="sidebarRegion">
           Max history <input type="text" id="maxhistory" value="200" />
         </div>
+
+        <div class="sidebarRegion">
+          <h3>Groups</h3>
+          <div id="groupList">
+          </div>
+        </div>
+
       </div>
 
     </div>

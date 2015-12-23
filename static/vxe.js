@@ -7,8 +7,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 window.vxe = (function(win, doc, $) {
   var md = new markdownit();
+  var validCommandRegex = /^\/[a-zA-Z]+\s+.+$/i;
   var nickRegex = /^\/nick\s+([A-Za-z0-9]+)$/i;
   var gifRegex = /^\/gif\s+(.+)$/i;
+  var joinRegex = /^\/join\s+([A-Za-z0-9]+)$/i;
 
   var giffer = {
     search: function (keywords, url_callback) {
@@ -56,9 +58,20 @@ window.vxe = (function(win, doc, $) {
     },
 
     processComand: function (s, channelName, cmd) {
-      var match = cmd.match(nickRegex);
+      var match = cmd.match(validCommandRegex);
+      if (!match){
+        return false;
+      }
+
+      match = cmd.match(nickRegex);
       if (match) {
-        s.emit("set-nick", match[1])
+        s.emit("set-nick", match[1]);
+        return true;
+      }
+
+      match = cmd.match(joinRegex);
+      if (match) {
+        s.emit("join-group", match[1]);
         return true;
       }
 
