@@ -8,7 +8,7 @@
 Zepto(function () {
   var s = io('http:///');
   var id = Date.now();
-  var channelName = "f00d3r";
+  var channelName = "lounge";
   var $ = window.Zepto;
 
   var txtarea = $('#dump');
@@ -16,10 +16,54 @@ Zepto(function () {
   var maxhistory = $("#maxhistory");
   var sidebar = $(".sidebarContainer");
   var channelMessages = {};
+  var notificationSounds = {
+    'notification': '/static/notif.mp3',
+  };
+  var MSG_DELIMETER = "~~~~>";
+  var MSG_SENDER_REGEX = /^([^@]+)@+(.+)$/i;
+
+  var parseMessage = function (data) {
+      var msg = data.split(MSG_DELIMETER);
+      if (msg.length < 2) {
+        return null;
+      }
+
+      var matches = msg[0].match(MSG_SENDER_REGEX);
+      if (matches && matches.length == 3){
+        return {from: matches[1], to: matches[2], msg: msg[1]};
+      }
+
+      return {from:msg[0], msg:msg[1]};
+  };
+
+  var buildMessage = function (from, to, message) {
+  };
+
+  var trimHistory = function (name) {
+    channelMessages[name] = channelMessages[name] || [];
+    var historyNodes = channelMessages[name];
+    while (~~maxhistory.val() < historyNodes.length){
+      var first = historyNodes[0];
+      historyNodes = historyNodes.slice(1);
+      first.remove();
+    }
+  };
+
+  var notifyMessage = function (notificationType, message) {
+    if (!notificationSounds[notificationType]) {
+      return;
+    }
+
+    if (!$("#mute").prop("checked")) {
+      var audio = new Audio();
+      audio.play();
+    }
+  };
 
   $("#dump, #bottomBar").on("click", function (){
     sidebar.hide();
   });
+
   $(".burgerButton").on("click", function(e) {
     sidebar.show();
     e.preventDefault();
@@ -32,13 +76,13 @@ Zepto(function () {
     }
 
     var cmdResult = vxe.processComand(s, channelName, msg.val());
-    if (!cmdResult){
+    if (!cmdResult) {
       var m = {to: channelName, msg: msg.val()};
       if (m.msg.trim().length == 0){
         return;
       }
 
-      s.emit("send-msg", m.to+"~~~~>"+m.msg);
+      s.emit("send-msg", m.to+MSG_DELIMETER+m.msg);
     }
     msg.val('');
     msg.focus();
@@ -69,33 +113,19 @@ Zepto(function () {
     }
   });
 
-  var onMessage = function(data) {
-    try {
-      var msg = data.split("~~~~>");
-      var dataObj = {from:msg[0], msg:msg[1]};
+  var onMessage = function(message) {
+    var dataObj = parseMessage(message);
+    var msgTo = (dataObj && dataObj.to) || "SERVER";
 
-      // TODO: Maintain per channel history
-      channelMessages[channelName] = channelMessages[channelName] || [];
-      var nodes = channelMessages[channelName];
-      var currentMsg =$(vxe.renderMessage('messageTemplate', dataObj));
-      nodes.push(currentMsg);
-
-      if (~~maxhistory.val() < nodes.length){
-        var first = nodes[0];
-        nodes = nodes.slice(1);
-        first.remove();
-      }
-
-      txtarea.prepend(currentMsg);
-
-      if (!$("#mute").prop("checked")) {
-        var audio = new Audio('/static/notif.mp3');
-        audio.play();
-      }
-    }
-    catch(e) {
-      txtarea.innerHTML += "\n<div>"+data+"</div>";
-    }
+    channelMessages[msgTo] = channelMessages[msgTo] || [];
+    var historyNodes = channelMessages[msgTo];
+    var currentMsg =$(vxe.renderMessage('messageTemplate', dataObj));
+    currentMsg.data("raw-data", dataObj);
+    
+    historyNodes.push(currentMsg);
+    txtarea.prepend(currentMsg);
+    trimHistory(msgTo);
+    notifyMessage('notification', dataObj);
   };
 
   s.on('new-msg', onMessage);
