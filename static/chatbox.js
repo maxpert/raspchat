@@ -22,6 +22,12 @@ Zepto(function () {
   var MSG_DELIMETER = "~~~~>";
   var MSG_SENDER_REGEX = /^([^@]+)@+(.+)$/i;
 
+  var scrollToBottom = function () {
+    win.setTimeout(function () {
+      txtarea.scrollTop(txtarea[0].scrollHeight);
+    }, 200);
+  };
+
   var getGroupHistoryLogger = function (name) {
     name = name.toLowerCase();
     var logs = win.groupLogs = win.groupLogs || {};
@@ -72,6 +78,7 @@ Zepto(function () {
       var historyNodes = getGroupHistoryLogger(newGroup);
       $(historyNodes).each(function (i, el) {
         txtarea.append(el);
+        scrollToBottom();
       });
       txtarea.data("group", newGroup);
     }
@@ -119,9 +126,10 @@ Zepto(function () {
   var onGroupJoined = function(msg) {
     var joinInfo = msg.split('@');
     if (joinInfo && joinInfo.length >= 2) {
+      var msg = joinInfo[0]+" joined group "+joinInfo[1] + " \n\n **use /switch "+joinInfo[1]+" to switch to group**";
       var logger = getGroupHistoryLogger(joinInfo[1]);
-      writeGroupMessage({from: joinInfo[0], to: joinInfo[1], msg: joinInfo[0]+" joined group "+joinInfo[1]});
-      writeGroupMessage({from: joinInfo[0], to: serverInfoGroup, msg: joinInfo[0]+" joined group "+joinInfo[1]});
+      writeGroupMessage({from: joinInfo[0], to: joinInfo[1], msg: msg});
+      writeGroupMessage({from: joinInfo[0], to: serverInfoGroup, msg: msg});
       return;
     }
 
@@ -148,6 +156,8 @@ Zepto(function () {
   $(win).on("group-added", function (e, name) {
     var groupAnchor = $("<div class='groupName'><a href='#"+name+"'>"+name+"</a></div>");
     $("#groupList").append(groupAnchor);
+    scrollToBottom();
+
     groupAnchor
       .data("name", name)
       .find("a")
@@ -167,6 +177,7 @@ Zepto(function () {
     if (historyNodes.length && historyNodes[historyNodes.length - 1].parent().length == 0) {
       var currentMsg = historyNodes[historyNodes.length - 1];
       txtarea.append(currentMsg);
+      scrollToBottom();
     }
 
     while (~~maxhistory.val() < historyNodes.length){
@@ -214,11 +225,11 @@ Zepto(function () {
     writeGroupMessage({
       from: currentGroup,
       to: currentGroup,
-      msg: "/nick <nick> to set a new nick\n\n"+
-           "/join <group> to join a group\n\n"+
-           "/gif <keywords> find and send a gif\n\n"+
-           "/switch <group> to switch a to a joined group\n\n"+
-           "/help this message"
+      msg: "**/nick** <nick> to set a new nick\n\n"+
+           "**/join** <group> to join a group\n\n"+
+           "**/gif** <keywords> find and send a gif\n\n"+
+           "**/switch** <group> to switch a to a joined group\n\n"+
+           "**/help** this message"
     });
   });
 
@@ -239,7 +250,4 @@ Zepto(function () {
 
   writeGroupMessage({from: serverInfoGroup, to: serverInfoGroup, msg: "Connecting..."});
   msg.focus();
-  var autoScrollInterval = win.setInterval(function () {
-    txtarea.scrollTop(txtarea[0].scrollHeight);
-  }, 100);
 });

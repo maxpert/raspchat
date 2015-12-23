@@ -194,7 +194,7 @@ func getWelcomeMessage() string {
 		"CPU STAT: \n --- \n %v \n --- \n CPU INFO: \n --- \n %v \n",
 		toPrettyJson(stat),
 		toPrettyJson(info),
-	) + "\n\n To change nick use /nick <your nick>"
+	)
 }
 
 func toPrettyJson(obj interface{}) string {
