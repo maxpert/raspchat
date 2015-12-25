@@ -169,6 +169,11 @@ Zepto(function () {
       });
   });
 
+  $(win).on("new-message", function () {
+    var audio = new Audio(notificationSounds['notification']);
+    audio.play();
+  });
+
   $(win).on("active-new-message", function (_, dataObj) {
     var name = dataObj.to;
     var historyNodes = getGroupHistoryLogger(name);
