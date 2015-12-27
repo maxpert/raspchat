@@ -6,7 +6,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 (function (vue) {
-  var md = new markdownit();
+  var md = new markdownit("default", {
+    linkify: true,
+  });
 
   var showNotification = function (message) {
     if (!("Notification" in window)) {
@@ -28,8 +30,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     return md.render(value);
   });
 
+  vue.filter('better_date', function (value) {
+    return moment(value).calendar();
+  });
+
   vue.filter('avatar_url', function (value) {
-    return 'http://api.adorable.io/avatars/256/' + value + '.png';
+    return 'http://api.adorable.io/avatars/256/zmg-' + value + '.png';
   });
 
   vue.component('chat-message', vue.extend({
@@ -37,12 +43,26 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     template: '#chat-message',
     ready: function () {
       this.$dispatch("chat-message-added", this.message);
+      this.$watch("message.msg", function () {
+        this.$dispatch("chat-message-added", this.message);
+      }.bind(this));
     }
   }));
 
   vue.component('chat-log', vue.extend({
     props: ['messages'],
     template: '#chat-messages',
+    ready: function () {
+      this.$el.addEventListener("click", function (event) {
+        event = event || window.event;
+
+        if (event.target.tagName == "A") {
+          window.open(event.target.href, "_blank");
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }, false);
+    },
     methods: {
       scrollToBottom: function () {
         this.$el.scrollTop = this.$el.scrollHeight;
@@ -340,6 +360,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       }
     },
   });
-
-  vue.config.debug = true;
 })(Vue);

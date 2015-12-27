@@ -110,6 +110,14 @@ body {
   max-width: 100%;
 }
 
+.markdown-container a, .markdown-container a:active, .markdown-container a:visited {
+  color: inherit;
+}
+
+.markdown-container p {
+  margin: 4px 0;
+}
+
 .fromContainer {
   padding: 0 0 7px 0;
 }
