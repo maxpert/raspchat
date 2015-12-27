@@ -38,27 +38,28 @@
   <template id="app-bar">
     <div class="app-bar color-background-900 code-font">
       <div class="app-bar-container">
+
+        <div>Settings</div>
+        <hr style="margin: 5px 0;"/>
         <div class="additional-buttons">
-          <div>Settings</div>
-          <sound-notification-button :ignore-for="userId"/>
+          <sound-notification-button default-enabled="{{true}}" :ignore-for="userId"/>
         </div>
 
-        <table style="padding: 10px 0 10px 5px;">
+        <div>You are</div>
+        <hr style="margin: 5px 0;"/>
+        <table style="width: 100%; padding: 10px 0 10px 5px;">
           <tr>
-            <td colspan="2">
-              You are
-            </td>
-          </tr>
-          <tr>
-            <td>
+            <td style="width: 12px;">
               <img :src="userId | avatar_url" class="avatar" />
             </td>
-            <td style="font-size: 16px; overflow: hidden;">
+            <td aling="left" style="font-size: 16px; overflow: hidden;">
               {{userId}}
             </td>
           </tr>
         </table>
 
+        <div>Groups</div>
+        <hr style="margin: 5px 0;"/>
         <div class="list-container">
           <groups-list />
         </div>
@@ -74,7 +75,6 @@
   </template>
 
   <template id="groups-list">
-    <div class="code-font">Groups</div>
     <div class="code-font groups-list" v-for="g in groups">
       <a href="#" class="group-entry {{selected == g.name ? 'active-group' : ''}}" @click.stop.prevent="selectGroup(g.name)">
         <span>{{g.name}}</span><span v-if="g.unread"> - {{g.unread}}</span>

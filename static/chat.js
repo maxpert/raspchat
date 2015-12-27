@@ -80,9 +80,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     props: ['userId'],
     template: '#app-bar',
     data: function () {
-      return {
-        sound: false
-      };
     },
     methods: {
     }
@@ -164,8 +161,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   vue.component('sound-notification-button', vue.extend({
     template: '#sound-notification-button',
     mixins: [ToggleButtonMixin],
-    props: ["ignoreFor"],
+    props: ["defaultEnabled", "ignoreFor"],
     ready: function () {
+      if (this.defaultEnabled){
+        this.$set("enabled", true);
+      }
+
       this.$on("message_new", this.onNotification);
     },
     methods: {
@@ -244,6 +245,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         this.$broadcast("connection_on");
         this.transport.setNick(this.nick);
         this.$set('nick', this.transport.id);
+        this.transport.send("SERVER", "/join lounge");
       },
 
       changeNick: function (newNick) {

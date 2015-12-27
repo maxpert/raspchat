@@ -112,11 +112,12 @@ func (me *RelayService) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (me *Relay) Start() {
-	me.sock.Emit("new-msg", from_server_prefix+getWelcomeMessage())
 	me.sock.On("send-msg", me.onClientSend)
 	me.sock.On("set-nick", me.onClientSetNick)
 	me.sock.On("join-group", me.onClientJoin)
 	me.sock.On("leave-group", me.onClientLeave)
+
+	me.sock.Emit("new-msg", from_server_prefix+getWelcomeMessage())
 	_nickRegistry.Register(me.clientid, me.nick)
 }
 

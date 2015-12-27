@@ -6,13 +6,17 @@ Basic demo is available [Here](http://raspchat.ngrok.io). Do note the server is 
 
 ## Features:
 
- * Basic Giphy support
+ * Basic Gif support
  * Basic nick support
+ * Channel support
+ * Markdown support
 
 ## TODO:
 
- * Cleanup code (it's super shitty right now)
- * Improve UX keeping it simple
- * Improve JS code cleaning up modules in JS instead of stupid file naming
- * Improve build script
- * Support channels and basic IRC commands
+ * Improve build and deploy script
+ * Introduce admin panel with:
+   * Reserved alias authorization
+   * IP limiting/banning
+   * Channel management and permissions
+ * Loadable extension system
+ * Scheduled chat export system
