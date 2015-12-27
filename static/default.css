@@ -89,7 +89,8 @@ body {
 }
 
 .meta-message {
-  color: #333;
+  color: #999;
+  padding: 5px 10px;
 }
 
 .incomingMessage {

@@ -216,6 +216,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Don't let user send message on default group
         if (this.currentGroup.name == this.defaultGroup && msg[0] != "/"){
           this._appendMetaMessage(
+            this.defaultGroup,
             "You can only send a command here ...\n"+
             "Valid commands are: \n"+
             "/join <group_name> to join a group (case-sensitive)\n"+
@@ -243,9 +244,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       onConnected: function () {
         this.$set('isConnected', true);
         this.$broadcast("connection_on");
-        this.transport.setNick(this.nick);
-        this.$set('nick', this.transport.id);
-        this.transport.send("SERVER", "/join lounge");
+
+        window.setTimeout(function () {
+          this.transport.setNick(this.nick);
+          this.$set('nick', this.transport.id);
+          this.transport.send(this.defaultGroup, "/join lounge");
+        }.bind(this), 500);
       },
 
       changeNick: function (newNick) {
@@ -259,12 +263,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
       onJoin: function (joinInfo) {
         this._getOrCreateGroupLog(joinInfo.to);
-        this._appendMessage({
-          to: joinInfo.to,
-          from: joinInfo.from,
-          msg: joinInfo.from + " has joined discussion",
-          delivery_time: new Date()
-        });
+        this._appendMetaMessage(joinInfo.to, joinInfo.from + " has joined");
         if (this.currentGroup.name == this.defaultGroup) {
           this.switchGroup(joinInfo.to);
         }
@@ -275,12 +274,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           delete groupsLog[info.to];
           this.$broadcast("group_left", info.to);
         } else {
-          this._appendMessage({
-            to: info.to,
-            from: info.from,
-            msg: info.from + " has left",
-            delivery_time: new Date()
-          });
+          this._appendMetaMessage(info.to, info.from + " has left");
         }
 
         if (this.currentGroup.name == info.to && this.nick == info.from) {
@@ -311,12 +305,25 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           this.$set('currentGroup.messages', groupLog);
         }
 
-        groupLog.push(m);
+        if (groupLog.length && groupLog[groupLog.length - 1].from == m.from) {
+          var lastMsg = groupLog[groupLog.length - 1];
+          lastMsg.msg += "\n\n" + m.msg;
+        } else {
+          groupLog.push(m);
+        }
+
         this.$broadcast('message_new', m);
       },
 
-      _appendMetaMessage: function (msg) {
-        this.currentGroup.messages.push({isMeta: true, msg: msg});
+      _appendMetaMessage: function (group, msg) {
+        var groupLog = this._getOrCreateGroupLog(group);
+
+        if (!this.currentGroup.name) {
+          this.$set('currentGroup.name', group);
+          this.$set('currentGroup.messages', groupLog);
+        }
+
+        groupLog.push({isMeta: true, msg: msg});
       },
 
       _getOrCreateGroupLog: function (g) {
