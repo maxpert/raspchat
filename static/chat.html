@@ -6,210 +6,112 @@
   <meta charset="utf-8">
   <meta name="robots" content="noindex">
   <title>Raspchat</title>
-  <style>
-
-  .color-background-50  { background: #E0F2F1; }
-  .color-background-500 { background: #009688; }
-  .color-background-600 { background: #00897B; }
-  .color-background-700 { background: #00796B; }
-  .color-background-800 { background: #00695C; }
-  .color-background-900 { background: #004D40; }
-
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
-  html {
-    height: 100%;
-  }
-
-  body {
-    height: 100%;
-    display: block;
-  }
-
-  .code-font {
-    font-family: "Courier New",Courier,"Lucida Sans Typewriter","Lucida Typewriter",monospace;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
-
-  div.meta-message {
-    color: #333;
-  }
-
-  div.incomingMessage {
-    margin: 10px;
-    box-sizing: border-box;
-  }
-
-  .incomingMessage img {
-    width: 300px;
-  }
-
-  #dump {
-    display: block;
-    height: 90%;
-    max-height: 90%;
-    width: 100%;
-    overflow: auto;
-    color: black;
-    background: white;
-    padding: 10px;
-  }
-
-  #bottomBar {
-    position: relative;
-    margin: 2px;
-  }
-
-  #sidebar {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    z-index: 9999;
-  }
-
-  .sidebarContainer {
-    position: relative;
-    border: solid #9e9e9e;
-    border-width: 0 1px 0 0;
-  }
-
-  .burgerButton {
-    position: absolute;
-    color: white;
-    width: 42px;
-    height: 42px;
-    vertical-align: middle;
-    padding: 16px 0 0 0;
-    text-align: center;
-    border-radius: 32px;
-    text-decoration: none;
-    margin: 10px;
-    top: -24px;
-    left: -24px;
-  }
-
-  .fromContainer {
-    padding: 0 0 7px 0;
-  }
-
-  .fromContainer .name {
-    padding: 0px 10px 7px 0;
-    font-weight: 900;
-    font-style: normal;
-    color: #00695C;
-  }
-
-  .sidebarContainer .sidebarRegion {
-    padding: 10px 0;
-  }
-
-  /* Mobile */
-  @media(max-width: 600px) {
-    #msg {
-      width: 80%;
-      height: 42px;
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-
-    #btn {
-      width: 17%;
-      height: 42px;
-      position: absolute;
-      top: 0;
-      right: 0;
-    }
-
-    #bottomBar {
-      height: 42px;
-    }
-
-    .sidebarContainer {
-      max-width: 400px;
-      display: block;
-      overflow: auto;
-      color: black;
-      padding: 10px;
-      height: 100%;
-    }
-  }
-
-  /* Desktop */
-  @media (min-width: 600px) {
-    #msg {
-      width: 100%;
-      padding: 0;
-      margin: 0;
-      display: block;
-    }
-
-    #btn {
-      display: none;
-    }
-
-    .sidebarContainer {
-      display: block;
-      overflow: auto;
-      color: black;
-      padding: 10px;
-      max-width: 600px;
-      height: 100%;
-    }
-  }
-  </style>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link href='./default.css' rel='stylesheet' type='text/css'>
 </head>
 <body>
   <div id="root" style="width: 100%; height: 100%; margin: 0; padding: 0; position: relative;">
-    <div id="dump"></div>
-    <div id="bottomBar">
-      <textarea id='msg' class="code-font" type="text" placeholder="Type your message"></textarea>
-      <input id='btn' type="button" style="" value="send" />
-    </div>
-    <div id="sidebar" class="code-font">
-
-      <a href="#" class="burgerButton color-background-800">*</a>
-
-      <div class="sidebarContainer color-background-50" style="display: none;">
-        <div class="sidebarRegion">
-          <input type="checkbox" id="mute" /> <span> Mute sounds </span>
-        </div>
-
-        <div class="sidebarRegion">
-          Max history <input type="text" id="maxhistory" value="200" />
-        </div>
-
-        <div class="sidebarRegion">
-          <h3>Groups</h3>
-          <div id="groupList">
-          </div>
-        </div>
-
-      </div>
-
-    </div>
+    <template v-if="isConnected">
+      <slot name="logsHolder"><chat-log :messages="currentGroup.messages"/></slot>
+      <slot name="composeHolder"><chat-compose @send-message="sendMessage"/></slot>
+      <slot name="appBar"><app-bar :user-id="nick"/></slot>
+    </template>
+    <form class="login-form" @submit.stop.prevent="connect" v-else>
+      <center>
+        <input type="text" placeholder="Enter a nick" v-model="nick" />
+        <button type="submit">Connect</button>
+      </center>
+    </form>
   </div>
 
-  <script type="template/mustache" id="messageTemplate">
-    <div class="incomingMessage {{#isMeta}}meta-message {{/isMeta}}code-font" style="">
-      {{#from}}<div class="fromContainer"><span class="name">{{from}}</span>
-      <span style="font-size: 12px">{{delivery_time}}</span></div>{{/from}} {{{msg}}}
+  <template id="chat-compose">
+    <div class="bottomBar">
+      <textarea class="msg code-font"
+                v-model="message"
+                @keydown.stop.prevent.enter="enterPressed"
+                @keydown.stop.prevent.tab="tabPressed"
+                placeholder="Type your message"></textarea>
+      <input class='btn' type="button" style="" @click.stop.prevent="enterPressed" value="send" />
     </div>
-  </script>
+  </template>
+
+  <template id="app-bar">
+    <div class="app-bar color-background-900 code-font">
+      <div class="app-bar-container">
+        <div class="additional-buttons">
+          <div>Settings</div>
+          <sound-notification-button :ignore-for="userId"/>
+        </div>
+
+        <table style="padding: 10px 0 10px 5px;">
+          <tr>
+            <td colspan="2">
+              You are
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <img :src="userId | avatar_url" class="avatar" />
+            </td>
+            <td style="font-size: 16px; overflow: hidden;">
+              {{userId}}
+            </td>
+          </tr>
+        </table>
+
+        <div class="list-container">
+          <groups-list />
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="sound-notification-button">
+    <a href="#" class="inline-button code-font" @click.stop.prevent="toggle">
+      <i class="fa fa-bell" v-if="enabled"></i>
+      <i class="fa fa-bell-o" v-else></i>
+    </a>
+  </template>
+
+  <template id="groups-list">
+    <div class="code-font">Groups</div>
+    <div class="code-font groups-list" v-for="g in groups">
+      <a href="#" class="group-entry {{selected == g.name ? 'active-group' : ''}}" @click.stop.prevent="selectGroup(g.name)">
+        <span>{{g.name}}</span><span v-if="g.unread"> - {{g.unread}}</span>
+        <i class="fa fa-times" style="float: right; font-size: 17px;" @click.stop.prevent="leaveGroup(g.name)" v-if="$index"></i>
+      </a>
+    </div>
+  </template>
+
+  <template id="chat-messages">
+  <div class="chat-log">
+    <div class="chat-message" v-for="m in messages">
+      <chat-message :message="m" @chat-message-added="scrollToBottom"/>
+    </div>
+  </div>
+  </template>
+
+  <template id="chat-message">
+  <div v-if="message.isMeta">
+    <pre class="meta-message">{{{message.msg}}}</pre>
+  </div>
+  <div class="incomingMessage code-font" v-else>
+    <img :src="message.from | avatar_url" class="avatar" alt="{{message.from}}" />
+    <div class="fromContainer">
+      <span class="name">{{message.from}}</span>
+      <span style="font-size: 12px">{{message.delivery_time}}</span>
+    </div>
+    <div class="markdown-container">
+    {{{message.msg | markdown}}}
+    </div>
+    <div class="cf">&nbsp;</div>
+  </div>
+  </template>
 
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.7/socket.io.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.2.1/mustache.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/5.0.2/markdown-it.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.1.6/zepto.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"></script>
-<script src="./vxe.js"></script>
-<script src="./chatbox.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.13/vue.min.js"></script>
+<script src="./core.js"></script>
+<script src="./chat.js"></script>
 </html>

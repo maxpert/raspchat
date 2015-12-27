@@ -29,7 +29,7 @@ type Relay struct {
 	sock         socketio.Socket
 	clientid     string
 	nick         string
-	groupsJoined []string
+	groupsJoined map[string]struct{}
 	groupInfo    GroupInfoManager
 }
 
@@ -48,7 +48,7 @@ func NewRelay(sock socketio.Socket, infoMan GroupInfoManager) *Relay {
 		sock:         sock,
 		clientid:     sock.Id(),
 		nick:         sock.Id(),
-		groupsJoined: make([]string, 0),
+		groupsJoined: make(map[string]struct{}),
 		groupInfo:    infoMan,
 	}
 }
@@ -116,17 +116,18 @@ func (me *Relay) Start() {
 	me.sock.On("send-msg", me.onClientSend)
 	me.sock.On("set-nick", me.onClientSetNick)
 	me.sock.On("join-group", me.onClientJoin)
+	me.sock.On("leave-group", me.onClientLeave)
 	_nickRegistry.Register(me.clientid, me.nick)
 }
 
 func (me *Relay) Stop() {
-	_nickRegistry.Unregister(me.clientid)
-
-	for _, grp := range me.groupsJoined {
+	for grp, _ := range me.groupsJoined {
 		me.sock.BroadcastTo(grp, "group-leave", me.nick+"@"+grp)
 		me.groupInfo.RemoveUser(grp, me.clientid)
 	}
 	me.sock = nil
+
+	_nickRegistry.Unregister(me.clientid)
 }
 
 func (me *Relay) onClientSetNick(msg string) {
@@ -145,11 +146,12 @@ func (me *Relay) onClientSetNick(msg string) {
 	me.nick = msg
 
 	changeMsg := fmt.Sprintf("%s%s changed nick to %s", from_server_prefix, oldnick, me.nick)
-	for _, name := range me.groupsJoined {
+	for name, _ := range me.groupsJoined {
 		me.sock.BroadcastTo(name, "group-message", changeMsg)
 	}
 
 	me.sock.Emit("new-msg", changeMsg)
+	me.sock.Emit("nick-set", me.nick)
 }
 
 func (me *Relay) onClientJoin(msg string) {
@@ -159,8 +161,22 @@ func (me *Relay) onClientJoin(msg string) {
 	me.sock.Emit("group-join", me.nick+"@"+msg)
 
 	me.Lock()
-	me.groupsJoined = append(me.groupsJoined, msg)
+	me.groupsJoined[msg] = struct{}{}
 	me.groupInfo.AddUser(msg, me.clientid, true)
+	me.Unlock()
+}
+
+func (me *Relay) onClientLeave(msg string) {
+	log.Println("command.leave ---->", msg)
+	me.sock.Leave(msg)
+	me.sock.BroadcastTo(msg, "group-leave", me.nick+"@"+msg)
+	me.sock.Emit("group-leave", me.nick+"@"+msg)
+
+	me.Lock()
+	if _, ok := me.groupsJoined[msg]; ok {
+		delete(me.groupsJoined, msg)
+	}
+	me.groupInfo.RemoveUser(msg, me.clientid)
 	me.Unlock()
 }
 

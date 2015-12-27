@@ -1,0 +1,199 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html {
+  height: 100%;
+}
+body {
+  height: 100%;
+  display: block;
+}
+
+/*Colors*/
+.color-background-50  { background: #E0F2F1; }
+.color-background-500 { background: #009688; }
+.color-background-600 { background: #00897B; }
+.color-background-700 { background: #00796B; }
+.color-background-800 { background: #00695C; }
+.color-background-900 { background: #004D40; }
+
+.code-font {
+  font-family: "Courier New",Courier,"Lucida Sans Typewriter","Lucida Typewriter",monospace;
+}
+
+.cf {
+  display: block;
+  clear: both;
+}
+
+.login-form {
+  display: block;
+  clear: both;
+  color: white;
+}
+
+.chat-log {
+  display: block;
+  height: 90%;
+  max-height: 90%;
+  width: 100%;
+  overflow: auto;
+  color: black;
+  background: white;
+  padding: 10px;
+}
+
+.bottomBar {
+  position: relative;
+  margin: 2px;
+}
+
+.app-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.app-bar-container {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: #fff;
+  overflow: hidden;
+}
+
+.group-entry, .group-entry:active{
+  text-decoration: none;
+  display: block;
+  clear: both;
+  color: white;
+  margin: 7px 0;
+  padding: 5px;
+  font-size: 16px;
+}
+
+.group-entry:hover {
+   background: #00695C;
+}
+
+.active-group {
+  background: #fff;
+  color: #000;
+}
+
+.active-group:hover {
+  background: #fff;
+}
+
+.meta-message {
+  color: #333;
+}
+
+.incomingMessage {
+  margin: 10px;
+  box-sizing: border-box;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  float: left;
+  margin: 0 8px 0 0;
+  border-radius: 10px;
+}
+
+.markdown-container img {
+  max-width: 100%;
+}
+
+.fromContainer {
+  padding: 0 0 7px 0;
+}
+
+.fromContainer .name {
+  padding: 0px 10px 7px 0;
+  font-weight: 900;
+  font-style: normal;
+  color: #00695C;
+}
+
+.list-container {
+  padding-left: 5px;
+  max-height: 60%;
+  height: 60%;
+}
+
+.additional-buttons {
+  padding: 10px 5px;
+}
+
+.inline-button, .inline-button:active {
+  text-decoration: none;
+  height: 24px;
+  font-size: 20px;
+  line-height: 20px;
+  color: #fff;
+}
+
+/* Mobile */
+@media(max-width: 600px) {
+  .msg {
+    width: 80%;
+    height: 42px;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .btn {
+    width: 17%;
+    height: 42px;
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  .bottomBar {
+    position: fixed;
+    height: 42px;
+    width: 100%;
+  }
+
+  .chat-log {
+  }
+
+  .app-bar {
+    display: none;
+  }
+
+  .avatar {
+    width: 32px !important;
+    height: 32px !important;
+  }
+}
+
+/* Desktop */
+@media (min-width: 600px) {
+  .msg {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    display: block;
+  }
+
+  .btn {
+    display: none;
+  }
+
+  .bottomBar, .chat-log {
+    padding-left: 200px;
+  }
+
+  .app-bar {
+    bottom: 0;
+    width: 200px;
+  }
+}
