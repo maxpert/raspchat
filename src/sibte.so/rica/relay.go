@@ -11,13 +11,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"regexp"
 	"strings"
 	"sync"
 
-	linuxproc "github.com/c9s/goprocinfo/linux"
 	"github.com/googollee/go-socket.io"
 )
 
@@ -26,11 +26,10 @@ var from_server_prefix string = "SERVER" + message_delimeter
 
 type Relay struct {
 	sync.Mutex
-	sock         socketio.Socket
-	clientid     string
-	nick         string
-	groupsJoined map[string]struct{}
-	groupInfo    GroupInfoManager
+	sock      socketio.Socket
+	clientid  string
+	nick      string
+	groupInfo GroupInfoManager
 }
 
 type RelayService struct {
@@ -45,11 +44,10 @@ var _nickRegistry *NickRegistry = NewNickRegistry()
 func NewRelay(sock socketio.Socket, infoMan GroupInfoManager) *Relay {
 	log.Println("Creating new relay server")
 	return &Relay{
-		sock:         sock,
-		clientid:     sock.Id(),
-		nick:         sock.Id(),
-		groupsJoined: make(map[string]struct{}),
-		groupInfo:    infoMan,
+		sock:      sock,
+		clientid:  sock.Id(),
+		nick:      sock.Id(),
+		groupInfo: infoMan,
 	}
 }
 
@@ -72,11 +70,6 @@ func NewRelayService(server *socketio.Server) *RelayService {
 		me.createNewRelay(so)
 	})
 
-	server.On("error", func(so socketio.Socket, err error) {
-		log.Println("Error", err)
-		me.destroyRelay(so.Id())
-	})
-
 	return me
 }
 
@@ -95,13 +88,18 @@ func (me *RelayService) createNewRelay(so socketio.Socket) {
 		me.destroyRelay(sockid)
 	})
 
+	so.On("error", func(so socketio.Socket, err error) {
+		log.Println("Error", err)
+		me.destroyRelay(so.Id())
+	})
+
 	r.Start()
 }
 
 func (me *RelayService) destroyRelay(sockid string) {
 	r, ok := me.relayMap[sockid]
 	if ok {
-		r.Stop()
+		go r.Stop()
 		log.Println("Removing connection id", sockid)
 		delete(me.relayMap, sockid)
 	}
@@ -112,23 +110,28 @@ func (me *RelayService) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (me *Relay) Start() {
+	me.nick = me.sock.Id()
+	_nickRegistry.Register(me.clientid, me.nick)
+
 	me.sock.On("send-msg", me.onClientSend)
 	me.sock.On("set-nick", me.onClientSetNick)
 	me.sock.On("join-group", me.onClientJoin)
 	me.sock.On("leave-group", me.onClientLeave)
-
+	me.sock.On("ping", me.onPing)
 	me.sock.Emit("new-msg", from_server_prefix+getWelcomeMessage())
-	_nickRegistry.Register(me.clientid, me.nick)
 }
 
 func (me *Relay) Stop() {
-	for grp, _ := range me.groupsJoined {
-		me.sock.BroadcastTo(grp, "group-leave", me.nick+"@"+grp)
+	_nickRegistry.Unregister(me.clientid)
+
+	for _, grp := range me.sock.Rooms() {
 		me.groupInfo.RemoveUser(grp, me.clientid)
+
+		me.sock.Leave(grp)
+		me.sock.BroadcastTo(grp, "group-leave", me.nick+"@"+grp)
 	}
 	me.sock = nil
-
-	_nickRegistry.Unregister(me.clientid)
+	log.Println("Stopping socket client id", me.clientid)
 }
 
 func (me *Relay) onClientSetNick(msg string) {
@@ -146,39 +149,35 @@ func (me *Relay) onClientSetNick(msg string) {
 	oldnick := me.nick
 	me.nick = msg
 
-	changeMsg := fmt.Sprintf("%s%s changed nick to %s", from_server_prefix, oldnick, me.nick)
-	for name, _ := range me.groupsJoined {
-		me.sock.BroadcastTo(name, "group-message", changeMsg)
+	for _, name := range me.sock.Rooms() {
+		me.sock.BroadcastTo(name, "member-nick-changed", oldnick+"->"+me.nick)
 	}
 
-	me.sock.Emit("new-msg", changeMsg)
 	me.sock.Emit("nick-set", me.nick)
 }
 
 func (me *Relay) onClientJoin(msg string) {
 	log.Println("command.join ---->", msg)
-	me.sock.Join(msg)
-	me.sock.BroadcastTo(msg, "group-join", me.nick+"@"+msg)
-	me.sock.Emit("group-join", me.nick+"@"+msg)
-
-	me.Lock()
-	me.groupsJoined[msg] = struct{}{}
 	me.groupInfo.AddUser(msg, me.clientid, true)
-	me.Unlock()
+
+	me.sock.BroadcastTo(msg, "group-join", me.nick+"@"+msg)
+	me.sock.Join(msg)
+
+	me.sock.Emit("group-join", me.nick+"@"+msg)
 }
 
 func (me *Relay) onClientLeave(msg string) {
 	log.Println("command.leave ---->", msg)
+	me.groupInfo.RemoveUser(msg, me.clientid)
+
 	me.sock.Leave(msg)
 	me.sock.BroadcastTo(msg, "group-leave", me.nick+"@"+msg)
-	me.sock.Emit("group-leave", me.nick+"@"+msg)
 
-	me.Lock()
-	if _, ok := me.groupsJoined[msg]; ok {
-		delete(me.groupsJoined, msg)
-	}
-	me.groupInfo.RemoveUser(msg, me.clientid)
-	me.Unlock()
+	me.sock.Emit("group-leave", me.nick+"@"+msg)
+}
+
+func (me *Relay) onPing() {
+	me.sock.Emit("pong")
 }
 
 func (me *Relay) onClientSend(msg string) {
@@ -197,20 +196,14 @@ func (me *Relay) onClientSend(msg string) {
 }
 
 func getWelcomeMessage() string {
-	stat, err := linuxproc.ReadStat("/proc/stat")
-	if err != nil {
-		return "Unable to query stat info"
-	}
-
-	info, err := linuxproc.ReadCPUInfo("/proc/cpuinfo")
+	info, err := ioutil.ReadFile("/proc/cpuinfo")
 	if err != nil {
 		return "Unable to query cpu info"
 	}
 
 	return fmt.Sprintf(
-		"CPU STAT: \n --- \n %v \n --- \n CPU INFO: \n --- \n %v \n",
-		toPrettyJson(stat),
-		toPrettyJson(info),
+		"CPU INFO: \n --- \n %v \n",
+		strings.Replace(string(info), "\n", "\n\n", 999),
 	)
 }
 

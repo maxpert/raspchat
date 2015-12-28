@@ -35,6 +35,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   });
 
   vue.filter('avatar_url', function (value) {
+    // http://api.adorable.io/avatars/face/eyes6/nose7/face1/AA0000
     return 'http://api.adorable.io/avatars/256/zmg-' + value + '.png';
   });
 
@@ -192,7 +193,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     methods: {
       onNotification: function (msg) {
         if (this.enabled && msg.from != this.ignoreFor){
-          var snd = new Audio("/static/notif.mp3");
+          var snd = new Audio("/static/ping.mp3");
           snd.play();
         }
       }
