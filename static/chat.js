@@ -46,7 +46,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       this.$dispatch("chat-message-added", this.message);
       this.$watch("message.msg", function () {
         this.$dispatch("chat-message-added", this.message);
-      }.bind(this));
+      }.$glue(this));
     }
   }));
 
@@ -207,12 +207,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       nick: "",
       currentGroup: {name: '', messages: []},
       isConnected: false,
+      isReady: false,
     },
 
     ready: function (argument) {
       this.transport = new core.Transport();
       this.transport.events.on('connected', this.onConnected);
       this.transport.events.on('disconnected', this.onDisconnected);
+      this.transport.events.on('handshake', this.onHandshaked);
+
       this.transport.events.on('message', this.onMessage);
       this.transport.events.on('joined', this.onJoin);
       this.transport.events.on('leave', this.onLeave);
@@ -230,7 +233,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
     methods: {
       connect: function () {
-        this.transport.connect();
+        this.$set("isConnecting", true);
+        this.transport.connect(this.nick);
       },
 
       sendMessage: function (msg) {
@@ -254,23 +258,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         this.onSwitch(grp);
       },
 
-      onMessage: function (m) {
-        if (!this.defaultGroup) {
-          this.defaultGroup = m.from;
-        }
+      onHandshaked: function (info_channel) {
+        this.defaultGroup = info_channel;
+        this.transport.send(this.defaultGroup, "/join lounge");
+      },
 
+      onMessage: function (m) {
         this._appendMessage(m);
       },
 
       onConnected: function () {
         this.$set('isConnected', true);
         this.$broadcast("connection_on");
-
-        window.setTimeout(function () {
-          this.transport.setNick(this.nick);
-          this.$set('nick', this.transport.id);
-          this.transport.send(this.defaultGroup, "/join lounge");
-        }.bind(this), 500);
       },
 
       changeNick: function (newNick) {
@@ -278,7 +277,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       },
 
       onDisconnected: function () {
-        this.$set('isConnected', false);
+        this.$set("isConnecting", true);
         this.$broadcast("connection_off");
       },
 
@@ -287,6 +286,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         this._appendMetaMessage(joinInfo.to, joinInfo.from + " has joined");
         if (this.currentGroup.name == this.defaultGroup) {
           this.switchGroup(joinInfo.to);
+        }
+
+        if (this.isConnecting) {
+          this.$set("isConnecting", false);
         }
       },
 

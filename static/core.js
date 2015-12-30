@@ -5,18 +5,21 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-if (!Function.prototype.bind){
-  Function.prototype.bind = function (scope) {
+if (!Function.prototype.$glue){
+  Function.prototype.$glue = function (scope) {
     var fn = this;
-    return function () {
-        return fn.apply(scope);
-    };
+    if (!fn.__glued) {
+      fn.__glued = function () {
+        var args = Array.prototype.slice.call(arguments);
+        return fn.apply(scope, args);
+      };
+    }
+
+    return fn.__glued;
   };
 }
 
 window.core = (function(win, doc) {
-  var MSG_DELIMETER = "~~~~>";
-  var MSG_SENDER_REGEX = /^([^@]+)@+(.+)$/i;
   var SERVER_ALIAS = 'SERVER';
 
   var validCommandRegex = /^\/([a-zA-Z]+)\s*(.*)$/i;
@@ -33,9 +36,8 @@ window.core = (function(win, doc) {
       oReq.addEventListener("load", function (r) {
         var resp = JSON.parse(oReq.response);
         console.log("gif info", resp);
-        if (resp.attachments && resp.attachments.length > 0){
-          var atch = resp.attachments[0];
-          url_callback(atch.image_url, atch);
+        if (resp && resp.url){
+          url_callback(resp.url, resp);
           return;
         }
 
@@ -44,34 +46,6 @@ window.core = (function(win, doc) {
       oReq.open("get", "/gif?q="+keywords);
       oReq.send();
     }
-  };
-
-  var parseRecipient = function (msg) {
-    var matches = msg.match(MSG_SENDER_REGEX);
-    if (matches && matches.length == 3){
-      return {from: matches[1], to: matches[2]};
-    }
-
-    if (msg != SERVER_ALIAS) {
-      return null;
-    }
-
-    return {from: SERVER_ALIAS, to: SERVER_ALIAS};
-  };
-
-  var parseMessage = function (data) {
-    var msg = data.split(MSG_DELIMETER);
-    if (msg.length < 2) {
-      return null;
-    }
-
-    var p = parseRecipient(msg[0]);
-    if (p == null) {
-      return null;
-    }
-
-    p.msg = msg[1];
-    return p;
   };
 
   var processComand = function (cmd, callback) {
@@ -131,9 +105,10 @@ window.core = (function(win, doc) {
   };
 
   EventEmitter.prototype = {
-    fire: function (channel, data) {
+    fire: function (channel) {
       var subscribes = this._channels[channel] || [],
-          l = subscribes.length;
+          l = subscribes.length,
+          data = Array.prototype.slice.call(arguments, 1);
       while (l--) {
         var cb = subscribes[l];
         win.setTimeout(function () {
@@ -162,19 +137,18 @@ window.core = (function(win, doc) {
     this.events = new EventEmitter();
     this.sock = null;
     this.id = null;
+    this.handshakeCompleted = false;
     this.url = url || 'http:///';
   };
 
   Transport.prototype = {
-      connect: function () {
+      connect: function (nick) {
+        this._requestedNick = nick;
+
         this.sock = io(this.url);
-        this.sock.on('connect', this._on_connect.bind(this));
-        this.sock.on('disconnect', this._on_disconnect.bind(this));
-        this.sock.on('new-msg', this._on_message.bind(this));
-        this.sock.on('group-message', this._on_message.bind(this));
-        this.sock.on('group-join', this._on_group_joined.bind(this));
-        this.sock.on('group-leave', this._on_group_left.bind(this));
-        this.sock.on('nick-set', this._on_nick_changed.bind(this));
+        this.sock.on('connect', this._on_connect.$glue(this));
+        this.sock.on('disconnect', this._on_disconnect.$glue(this));
+        this.sock.on('client-init', this._on_client_init.$glue(this));
         this.events.fire('connecting');
       },
 
@@ -186,67 +160,93 @@ window.core = (function(win, doc) {
         var me = this;
         var processed = processComand(msg, function(cmd, value){
           if (cmd == "switch-group") {
-            me.events.fire('switch', [value]);
+            me.events.fire('switch', value);
             return;
           }
 
           var m = value;
           if (cmd == "send-msg") {
-            m = to + MSG_DELIMETER + m;
+            m = {to: to, msg: m};
           }
           me.sock.emit(cmd, m);
         });
 
         if (!processed) {
-          this.sock.emit("send-msg", to + MSG_DELIMETER + msg);
+          this.sock.emit("send-msg", {to: to, msg: msg});
         }
-      },
-
-      _on_message: function (msg) {
-        var m = parseMessage(msg);
-        if (m == null) {
-          console.warn("Invalid data", msg);
-          return;
-        }
-
-        m.delivery_time = new Date();
-        this.events.fire('message', [m]);
-      },
-
-      _on_group_joined: function (msg) {
-        var recpInfo = parseRecipient(msg);
-        this.events.fire('message', [{
-          from: SERVER_ALIAS,
-          to: SERVER_ALIAS,
-          delivery_time: new Date(),
-          msg: recpInfo.from + " joined " + recpInfo.to
-        }]);
-        this.events.fire('joined', [recpInfo]);
-      },
-
-      _on_group_left: function (msg) {
-        var recpInfo = parseRecipient(msg);
-        this.events.fire('message', [{
-          from: SERVER_ALIAS,
-          to: SERVER_ALIAS,
-          delivery_time: new Date(),
-          msg: recpInfo.from + " left " + recpInfo.to
-        }]);
-        this.events.fire('leave', [recpInfo]);
-      },
-
-      _on_nick_changed: function (nick) {
-        this.id = nick;
-        this.events.fire('nick-changed', [nick]);
       },
 
       _on_connect: function () {
         this.id = this.sock.id;
+
+        this.sock.emit('init-client', {nick: this._requestedNick});
         this.events.fire('connected');
       },
 
       _on_disconnect: function () {
         this.events.fire('disconnected');
+      },
+
+      _on_client_init: function (err) {
+        if (err) {
+          console.log("Client handshake error", err)
+          return;
+        }
+
+        this.sock.removeAllListeners('new-msg');
+        this.sock.removeAllListeners('group-message');
+        this.sock.removeAllListeners('group-join');
+        this.sock.removeAllListeners('group-leave');
+        this.sock.removeAllListeners('nick-set');
+        this.sock.removeAllListeners('member-nick-changed');
+
+        this.sock.on('new-msg', this._on_message.$glue(this));
+        this.sock.on('group-message', this._on_message.$glue(this));
+        this.sock.on('group-join', this._on_group_joined.$glue(this));
+        this.sock.on('group-leave', this._on_group_left.$glue(this));
+        this.sock.on('nick-set', this._on_nick_changed.$glue(this));
+        this.sock.on('member-nick-set', this._on_member_nick_changed.$glue(this));
+
+        this.events.fire('handshake', SERVER_ALIAS);
+      },
+
+      _on_message: function (msg) {
+        msg.delivery_time = msg.delivery_time || new Date();
+        this.events.fire('message', msg);
+      },
+
+      _on_group_joined: function (msg) {
+        this.events.fire('message', {
+          from: SERVER_ALIAS,
+          to: SERVER_ALIAS,
+          delivery_time: new Date(),
+          msg: msg.from + " joined " + msg.to
+        });
+        this.events.fire('joined', msg);
+      },
+
+      _on_group_left: function (recpInfo) {
+        this.events.fire('message', {
+          from: SERVER_ALIAS,
+          to: SERVER_ALIAS,
+          delivery_time: new Date(),
+          msg: recpInfo.from + " left " + recpInfo.to
+        });
+        this.events.fire('leave', recpInfo);
+      },
+
+      _on_nick_changed: function (msg) {
+        this.id = msg.newNick;
+        this.events.fire('nick-changed', msg.newNick, msg.oldNick);
+      },
+
+      _on_member_nick_changed: function (group, nickInfo) {
+        this.events.fire('new-msg', {
+          to: group,
+          msg: nickInfo.oldNick + " changed nick to " + nickInfo.newNick,
+          from: nickInfo.newNick,
+          delivery_time: new Date(),
+        });
       },
   };
 

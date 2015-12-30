@@ -15,6 +15,13 @@
       <slot name="logsHolder"><chat-log :messages="currentGroup.messages"/></slot>
       <slot name="composeHolder"><chat-compose @send-message="sendMessage"/></slot>
       <slot name="appBar"><app-bar :user-id="nick"/></slot>
+      <slot name="loadingBar">
+        <div class="loading-overlay" v-show="isConnecting">
+          <div class="container-text">
+            Connecting...
+          </div>
+        </div>
+      </slot>
     </template>
     <form class="login-form" @submit.stop.prevent="connect" v-else>
       <center>

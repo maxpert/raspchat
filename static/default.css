@@ -147,6 +147,25 @@ body {
   color: #fff;
 }
 
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+
+.loading-overlay .container-text{
+  position: relative;
+  width: 100%;
+  padding: 20% 0 0 0;
+  margin: 0;
+  font-size: 32px;
+  text-align: center;
+}
+
 /* Mobile */
 @media(max-width: 600px) {
   .msg {

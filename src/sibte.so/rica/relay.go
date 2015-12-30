@@ -14,7 +14,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"regexp"
 	"strings"
 	"sync"
 
@@ -22,6 +21,7 @@ import (
 )
 
 var message_delimeter string = "~~~~>"
+var _FROM_SERVER string = "SERVER"
 var from_server_prefix string = "SERVER" + message_delimeter
 
 type Relay struct {
@@ -45,7 +45,7 @@ func NewRelay(sock socketio.Socket, infoMan GroupInfoManager) *Relay {
 	log.Println("Creating new relay server")
 	return &Relay{
 		sock:      sock,
-		clientid:  sock.Id(),
+		clientid:  "",
 		nick:      sock.Id(),
 		groupInfo: infoMan,
 	}
@@ -62,9 +62,10 @@ func NewRelayService(server *socketio.Server) *RelayService {
 		sockid := so.Id()
 		log.Println("New connection", sockid)
 
-		if _, ok := me.relayMap[sockid]; ok {
-			log.Println("Using existing connection", sockid)
-			return
+		if oldSock, ok := me.relayMap[sockid]; ok {
+			log.Println("!!!!!!!!!!!!!!!!! Stopping existing connection ", sockid)
+			oldSock.Stop()
+			delete(me.relayMap, sockid)
 		}
 
 		me.createNewRelay(so)
@@ -110,19 +111,27 @@ func (me *RelayService) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (me *Relay) Start() {
+	stopWatch := StartStopWatch("Start:" + me.clientid)
+	defer stopWatch.LogDuration()
+
 	me.nick = me.sock.Id()
 	_nickRegistry.Register(me.clientid, me.nick)
 
+	me.sock.On("init-client", me.onInitClient)
 	me.sock.On("send-msg", me.onClientSend)
 	me.sock.On("set-nick", me.onClientSetNick)
 	me.sock.On("join-group", me.onClientJoin)
 	me.sock.On("leave-group", me.onClientLeave)
-	me.sock.On("ping", me.onPing)
-	me.sock.Emit("new-msg", from_server_prefix+getWelcomeMessage())
+	log.Println("--------Socket started and hooked!--------")
 }
 
 func (me *Relay) Stop() {
-	_nickRegistry.Unregister(me.clientid)
+	stopWatch := StartStopWatch("Stop:" + me.clientid)
+	defer stopWatch.LogDuration()
+
+	if !_nickRegistry.Unregister(me.clientid) {
+		log.Println("Unable to unregister client id", me.clientid)
+	}
 
 	for _, grp := range me.sock.Rooms() {
 		me.groupInfo.RemoveUser(grp, me.clientid)
@@ -134,65 +143,108 @@ func (me *Relay) Stop() {
 	log.Println("Stopping socket client id", me.clientid)
 }
 
+func (me *Relay) onInitClient(m *HandshakeMessage) {
+	log.Println("On client initialization", m)
+	stopWatch := StartStopWatch("onInitClient:" + me.sock.Id())
+	defer stopWatch.LogDuration()
+
+	var err error
+	var nickMsg *NickMessage = &NickMessage{OldNick: me.nick}
+	if me.nick, err = _nickRegistry.SetNick(me.clientid, m.Nick); err != nil {
+		nickMsg.NewNick = me.nick
+		defer me.sock.Emit("nick-set", &ErrorMessage{
+			Error: err.Error(),
+			Body:  nickMsg,
+		})
+	} else {
+		nickMsg.NewNick = me.nick
+		defer me.sock.Emit("nick-set", nickMsg)
+	}
+
+	defer me.sock.Emit("new-msg", &ChatMessage{
+		From:    _FROM_SERVER,
+		To:      _FROM_SERVER,
+		Message: getWelcomeMessage(),
+	})
+
+	me.sock.Emit("client-init")
+}
+
 func (me *Relay) onClientSetNick(msg string) {
-	invalidAliasRegex, _ := regexp.Compile("[^A-Za-z0-9]")
-	if invalidAliasRegex.MatchString(msg) || len(msg) > 42 {
-		me.sock.Emit("new-msg", from_server_prefix+"A nick can only have alpha-numeric values")
-		return
-	}
+	log.Println("command.set-nick ---->", msg)
+	stopWatch := StartStopWatch("onClientSetNick")
+	defer stopWatch.LogDuration()
 
-	if _nickRegistry.Register(me.clientid, msg) == false {
-		me.sock.Emit("new-msg", from_server_prefix+"Nick already registered")
-		return
-	}
-
+	var err error
 	oldnick := me.nick
-	me.nick = msg
+	if me.nick, err = _nickRegistry.SetNick(me.clientid, msg); err != nil {
+		me.sock.Emit("new-msg", err.Error())
+	}
+
+	if oldnick == me.nick {
+		return
+	}
+
+	nickMsg := &NickMessage{
+		OldNick: oldnick,
+		NewNick: me.nick,
+	}
 
 	for _, name := range me.sock.Rooms() {
-		me.sock.BroadcastTo(name, "member-nick-changed", oldnick+"->"+me.nick)
+		log.Println("Member nick change broadcasting to", name)
+		me.sock.BroadcastTo(name, "member-nick-set", name, nickMsg)
 	}
-
-	me.sock.Emit("nick-set", me.nick)
+	me.sock.Emit("nick-set", nickMsg)
 }
 
-func (me *Relay) onClientJoin(msg string) {
-	log.Println("command.join ---->", msg)
-	me.groupInfo.AddUser(msg, me.clientid, true)
+func (me *Relay) onClientJoin(groupName string) {
+	log.Println("command.join ---->", groupName)
+	stopWatch := StartStopWatch("onClientJoin")
+	defer stopWatch.LogDuration()
 
-	me.sock.BroadcastTo(msg, "group-join", me.nick+"@"+msg)
-	me.sock.Join(msg)
+	me.groupInfo.AddUser(groupName, me.clientid, true)
 
-	me.sock.Emit("group-join", me.nick+"@"+msg)
+	m := &RecipientMessage{
+		To:   groupName,
+		From: me.nick,
+	}
+	me.sock.BroadcastTo(groupName, "group-join", m)
+	me.sock.Join(groupName)
+
+	me.sock.Emit("group-join", m)
 }
 
-func (me *Relay) onClientLeave(msg string) {
-	log.Println("command.leave ---->", msg)
-	me.groupInfo.RemoveUser(msg, me.clientid)
+func (me *Relay) onClientLeave(groupName string) {
+	log.Println("command.leave ---->", groupName)
+	stopWatch := StartStopWatch("onClientLeave")
+	defer stopWatch.LogDuration()
 
-	me.sock.Leave(msg)
-	me.sock.BroadcastTo(msg, "group-leave", me.nick+"@"+msg)
+	me.groupInfo.RemoveUser(groupName, me.clientid)
 
-	me.sock.Emit("group-leave", me.nick+"@"+msg)
+	me.sock.Leave(groupName)
+	msg := &RecipientMessage{
+		From: me.nick,
+		To:   groupName,
+	}
+	me.sock.BroadcastTo(groupName, "group-leave", msg)
+	me.sock.Emit("group-leave", msg)
 }
 
-func (me *Relay) onPing() {
-	me.sock.Emit("pong")
-}
-
-func (me *Relay) onClientSend(msg string) {
+func (me *Relay) onClientSend(msg *ChatMessage) {
 	log.Println("command.send ----> ", msg)
+	stopWatch := StartStopWatch("onClientSend")
+	defer stopWatch.LogDuration()
 
-	// Split message [channel]~~~~>[msg]
-	info := strings.Split(msg, message_delimeter)
-	if len(info) < 2 {
+	// If user is not a member of group ignore his message
+	if me.groupInfo.GetUserInfoObject(msg.To, me.clientid) == nil {
+		log.Println("Message ignored by user", me.clientid, "due to membership")
 		return
 	}
 
-	message := me.nick + "@" + info[0] + message_delimeter + info[1]
-	log.Println("Sending message", msg, "to", info[0])
-	me.sock.BroadcastTo(info[0], "group-message", message)
-	me.sock.Emit("new-msg", message)
+	msg.From = me.nick
+	log.Println("Sending message", msg.Message, "to", msg.To)
+	me.sock.BroadcastTo(msg.To, "group-message", msg)
+	me.sock.Emit("new-msg", msg)
 }
 
 func getWelcomeMessage() string {

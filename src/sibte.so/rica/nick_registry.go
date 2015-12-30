@@ -8,8 +8,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 import (
+	"errors"
+	"log"
+	"regexp"
 	"sync"
 )
+
+var invalidAliasRegex *regexp.Regexp = nil
 
 type NickRegistry struct {
 	sync.Mutex
@@ -18,10 +23,39 @@ type NickRegistry struct {
 }
 
 func NewNickRegistry() *NickRegistry {
+	if invalidAliasRegex == nil {
+		invalidAliasRegex, _ = regexp.Compile("[^\\._A-Za-z0-9]")
+	}
+
 	return &NickRegistry{
 		registry:       make(map[string]string),
 		uniqueAliasMap: make(map[string]string),
 	}
+}
+
+func (r *NickRegistry) SetNick(id, nick string) (string, error) {
+	failDefault, ok := r.registry[id]
+
+	if !ok {
+		r.Register(id, id)
+		failDefault = id
+	}
+
+	if invalidAliasRegex.MatchString(nick) || len(nick) > 42 {
+		return failDefault, errors.New("A nick can only have alpha-numeric values")
+	}
+
+	i := 0
+	for i = 0; i < 3 && r.Register(id, nick) == false; i++ {
+		log.Println("Nick", nick, "already registered retry", i)
+		nick = nick + "_"
+	}
+
+	if i >= 3 {
+		return failDefault, errors.New("Nick already registered please choose a different nick")
+	}
+
+	return nick, nil
 }
 
 func (r *NickRegistry) Register(id, nick string) bool {
@@ -48,6 +82,7 @@ func (r *NickRegistry) Unregister(id string) bool {
 
 	nick, ok := r.registry[id]
 	if !ok {
+		log.Println("Unable to remove nick name registry", id)
 		return false
 	}
 

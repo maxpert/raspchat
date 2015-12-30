@@ -16,6 +16,7 @@ import (
 
 	"github.com/googollee/go-socket.io"
 	"github.com/julienschmidt/httprouter"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"sibte.so/rica"
 )
@@ -42,7 +43,7 @@ func clearCache(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Fprint(w, "Done")
 }
 
-func _installSocketMux(ircAddr string, mux *http.ServeMux) (err error) {
+func _installSocketMux(mux *http.ServeMux) (err error) {
 	err = nil
 	server, err := socketio.NewServer(nil)
 	if err != nil {
@@ -68,18 +69,28 @@ func _installHttpRoutes(mux *http.ServeMux) (err error) {
 	return
 }
 
-func parseArgs() (addr string, ircAddr string) {
+func parseArgs() (addr string, logFile string) {
 	flag.StringVar(&addr, "bind", ":8080", "Bind address for the service")
-	flag.StringVar(&ircAddr, "irc", "localhost:6667", "IRC server address")
+	flag.StringVar(&logFile, "log", "", "Log file to write log output to")
 	flag.Parse()
 	return
 }
 
 func main() {
-	mux := http.NewServeMux()
-	bindAddr, ircAddr := parseArgs()
+	bindAddr, logFile := parseArgs()
 
-	_installSocketMux(ircAddr, mux)
+	if logFile != "" {
+		log.SetOutput(&lumberjack.Logger{
+			Filename:   logFile,
+			MaxBackups: 3,
+			MaxSize:    5,
+			MaxAge:     15,
+		})
+	}
+
+	mux := http.NewServeMux()
+
+	_installSocketMux(mux)
 	_installHttpRoutes(mux)
 
 	server := &http.Server{

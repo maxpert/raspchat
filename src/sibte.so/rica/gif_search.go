@@ -30,7 +30,7 @@ func FindRightGif(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	log.Println("Searching...", q)
 	qreader := strings.NewReader("text=" + q)
-	resp, err := http.Post("https://rightgif.com/search", "application/x-www-form-urlencoded", qreader)
+	resp, err := http.Post("https://rightgif.com/search/web", "application/x-www-form-urlencoded", qreader)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Println("Error", err)
