@@ -61,7 +61,6 @@ func NewRelayService(server *socketio.Server) *RelayService {
 	server.On("connection", func(so socketio.Socket) {
 		sockid := so.Id()
 		log.Println("New connection", sockid)
-
 		if oldSock, ok := me.relayMap[sockid]; ok {
 			log.Println("!!!!!!!!!!!!!!!!! Stopping existing connection ", sockid)
 			oldSock.Stop()
