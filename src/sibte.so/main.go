@@ -13,7 +13,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/fvbock/endless"
 	"github.com/googollee/go-socket.io"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -93,11 +95,8 @@ func main() {
 	_installSocketMux(mux)
 	_installHttpRoutes(mux)
 
-	server := &http.Server{
-		Addr:    bindAddr,
-		Handler: mux,
-	}
-
+	endless.DefaultHammerTime = 10 * time.Second
+	server := endless.NewServer(bindAddr, mux)
 	log.Println("Starting server...", bindAddr)
 	log.Panic(server.ListenAndServe())
 }

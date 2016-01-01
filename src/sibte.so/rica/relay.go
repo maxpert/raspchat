@@ -121,7 +121,7 @@ func (me *Relay) Start() {
 	me.sock.On("set-nick", me.onClientSetNick)
 	me.sock.On("join-group", me.onClientJoin)
 	me.sock.On("leave-group", me.onClientLeave)
-	log.Println("--------Socket started and hooked!--------")
+	log.Println("___Socket started and hooked!___")
 }
 
 func (me *Relay) Stop() {
@@ -207,10 +207,10 @@ func (me *Relay) onClientJoin(groupName string) {
 		To:   groupName,
 		From: me.nick,
 	}
-	me.sock.BroadcastTo(groupName, "group-join", m)
-	me.sock.Join(groupName)
 
+	me.sock.BroadcastTo(groupName, "group-join", m)
 	me.sock.Emit("group-join", m)
+	me.sock.Join(groupName)
 }
 
 func (me *Relay) onClientLeave(groupName string) {
