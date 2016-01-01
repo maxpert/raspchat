@@ -20,9 +20,7 @@ import (
 	"github.com/googollee/go-socket.io"
 )
 
-var message_delimeter string = "~~~~>"
 var _FROM_SERVER string = "SERVER"
-var from_server_prefix string = "SERVER" + message_delimeter
 
 type Relay struct {
 	sync.Mutex
@@ -136,7 +134,10 @@ func (me *Relay) Stop() {
 		me.groupInfo.RemoveUser(grp, me.clientid)
 
 		me.sock.Leave(grp)
-		me.sock.BroadcastTo(grp, "group-leave", me.nick+"@"+grp)
+		me.sock.BroadcastTo(grp, "group-leave", &RecipientMessage{
+			From: me.nick,
+			To:   grp,
+		})
 	}
 	me.sock = nil
 	log.Println("Stopping socket client id", me.clientid)
