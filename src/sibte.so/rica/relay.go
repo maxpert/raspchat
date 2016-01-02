@@ -13,9 +13,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/googollee/go-socket.io"
 )
@@ -24,87 +24,28 @@ var _FROM_SERVER string = "SERVER"
 
 type Relay struct {
 	sync.Mutex
-	sock      socketio.Socket
-	clientid  string
-	nick      string
-	groupInfo GroupInfoManager
+	sock            socketio.Socket
+	clientid        string
+	nick            string
+	groupInfo       GroupInfoManager
+	clientDirectory iClientRelayDirectory
+	nickRegistry    *NickRegistry
 }
 
-type RelayService struct {
-	sync.Mutex
-	socketio  *socketio.Server
-	relayMap  map[string]*Relay
-	groupInfo GroupInfoManager
-}
-
-var _nickRegistry *NickRegistry = NewNickRegistry()
-
-func NewRelay(sock socketio.Socket, infoMan GroupInfoManager) *Relay {
+func NewRelay(
+	sock socketio.Socket,
+	clientDir iClientRelayDirectory,
+	infoMan GroupInfoManager,
+	nickReg *NickRegistry) *Relay {
 	log.Println("Creating new relay server")
 	return &Relay{
-		sock:      sock,
-		clientid:  "",
-		nick:      sock.Id(),
-		groupInfo: infoMan,
+		sock:            sock,
+		nick:            "",
+		clientid:        sock.Id(),
+		groupInfo:       infoMan,
+		clientDirectory: clientDir,
+		nickRegistry:    nickReg,
 	}
-}
-
-func NewRelayService(server *socketio.Server) *RelayService {
-	me := &RelayService{
-		socketio:  server,
-		relayMap:  make(map[string]*Relay),
-		groupInfo: NewInMemoryGroupInfo(),
-	}
-
-	server.On("connection", func(so socketio.Socket) {
-		sockid := so.Id()
-		log.Println("New connection", sockid)
-		if oldSock, ok := me.relayMap[sockid]; ok {
-			log.Println("!!!!!!!!!!!!!!!!! Stopping existing connection ", sockid)
-			oldSock.Stop()
-			delete(me.relayMap, sockid)
-		}
-
-		me.createNewRelay(so)
-	})
-
-	return me
-}
-
-func (me *RelayService) createNewRelay(so socketio.Socket) {
-	sockid := so.Id()
-
-	me.Lock()
-	r, ok := me.relayMap[sockid]
-	if !ok {
-		r = NewRelay(so, me.groupInfo)
-		me.relayMap[sockid] = r
-	}
-	me.Unlock()
-
-	so.On("disconnection", func() {
-		me.destroyRelay(sockid)
-	})
-
-	so.On("error", func(so socketio.Socket, err error) {
-		log.Println("Error", err)
-		me.destroyRelay(so.Id())
-	})
-
-	r.Start()
-}
-
-func (me *RelayService) destroyRelay(sockid string) {
-	r, ok := me.relayMap[sockid]
-	if ok {
-		go r.Stop()
-		log.Println("Removing connection id", sockid)
-		delete(me.relayMap, sockid)
-	}
-}
-
-func (me *RelayService) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	me.socketio.ServeHTTP(w, req)
 }
 
 func (me *Relay) Start() {
@@ -112,10 +53,12 @@ func (me *Relay) Start() {
 	defer stopWatch.LogDuration()
 
 	me.nick = me.sock.Id()
-	_nickRegistry.Register(me.clientid, me.nick)
+	me.groupInfo.AddUser(_FROM_SERVER, me.clientid, make(map[string]interface{}))
+	me.nickRegistry.Register(me.clientid, me.nick)
 
 	me.sock.On("init-client", me.onInitClient)
 	me.sock.On("send-msg", me.onClientSend)
+	me.sock.On("send-raw-msg", me.onClientRawSend)
 	me.sock.On("set-nick", me.onClientSetNick)
 	me.sock.On("join-group", me.onClientJoin)
 	me.sock.On("leave-group", me.onClientLeave)
@@ -126,12 +69,14 @@ func (me *Relay) Stop() {
 	stopWatch := StartStopWatch("Stop:" + me.clientid)
 	defer stopWatch.LogDuration()
 
-	if !_nickRegistry.Unregister(me.clientid) {
+	me.groupInfo.RemoveUser(_FROM_SERVER, me.clientid)
+	if !me.nickRegistry.Unregister(me.clientid) {
 		log.Println("Unable to unregister client id", me.clientid)
 	}
 
 	for _, grp := range me.sock.Rooms() {
 		me.groupInfo.RemoveUser(grp, me.clientid)
+		log.Println("Removing user", me.clientid, "from", grp)
 
 		me.sock.Leave(grp)
 		me.sock.BroadcastTo(grp, "group-leave", &RecipientMessage{
@@ -145,12 +90,12 @@ func (me *Relay) Stop() {
 
 func (me *Relay) onInitClient(m *HandshakeMessage) {
 	log.Println("On client initialization", m)
-	stopWatch := StartStopWatch("onInitClient:" + me.sock.Id())
+	stopWatch := StartStopWatch("onInitClient:" + me.clientid)
 	defer stopWatch.LogDuration()
 
 	var err error
 	var nickMsg *NickMessage = &NickMessage{OldNick: me.nick}
-	if me.nick, err = _nickRegistry.SetNick(me.clientid, m.Nick); err != nil {
+	if me.nick, err = me.nickRegistry.SetNick(me.clientid, m.Nick); err != nil {
 		nickMsg.NewNick = me.nick
 		defer me.sock.Emit("nick-set", &ErrorMessage{
 			Error: err.Error(),
@@ -172,13 +117,18 @@ func (me *Relay) onInitClient(m *HandshakeMessage) {
 
 func (me *Relay) onClientSetNick(msg string) {
 	log.Println("command.set-nick ---->", msg)
+
 	stopWatch := StartStopWatch("onClientSetNick")
 	defer stopWatch.LogDuration()
 
 	var err error
 	oldnick := me.nick
-	if me.nick, err = _nickRegistry.SetNick(me.clientid, msg); err != nil {
-		me.sock.Emit("new-msg", err.Error())
+	if me.nick, err = me.nickRegistry.SetNick(me.clientid, msg); err != nil {
+		me.sock.Emit("new-msg", &ChatMessage{
+			From:    _FROM_SERVER,
+			To:      _FROM_SERVER,
+			Message: err.Error(),
+		})
 	}
 
 	if oldnick == me.nick {
@@ -202,16 +152,23 @@ func (me *Relay) onClientJoin(groupName string) {
 	stopWatch := StartStopWatch("onClientJoin")
 	defer stopWatch.LogDuration()
 
-	me.groupInfo.AddUser(groupName, me.clientid, true)
+	me.groupInfo.AddUser(groupName, me.clientid, make(map[string]interface{}))
 
 	m := &RecipientMessage{
 		To:   groupName,
 		From: me.nick,
 	}
 
-	me.sock.BroadcastTo(groupName, "group-join", m)
-	me.sock.Emit("group-join", m)
+	go func() {
+		broadcastTime := StartStopWatch("JoinBroadcastTime")
+		defer broadcastTime.LogDuration()
+
+		time.Sleep(500 * time.Millisecond)
+		me.sock.BroadcastTo(groupName, "group-join", m)
+	}()
+
 	me.sock.Join(groupName)
+	me.sock.Emit("group-join", m)
 }
 
 func (me *Relay) onClientLeave(groupName string) {
@@ -228,6 +185,25 @@ func (me *Relay) onClientLeave(groupName string) {
 	}
 	me.sock.BroadcastTo(groupName, "group-leave", msg)
 	me.sock.Emit("group-leave", msg)
+}
+
+func (me *Relay) onClientRawSend(to string, msg interface{}) {
+	log.Println("command.send-raw --->", to, msg)
+	relay := me.clientDirectory.GetRelay(to)
+	if relay == nil {
+		if id, ok := me.nickRegistry.IdOf(to); ok {
+			to = id
+			relay = me.clientDirectory.GetRelay(id)
+		}
+	}
+
+	if relay == nil {
+		log.Println("Unable to find relay for", to, "ignoring...")
+		return
+	}
+
+	log.Println("Sending message to", to, "from", me.clientid)
+	relay.sock.Emit("new-raw-msg", me.clientid, msg)
 }
 
 func (me *Relay) onClientSend(msg *ChatMessage) {

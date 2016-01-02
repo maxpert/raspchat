@@ -34,7 +34,8 @@ func NewNickRegistry() *NickRegistry {
 }
 
 func (r *NickRegistry) SetNick(id, nick string) (string, error) {
-	failDefault, ok := r.registry[id]
+	log.Println("@@@@@@@ Setting Nick of", id, "to", nick)
+	failDefault, ok := r.NickOf(id)
 
 	if !ok {
 		r.Register(id, id)
@@ -96,4 +97,11 @@ func (r *NickRegistry) NickOf(id string) (string, bool) {
 	defer r.Unlock()
 	nick, ok := r.registry[id]
 	return nick, ok
+}
+
+func (r *NickRegistry) IdOf(nick string) (string, bool) {
+	r.Lock()
+	defer r.Unlock()
+	id, ok := r.uniqueAliasMap[nick]
+	return id, ok
 }

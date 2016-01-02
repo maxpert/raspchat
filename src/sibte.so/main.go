@@ -45,15 +45,19 @@ func clearCache(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Fprint(w, "Done")
 }
 
+var _groupInfoManager rica.GroupInfoManager = rica.NewInMemoryGroupInfo()
+var _nickRegistry *rica.NickRegistry = rica.NewNickRegistry()
+
 func _installSocketMux(mux *http.ServeMux) (err error) {
 	err = nil
 	server, err := socketio.NewServer(nil)
+
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	mux.Handle("/socket.io/", rica.NewRelayService(server))
+	mux.Handle("/socket.io/", rica.NewRelayService(server, _groupInfoManager, _nickRegistry))
 	return
 }
 

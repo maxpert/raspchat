@@ -46,7 +46,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       this.$dispatch("chat-message-added", this.message);
       this.$watch("message.msg", function () {
         this.$dispatch("chat-message-added", this.message);
-      }.$glue(this));
+      }.bind(this));
     }
   }));
 
@@ -211,11 +211,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     },
 
     ready: function (argument) {
-      this.transport = new core.Transport();
+      this.transport = core.GetTransport("chat");
       this.transport.events.on('connected', this.onConnected);
       this.transport.events.on('disconnected', this.onDisconnected);
       this.transport.events.on('handshake', this.onHandshaked);
 
+      this.transport.events.on("raw-message", this.onRawMessage);
       this.transport.events.on('message', this.onMessage);
       this.transport.events.on('joined', this.onJoin);
       this.transport.events.on('leave', this.onLeave);
@@ -252,6 +253,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
 
         this.transport.send(this.currentGroup.name, msg);
+      },
+
+      onRawMessage: function (from, msg) {
+        if (msg.type != "Negotiate") {
+          return;
+        }
+
+        this._appendMetaMessage(this.currentGroup.name, "DCC to "+from);
+        var p = new core.PeerConnectionNegotiator(this.transport);
+        p.events.on("close", function () {
+          p.close();
+        });
+        p.connectTo(from);
       },
 
       switchGroup: function (grp) {
@@ -348,6 +362,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
 
         groupLog.push({isMeta: true, msg: msg});
+        if (groupLog.length > 100) {
+          groupLog.splice(0, 100 - groupLog.length);
+        }
       },
 
       _getOrCreateGroupLog: function (g) {
