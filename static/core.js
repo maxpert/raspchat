@@ -232,10 +232,10 @@ window.core = (function(win, doc) {
         if (!this.handshakeCompleted) {
           this.handshakeCompleted = true;
           this.events.fire('handshake', SERVER_ALIAS);
-          this.events.fire('group-message', {
+          this.events.fire('message', {
             from: SERVER_ALIAS,
             to: SERVER_ALIAS,
-            msg: msg.msg,
+            msg: "```"+msg.msg+"```",
           });
           this.setNick(this.nick);
         }
@@ -273,6 +273,10 @@ window.core = (function(win, doc) {
 
           case 'new-raw-msg':
             this._on_rawmessage(msg.to, msg.pack_msg);
+            break;
+
+          case 'ping':
+            this.sock.send(JSON.stringify({'@': 'pong', t: msg.t}));
             break;
 
           default:

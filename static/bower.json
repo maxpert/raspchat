@@ -1,0 +1,18 @@
+{
+  "name": "gorica",
+  "description": "Basic chat server",
+  "main": "index.js",
+  "authors": [
+    "Zohaib Sibte Hassan"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/maxpert/raspchat",
+  "moduleType": [],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

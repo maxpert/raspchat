@@ -20,7 +20,7 @@ body {
 .color-background-900 { background: #004D40; }
 
 .code-font {
-  font-family: "Courier New",Courier,"Lucida Sans Typewriter","Lucida Typewriter",monospace;
+  font-family: 'Roboto Mono', "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
 }
 
 .cf {

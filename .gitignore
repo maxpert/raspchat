@@ -24,3 +24,8 @@ _testmain.go
 *.prof
 
 bin/
+node_modules/
+static/bower_components/
+static/*.min.js
+src/github.com/
+src/gopkg.in/

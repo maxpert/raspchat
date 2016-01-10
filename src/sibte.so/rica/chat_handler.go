@@ -10,6 +10,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 import (
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"reflect"
@@ -23,6 +24,7 @@ import (
 const (
 	_FROM_SERVER = "SERVER"
 
+	_PING_COMMAND         = "ping"
 	_JOIN_GROUP_COMMAND   = "join-group"
 	_LEAVE_GROUP_COMMAND  = "leave-group"
 	_SET_NICK_COMMAND     = "set-nick"
@@ -30,6 +32,7 @@ const (
 	_LIST_MEMBERS_COMMAND = "list-group"
 	_SEND_RAW_MSG_COMMAND = "send-raw-msg"
 
+	_PING_REPLY            = "pong"
 	_JOIN_GROUP_REPLY      = "group-join"
 	_LEAVE_GROUP_REPLY     = "group-leave"
 	_SET_NICK_REPLY        = "nick-set"
@@ -176,9 +179,13 @@ func (h *ChatHandler) recoverFromErrors() {
 }
 
 func (h *ChatHandler) sendWelcome() {
+	msg := "# Welcome to server"
+	if f, e := ioutil.ReadFile("/proc/cpuinfo"); e == nil {
+		msg = msg + "\n" + string(f)
+	}
 	welcomeMsg := &StringMessage{
 		BaseMessage: BaseMessage{_FROM_SERVER},
-		Message:     "Welcome",
+		Message:     msg,
 	}
 	h.writeSocket(welcomeMsg)
 
@@ -394,6 +401,11 @@ func (h *ChatHandler) Loop() {
 selectLoop:
 	for {
 		select {
+		case <-time.After(5 * time.Second):
+			h.incoming <- &PingMessage{
+				BaseMessage: BaseMessage{_PING_COMMAND},
+				Type:        int(time.Now().Unix()),
+			}
 		case m := <-h.incoming:
 			h.handleInternalMessage(m)
 		case m := <-sockChannel:

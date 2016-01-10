@@ -4,6 +4,11 @@ type BaseMessage struct {
 	EventName string `json:"@"`
 }
 
+type PingMessage struct {
+	BaseMessage
+	Type int `json:"t"`
+}
+
 type HandshakeMessage struct {
 	BaseMessage
 	Nick  string   `json:"nick"`

@@ -61,7 +61,7 @@ func (me *atomic_store) set(key, value string) bool {
 	c := me.store.GetCollection("rightgif")
 
 	err := c.Set([]byte(key), []byte(value))
-	return err == nil
+	return err == nil && me.store.Flush() == nil
 }
 
 func InitGifCache(dbPath string) {

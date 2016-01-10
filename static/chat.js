@@ -10,22 +10,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     linkify: true,
   });
 
-  var showNotification = function (message) {
-    if (!("Notification" in window)) {
-      return false;
-    } else if (Notification.permission === "granted") {
-      var notification = new Notification(message);
-    } else if (Notification.permission !== 'denied') {
-      Notification.requestPermission(function (permission) {
-        if (permission === "granted") {
-          var notification = new Notification(message);
-        }
-      });
-    }
-
-    return true;
-  };
-
   vue.filter('markdown', function (value) {
     return md.render(value);
   });
@@ -207,6 +191,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       nick: "",
       currentGroup: {name: '', messages: []},
       isConnected: false,
+      isConnecting: false,
       isReady: false,
     },
 
