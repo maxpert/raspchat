@@ -60,8 +60,6 @@ func _installSocketMux(mux *http.ServeMux) (err error) {
 }
 
 func _installHttpRoutes(mux *http.ServeMux) (err error) {
-	rica.InitGifCache()
-
 	err = nil
 	router := httprouter.New()
 	router.GET("/", index)
@@ -73,15 +71,18 @@ func _installHttpRoutes(mux *http.ServeMux) (err error) {
 	return
 }
 
-func parseArgs() (addr string, logFile string) {
+func parseArgs() (addr, logFile, dbPath string) {
 	flag.StringVar(&addr, "bind", ":8080", "Bind address for the service")
 	flag.StringVar(&logFile, "log", "", "Log file to write log output to")
+	flag.StringVar(&dbPath, "dbPath", "/tmp", "Path to database directory")
 	flag.Parse()
 	return
 }
 
 func main() {
-	bindAddr, logFile := parseArgs()
+	bindAddr, logFile, dbPath := parseArgs()
+
+	rica.InitGifCache(dbPath)
 
 	if logFile != "" {
 		log.SetOutput(&lumberjack.Logger{

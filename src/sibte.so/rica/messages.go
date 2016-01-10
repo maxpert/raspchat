@@ -15,6 +15,7 @@ type RecipientMessage struct {
 	To   string `json:"to"`
 	From string `json:"from"`
 }
+
 type ChatMessage struct {
 	BaseMessage
 	To      string `json:"to"`

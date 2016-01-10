@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 	"sync"
 
@@ -63,8 +64,8 @@ func (me *atomic_store) set(key, value string) bool {
 	return err == nil
 }
 
-func InitGifCache() {
-	f, _ := os.OpenFile("/tmp/rightgif.gkvlite", os.O_RDWR|os.O_CREATE, 0666)
+func InitGifCache(dbPath string) {
+	f, _ := os.OpenFile(path.Join(dbPath, "gif.cache"), os.O_RDWR|os.O_CREATE, 0666)
 	s, err := gkvlite.NewStore(f)
 
 	if err != nil {

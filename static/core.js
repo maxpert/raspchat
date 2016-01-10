@@ -31,6 +31,7 @@ window.core = (function(win, doc) {
   var gifRegex = /^\/gif\s+(.+)$/i;
   var joinRegex = /^\/join\s+([A-Za-z0-9]+)$/i;
   var leaveRegex = /^\/leave\s+([A-Za-z0-9]+)$/i;
+  var listRegex = /^\/list\s+([A-Za-z0-9]*)$/i;
   var switchRegex = /^\/switch\s+([A-Za-z0-9]+)$/i;
 
   var giffer = {
@@ -59,6 +60,12 @@ window.core = (function(win, doc) {
     }
 
     if (match[1].toLowerCase() == 'help') {
+      return true;
+    }
+
+    match = cmd.match(listRegex);
+    if (match) {
+      callback("list-group", match[1]);
       return true;
     }
 
@@ -143,22 +150,18 @@ window.core = (function(win, doc) {
     $glueFunctions(this);
     this.events = new EventEmitter();
     this.sock = null;
-    this.id = null;
     this.handshakeCompleted = false;
-    this.url = url || ':///';
+    this.url = url || ('ws://'+win.location.host+'/chat');
   };
 
   Transport.prototype = {
       connect: function (nick) {
-        this._requestedNick = nick;
+        this.nick = nick;
 
-        this.sock = io(this.url, {
-          transports : ["websocket"],
-        });
-        this.sock.on('connect', this._on_connect);
-        this.sock.on('disconnect', this._on_disconnect);
-        this.sock.on('client-init', this._on_client_init);
-        this.events.fire('connecting');
+        this.sock = new WebSocket(this.url);
+        this.sock.onopen = this._on_connect;
+        this.sock.onclose = this._on_disconnect;
+        this.sock.onmessage = this._on_data;
       },
 
       setNick: function (nick) {
@@ -166,7 +169,7 @@ window.core = (function(win, doc) {
       },
 
       sendRaw: function (to, msg) {
-        this.sock.emit("send-raw-msg", to, msg);
+        this.sock.send(JSON.stringify({"@": "send-raw-msg", to: to, msg: msg}));
       },
 
       send: function (to, msg) {
@@ -177,53 +180,83 @@ window.core = (function(win, doc) {
             return;
           }
 
-          var m = value;
-          if (cmd == "send-msg") {
-            m = {to: to, msg: m};
-          }
-          me.sock.emit(cmd, m);
+          var m = {'@': cmd, to: to, msg: value};
+          me.sock.send(JSON.stringify(m));
         });
 
         if (!processed) {
-          this.sock.emit("send-msg", {to: to, msg: msg});
+          this.sock.send(JSON.stringify({"@": "send-msg", to: to, msg: msg}));
         }
       },
 
-      _on_connect: function () {
-        this.id = this.sock.id;
-
-        this.sock.emit('init-client', {nick: this._requestedNick});
+      _on_connect: function (e) {
         this.events.fire('connected');
       },
 
       _on_disconnect: function () {
-        this._requestedNick = this.id;
+        this.handshakeCompleted = false;
         this.events.fire('disconnected');
       },
 
-      _on_client_init: function (err) {
-        if (err) {
-          console.log("Client handshake error", err)
-          return;
+      _on_data: function (e) {
+        var data = {};
+        try {
+          data = JSON.parse(e.data);
+        }catch(er){
+          console.error("Error decoding", e.data, er);
         }
 
-        this.sock.removeAllListeners('new-raw-msg');
-        this.sock.removeAllListeners('new-msg');
-        this.sock.removeAllListeners('group-message');
-        this.sock.removeAllListeners('group-join');
-        this.sock.removeAllListeners('group-leave');
-        this.sock.removeAllListeners('nick-set');
-        this.sock.removeAllListeners('member-nick-changed');
+        if (data['@']) {
+          this._handleMessage(data);
+        }
+      },
 
-        this.sock.on('new-raw-msg', this._on_rawmessage);
-        this.sock.on('new-msg', this._on_message);
-        this.sock.on('group-message', this._on_message);
-        this.sock.on('group-join', this._on_group_joined);
-        this.sock.on('group-leave', this._on_group_left);
-        this.sock.on('nick-set', this._on_nick_changed);
-        this.sock.on('member-nick-set', this._on_member_nick_changed);
+      _completeHandShake: function (msg) {
+        if (!this.handshakeCompleted) {
+          this.handshakeCompleted = true;
+          this.events.fire('handshake', SERVER_ALIAS);
+          this.events.fire('group-message', {
+            from: SERVER_ALIAS,
+            to: SERVER_ALIAS,
+            msg: msg.msg,
+          });
+          this.setNick(this.nick);
+        }
+      },
 
-        this.events.fire('handshake', SERVER_ALIAS);
+      _handleMessage: function (msg) {
+        switch (msg['@']) {
+          case SERVER_ALIAS:
+            this._completeHandShake(msg);
+            break;
+
+          case 'group-join':
+            this._on_group_joined(msg);
+            break;
+
+          case 'group-leave':
+            this._on_group_left(msg);
+            break;
+
+          case 'group-message':
+            this._on_message(msg);
+            break;
+
+          case 'nick-set':
+            this._on_nick_changed(msg);
+            break;
+
+          case 'member-nick-set':
+            this._on_member_nick_changed(msg.to, msg.pack_msg);
+            break;
+
+          case 'new-raw-msg':
+            this._on_rawmessage(msg.to, msg.pack_msg);
+            break;
+
+          default:
+            break;
+        }
       },
 
       _on_rawmessage: function (from, msg) {
@@ -256,12 +289,12 @@ window.core = (function(win, doc) {
       },
 
       _on_nick_changed: function (msg) {
-        this.id = msg.newNick;
+        this.nick = msg.newNick;
         this.events.fire('nick-changed', msg.newNick, msg.oldNick);
       },
 
       _on_member_nick_changed: function (group, nickInfo) {
-        this.events.fire('new-msg', {
+        this.events.fire('message', {
           to: group,
           msg: nickInfo.oldNick + " changed nick to " + nickInfo.newNick,
           from: nickInfo.newNick,

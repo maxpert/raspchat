@@ -27,6 +27,7 @@ const (
 	_LEAVE_GROUP_COMMAND  = "leave-group"
 	_SET_NICK_COMMAND     = "set-nick"
 	_SEND_MSG_COMMAND     = "send-msg"
+	_LIST_MEMBERS_COMMAND = "list-group"
 	_SEND_RAW_MSG_COMMAND = "send-raw-msg"
 
 	_JOIN_GROUP_REPLY      = "group-join"
@@ -35,6 +36,7 @@ const (
 	_MEMBER_NICK_SET_REPLY = "member-nick-set"
 	_NEW_MSG_REPLY         = "new-msg"
 	_NEW_RAW_MSG_REPLY     = "new-raw-msg"
+	_LIST_MEMBERS_REPLY    = "group-list"
 	_GROUP_MSG_REPLY       = "group-message"
 	_ERROR_MSG_REPLY       = "error-msg"
 
@@ -64,6 +66,7 @@ func initChatHandlerTypes() {
 		pEventToStructMap[_JOIN_GROUP_COMMAND] = reflect.TypeOf(StringMessage{})
 		pEventToStructMap[_LEAVE_GROUP_COMMAND] = reflect.TypeOf(StringMessage{})
 		pEventToStructMap[_SET_NICK_COMMAND] = reflect.TypeOf(StringMessage{})
+		pEventToStructMap[_LIST_MEMBERS_COMMAND] = reflect.TypeOf(StringMessage{})
 		pEventToStructMap[_NEW_RAW_MSG_REPLY] = reflect.TypeOf(RecipientContentMessage{})
 	}
 }
@@ -76,7 +79,8 @@ func NewChatHandler(nickReg *NickRegistry, groupInfoMan GroupInfoManager, connec
 		int(rand.Int31n(1000)),
 		int(rand.Int31n(1000)),
 	})
-	return &ChatHandler{
+
+	ret := &ChatHandler{
 		id:                  uid,
 		nick:                uid,
 		nickRegistry:        nickReg,
@@ -87,6 +91,10 @@ func NewChatHandler(nickReg *NickRegistry, groupInfoMan GroupInfoManager, connec
 		incoming:            make(chan interface{}, 32),
 		groups:              make(map[string]interface{}, 0),
 	}
+
+	ret.groups[_FROM_SERVER] = struct{}{}
+	ret.groupInfoManager.AddUser(_FROM_SERVER, ret.id, ret.incoming)
+	return ret
 }
 
 func pDecodeMessage(msg []byte) (ret interface{}, rErr error) {
@@ -213,6 +221,8 @@ func (h *ChatHandler) handleStringMessage(msg *StringMessage) {
 		h.onLeaveGroup(msg)
 	case _SET_NICK_COMMAND:
 		h.onSetNick(msg)
+	case _LIST_MEMBERS_COMMAND:
+		h.onListMembers(msg)
 	}
 }
 
@@ -220,6 +230,7 @@ func (h *ChatHandler) onRecipientContentMessage(msg *RecipientContentMessage) {
 	switch msg.EventName {
 	case _SEND_RAW_MSG_COMMAND:
 		log.Println("On send raw message")
+		h.sendTo(_FROM_SERVER, msg.To, msg.Message)
 	}
 }
 
@@ -234,11 +245,42 @@ func (h *ChatHandler) onChatMessage(msg *ChatMessage) {
 	}
 }
 
+func (h *ChatHandler) onListMembers(msg *StringMessage) {
+	groupName := msg.Message
+	if groupName == "" {
+		groupName = _FROM_SERVER
+	}
+
+	membersIds := h.groupInfoManager.GetUsers(groupName)
+	members := make([]string, len(membersIds))
+	i := 0
+	for _, id := range membersIds {
+		var foundNick bool
+		members[i], foundNick = h.nickRegistry.NickOf(id)
+		if !foundNick {
+			members[i] = id
+		}
+		i++
+	}
+
+	h.incoming <- &RecipientContentMessage{
+		BaseMessage: BaseMessage{_LIST_MEMBERS_REPLY},
+		To:          groupName,
+		From:        _FROM_SERVER,
+		Message:     members,
+	}
+}
+
 func (h *ChatHandler) onJoinGroup(msg *StringMessage) {
 	timer := StartStopWatch("onJoinGroup")
 	defer timer.LogDuration()
 
 	h.Lock()
+	if _, ok := h.groups[msg.Message]; ok {
+		h.Unlock()
+		return
+	}
+
 	h.groups[msg.Message] = struct{}{}
 	h.Unlock()
 	h.groupInfoManager.AddUser(msg.Message, h.id, h.incoming)
@@ -275,6 +317,7 @@ func (h *ChatHandler) onSetNick(msg *StringMessage) {
 	new_nick, err := h.nickRegistry.SetNick(h.id, msg.Message)
 
 	if err == nil {
+		h.nick = new_nick
 		nickMsg := &NickMessage{
 			BaseMessage: BaseMessage{_SET_NICK_REPLY},
 			OldNick:     old_nick,
@@ -315,23 +358,28 @@ func (h *ChatHandler) publish(groupName string, msg interface{}) {
 
 	groupMembers := h.groupInfoManager.GetUsers(groupName)
 	log.Println("Publish for member count:", len(groupMembers))
-	for _, name := range groupMembers {
-		tmp := h.groupInfoManager.GetUserInfoObject(groupName, name)
-		if tmp == nil {
-			log.Println("Skipping publish to", name)
-			continue
-		}
+	for _, id := range groupMembers {
+		h.sendTo(groupName, id, msg)
+	}
+}
 
-		if ch, ok := tmp.(chan interface{}); ok {
-			select {
-			case ch <- msg:
-				log.Println("Published message to", name)
-			case <-time.After(5 * time.Millisecond):
-				log.Println("Publishing on", name, "timed out")
-			}
-		} else {
-			log.Println("Invalid channel type skipping publish to", name)
+func (h *ChatHandler) sendTo(groupName, name string, msg interface{}) {
+	log.Println("sendTo", groupName, name)
+	tmp := h.groupInfoManager.GetUserInfoObject(groupName, name)
+	if tmp == nil {
+		log.Println("Skipping publish to", name)
+		return
+	}
+
+	if ch, ok := tmp.(chan interface{}); ok {
+		select {
+		case ch <- msg:
+			log.Println("Published message to", name)
+		case <-time.After(5 * time.Millisecond):
+			log.Println("Publishing on", name, "timed out")
 		}
+	} else {
+		log.Println("Invalid channel type skipping publish to", name)
 	}
 }
 
