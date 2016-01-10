@@ -71,16 +71,17 @@ func _installHttpRoutes(mux *http.ServeMux) (err error) {
 	return
 }
 
-func parseArgs() (addr, logFile, dbPath string) {
+func parseArgs() (addr, logFile, dbPath, mode string) {
 	flag.StringVar(&addr, "bind", ":8080", "Bind address for the service")
 	flag.StringVar(&logFile, "log", "", "Log file to write log output to")
 	flag.StringVar(&dbPath, "dbPath", "/tmp", "Path to database directory")
+	flag.StringVar(&mode, "mode", "dev", "Execution mode dev/prod (default: dev)")
 	flag.Parse()
 	return
 }
 
 func main() {
-	bindAddr, logFile, dbPath := parseArgs()
+	bindAddr, logFile, dbPath, mode := parseArgs()
 
 	rica.InitGifCache(dbPath)
 
@@ -99,11 +100,15 @@ func main() {
 	_installHttpRoutes(mux)
 
 	endless.DefaultHammerTime = 10 * time.Second
-	server := &http.Server{
-		Addr:    bindAddr,
-		Handler: mux,
+	if mode == "dev" {
+		server := &http.Server{
+			Addr:    bindAddr,
+			Handler: mux,
+		}
+		// server := endless.NewServer(bindAddr, mux)
+		log.Println("Starting server...", bindAddr)
+		log.Panic(server.ListenAndServe())
+	} else {
+		endless.ListenAndServe(bindAddr, mux)
 	}
-	// server := endless.NewServer(bindAddr, mux)
-	log.Println("Starting server...", bindAddr)
-	log.Panic(server.ListenAndServe())
 }

@@ -118,6 +118,10 @@ body {
   margin: 4px 0;
 }
 
+.markdown-container li {
+  margin-left: 20px;
+}
+
 .fromContainer {
   padding: 0 0 7px 0;
 }

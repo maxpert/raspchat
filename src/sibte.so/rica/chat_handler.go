@@ -272,15 +272,10 @@ func (h *ChatHandler) onListMembers(msg *StringMessage) {
 }
 
 func (h *ChatHandler) onJoinGroup(msg *StringMessage) {
-	timer := StartStopWatch("onJoinGroup")
+	timer := StartStopWatch("onJoinGroup:" + msg.Message)
 	defer timer.LogDuration()
 
 	h.Lock()
-	if _, ok := h.groups[msg.Message]; ok {
-		h.Unlock()
-		return
-	}
-
 	h.groups[msg.Message] = struct{}{}
 	h.Unlock()
 	h.groupInfoManager.AddUser(msg.Message, h.id, h.incoming)
@@ -293,19 +288,19 @@ func (h *ChatHandler) onJoinGroup(msg *StringMessage) {
 }
 
 func (h *ChatHandler) onLeaveGroup(msg *StringMessage) {
-	timer := StartStopWatch("onLeaveGroup")
+	timer := StartStopWatch("onLeaveGroup:" + msg.Message)
 	defer timer.LogDuration()
-
-	h.Lock()
-	delete(h.groups, msg.Message)
-	h.Unlock()
-	h.groupInfoManager.RemoveUser(msg.Message, h.id)
 
 	h.publish(msg.Message, &RecipientMessage{
 		BaseMessage: BaseMessage{_LEAVE_GROUP_REPLY},
 		To:          msg.Message,
 		From:        h.nick,
 	})
+
+	h.groupInfoManager.RemoveUser(msg.Message, h.id)
+	h.Lock()
+	delete(h.groups, msg.Message)
+	h.Unlock()
 }
 
 func (h *ChatHandler) onSetNick(msg *StringMessage) {

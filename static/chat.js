@@ -222,6 +222,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       this.transport.events.on('leave', this.onLeave);
       this.transport.events.on('switch', this.onSwitch);
       this.transport.events.on('nick-changed', this.changeNick);
+      this.transport.events.on('members-list', this.onMembersList);
 
       this.$on("switch", this.onSwitch);
       this.$on("leave", function (group) {
@@ -246,10 +247,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             this.defaultGroup,
             "You can only send a command here ...\n"+
             "Valid commands are: \n"+
+            "/list for list of members in a group\n"+
             "/join <group_name> to join a group (case-sensitive)\n"+
             "/nick <new_name> for changing your nick (case-sensitive)\n"+
             "/switch <group_name> to switch to a joined group (case-sensitive)\n"
           );
+          return;
+        }
+
+        if (msg.match(/^\/list$/i)) {
+          this.transport.send(this.currentGroup.name, "/list "+this.currentGroup.name);
           return;
         }
 
@@ -271,6 +278,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
       switchGroup: function (grp) {
         this.onSwitch(grp);
+      },
+
+      onMembersList: function (group, list) {
+        this._appendMessage({
+          to: group,
+          from: this.defaultGroup,
+          msg: "Group members for **"+group+"**\n\n - " + list.join("\n - "),
+          delivery_time: new Date()
+        });
       },
 
       onHandshaked: function (info_channel) {

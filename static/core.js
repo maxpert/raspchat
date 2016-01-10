@@ -31,7 +31,7 @@ window.core = (function(win, doc) {
   var gifRegex = /^\/gif\s+(.+)$/i;
   var joinRegex = /^\/join\s+([A-Za-z0-9]+)$/i;
   var leaveRegex = /^\/leave\s+([A-Za-z0-9]+)$/i;
-  var listRegex = /^\/list\s+([A-Za-z0-9]*)$/i;
+  var listRegex = /^\/list\s+([A-Za-z0-9]+)$/i;
   var switchRegex = /^\/switch\s+([A-Za-z0-9]+)$/i;
 
   var giffer = {
@@ -65,7 +65,7 @@ window.core = (function(win, doc) {
 
     match = cmd.match(listRegex);
     if (match) {
-      callback("list-group", match[1]);
+      callback("list-group", (match[1] && match[1].trim()) || SERVER_ALIAS);
       return true;
     }
 
@@ -267,6 +267,10 @@ window.core = (function(win, doc) {
             this._on_member_nick_changed(msg.to, msg.pack_msg);
             break;
 
+          case 'group-list':
+            this._on_group_members_list(msg.to, msg.pack_msg);
+            break;
+
           case 'new-raw-msg':
             this._on_rawmessage(msg.to, msg.pack_msg);
             break;
@@ -293,6 +297,10 @@ window.core = (function(win, doc) {
           msg: msg.from + " joined " + msg.to
         });
         this.events.fire('joined', msg);
+      },
+
+      _on_group_members_list: function (to, list) {
+        this.events.fire('members-list', to, list);
       },
 
       _on_group_left: function (recpInfo) {
