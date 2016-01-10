@@ -235,6 +235,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     methods: {
       connect: function () {
         this.$set("isConnecting", true);
+        this.$set("isConnected", true);
         this.transport.connect(this.nick);
       },
 

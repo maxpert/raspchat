@@ -157,11 +157,7 @@ window.core = (function(win, doc) {
   Transport.prototype = {
       connect: function (nick) {
         this.nick = nick;
-
-        this.sock = new WebSocket(this.url);
-        this.sock.onopen = this._on_connect;
-        this.sock.onclose = this._on_disconnect;
-        this.sock.onmessage = this._on_data;
+        this._create_ws_connection();
       },
 
       setNick: function (nick) {
@@ -189,6 +185,25 @@ window.core = (function(win, doc) {
         }
       },
 
+      _create_ws_connection: function () {
+        try{
+          if (this.sock && this.sock.close) {
+            this.sock.onclose = null;
+            this.sock.onopen = null;
+            this.sock.onmessage = null;
+            this.sock.close();
+          }
+        }catch(e){
+          console.error(e);
+        }
+
+        this.sock = new WebSocket(this.url);
+        this.sock.onopen = this._on_connect;
+        this.sock.onclose = this._on_disconnect;
+        this.sock.onmessage = this._on_data;
+        this.events.fire('connecting');
+      },
+
       _on_connect: function (e) {
         this.events.fire('connected');
       },
@@ -196,6 +211,8 @@ window.core = (function(win, doc) {
       _on_disconnect: function () {
         this.handshakeCompleted = false;
         this.events.fire('disconnected');
+        var me = this;
+        win.setTimeout(function (){ me._create_ws_connection(); }, 1000);
       },
 
       _on_data: function (e) {
