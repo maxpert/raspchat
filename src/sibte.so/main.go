@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/fvbock/endless"
-	"github.com/googollee/go-socket.io"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/natefinch/lumberjack.v2"
 
@@ -50,14 +49,13 @@ var _nickRegistry *rica.NickRegistry = rica.NewNickRegistry()
 
 func _installSocketMux(mux *http.ServeMux) (err error) {
 	err = nil
-	server, err := socketio.NewServer(nil)
 
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	mux.Handle("/socket.io/", rica.NewRelayService(server, _groupInfoManager, _nickRegistry))
+	mux.Handle("/chat", rica.NewChatService())
 	return
 }
 
@@ -100,7 +98,11 @@ func main() {
 	_installHttpRoutes(mux)
 
 	endless.DefaultHammerTime = 10 * time.Second
-	server := endless.NewServer(bindAddr, mux)
+	server := &http.Server{
+		Addr:    bindAddr,
+		Handler: mux,
+	}
+	// server := endless.NewServer(bindAddr, mux)
 	log.Println("Starting server...", bindAddr)
 	log.Panic(server.ListenAndServe())
 }
