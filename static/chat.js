@@ -11,7 +11,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   });
 
   vue.filter('markdown', function (value) {
-    return md.render(value) + '<div class="message-end" style="height: 1px;"> </div>';
+    return md.render(value);
   });
 
   vue.filter('better_date', function (value) {
@@ -44,10 +44,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     props: ['message'],
     template: '#chat-message',
     ready: function () {
+      this.hookImageLoads();
       this.$dispatch("chat-message-added", this.message);
+      
       this.$watch("message.msg", function () {
+        this.hookImageLoads();
         this.$dispatch("chat-message-added", this.message);
       }.bind(this));
+    },
+    methods: {
+      imageLoaded: function () {
+        var me = this;
+        me.$dispatch('chat-image-loaded');
+      },
+      hookImageLoads: function () {
+        var imgs = this.$el.parentNode.querySelectorAll("img");
+        for(var i in imgs){
+          var img = imgs[i];
+          if (img.addEventListener){
+            img.removeEventListener("load", this.imageLoaded);
+            img.addEventListener("load", this.imageLoaded, false);
+          }
+        }
+      }
     }
   }));
 
@@ -64,14 +83,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           event.stopPropagation();
         }
       }, false);
+
+      this.$on('chat-image-loaded', this.scrollToBottom);
     },
     methods: {
       scrollToBottom: function () {
-        var els = this.$el.querySelectorAll(".message-end");
-        var tElm = els && els[els.length - 1];
-        window.setTimeout(function () {
-          tElm && tElm.scrollIntoView();
-        }, 500);
+        this.cont = this.cont || this.$el.querySelector(".chat-messages");
+        this.cont.scrollTop = this.cont.scrollHeight;
       },
     },
   }));
