@@ -13,9 +13,24 @@
 <body>
   <div id="root" style="width: 100%; height: 100%; margin: 0; padding: 0; position: relative;">
     <template v-if="isConnected">
-      <slot name="logsHolder"><chat-log :messages="currentGroup.messages"/></slot>
-      <slot name="composeHolder"><chat-compose @send-message="sendMessage"/></slot>
-      <slot name="appBar"><app-bar :user-id="nick"/></slot>
+      <slot name="windowBox">
+        <div class="chrome-body">
+          <div class="chrome-body-container" :class="{'show-appbar': showAppBar}">
+            <slot name="appBar"><app-bar :show="showAppBar"/></slot>
+
+            <slot name="chatBox">
+              <div class="chat-box">
+                <slot><chat-log :messages="currentGroup.messages"/></slot>
+                <slot><chat-compose @send-message="sendMessage"/></slot>
+              </div>
+            </slot>
+
+          </div>
+        </div>
+
+        <slot name="chromeBar"><chrome-bar :user-id="nick" :title="currentGroup.name" /></slot>
+      </slot>
+
       <slot name="loadingBar">
         <div class="loading-overlay" v-show="isConnecting">
           <div class="container-text">
@@ -44,33 +59,21 @@
   </template>
 
   <template id="app-bar">
-    <div class="app-bar color-background-900 code-font">
+    <div class="app-bar color-background-500 code-font">
       <div class="app-bar-container">
 
-        <div>Settings</div>
+        <div style="margin: 5px;">Groups</div>
+        <hr style="margin: 5px 0;"/>
+        <div class="list-container">
+          <groups-list />
+        </div>
+
+        <div style="margin: 5px;">Settings</div>
         <hr style="margin: 5px 0;"/>
         <div class="additional-buttons">
           <sound-notification-button default-enabled="{{true}}" :ignore-for="userId"/>
         </div>
 
-        <div>You are</div>
-        <hr style="margin: 5px 0;"/>
-        <table style="width: 100%; padding: 10px 0 10px 5px;">
-          <tr>
-            <td style="width: 12px;">
-              <img :src="userId | avatar_url" class="avatar" />
-            </td>
-            <td aling="left" style="font-size: 16px; overflow: hidden;">
-              {{userId}}
-            </td>
-          </tr>
-        </table>
-
-        <div>Groups</div>
-        <hr style="margin: 5px 0;"/>
-        <div class="list-container">
-          <groups-list />
-        </div>
       </div>
     </div>
   </template>
@@ -91,10 +94,31 @@
     </div>
   </template>
 
+  <template id="chrome-bar">
+    <div class="chrome-bar color-background-500 code-font">
+      <table class="chrome-bar-container">
+        <tr>
+          <td class="hamburger-container"><a href="#" class="hamburger" @click.stop.prevent="hamburgerClicked()"><i class="fa fa-bars"></i></a></td>
+          <td class="title-container">{{title}}</td>
+          <td class="avatar-container">
+              <img :src="userId | avatar_url" width="32" height="32"/>
+          </td>
+          <td>
+            <span class="avatar-name-container">{{userId}}</span>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </template>
+
   <template id="chat-messages">
-  <div class="chat-log">
-    <div class="chat-message" v-for="m in messages">
-      <chat-message :message="m" @chat-message-added="scrollToBottom"/>
+  <div class="chat-log-container">
+    <div class="chat-log">
+      <div class="chat-messages">
+      <div class="chat-message" v-for="m in messages">
+        <chat-message :message="m" @chat-message-added="scrollToBottom"/>
+      </div>
+      </div>
     </div>
   </div>
   </template>
@@ -104,7 +128,7 @@
     <pre class="meta-message">{{{message.msg}}}</pre>
   </div>
   <div class="incomingMessage code-font" v-else>
-    <table width="100%" border="0">
+    <table width="100%" border="0" style="max-width: 100%;">
       <tr>
         <td valign="top" align="left" style="width: 12px;">
           <img :src="message.from | avatar_url" class="avatar" alt="{{message.from}}" />

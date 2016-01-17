@@ -11,7 +11,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   });
 
   vue.filter('markdown', function (value) {
-    return md.render(value);
+    return md.render(value) + '<div class="message-end" style="height: 1px;"> </div>';
   });
 
   vue.filter('better_date', function (value) {
@@ -20,8 +20,25 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
   vue.filter('avatar_url', function (value) {
     // http://api.adorable.io/avatars/face/eyes6/nose7/face1/AA0000
-    return 'http://api.adorable.io/avatars/256/zmg-' + value + '.png';
+    // return 'http://api.adorable.io/avatars/256/zmg-' + value + '.png';
+    return 'https://robohash.org/raspchat-'+value;
   });
+
+  vue.component('chrome-bar', vue.extend({
+    props: ['title', 'userId'],
+    template: '#chrome-bar',
+    data: function () {
+      return {
+        hamburgerActive: false,
+      };
+    },
+    methods: {
+      hamburgerClicked: function () {
+        this.$set('hamburgerActive', !this.hamburgerActive);
+        this.$dispatch("hamburger-clicked", this.hamburgerActive);
+      }
+    }
+  }));
 
   vue.component('chat-message', vue.extend({
     props: ['message'],
@@ -50,7 +67,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     },
     methods: {
       scrollToBottom: function () {
-        this.$el.scrollTop = this.$el.scrollHeight;
+        var els = this.$el.querySelectorAll(".message-end");
+        var tElm = els && els[els.length - 1];
+        window.setTimeout(function () {
+          tElm && tElm.scrollIntoView();
+        }, 500);
       },
     },
   }));
@@ -72,6 +93,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
         this.$set('message', '');
         this.$dispatch('send-message', msg);
+        this.$el.querySelector(".msg").focus();
       },
 
       tabPressed: function () {
@@ -82,7 +104,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   }));
 
   vue.component('app-bar', vue.extend({
-    props: ['userId'],
     template: '#app-bar',
     data: function () {
     },
@@ -193,9 +214,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       isConnected: false,
       isConnecting: false,
       isReady: false,
+      showAppBar: false,
     },
 
-    ready: function (argument) {
+    ready: function () {
+      if (this.$el.offsetWidth > 600){
+        this.$set("showAppBar", true);
+      }
+
       this.transport = core.GetTransport("chat");
       this.transport.events.on('connected', this.onConnected);
       this.transport.events.on('disconnected', this.onDisconnected);
@@ -213,6 +239,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       this.$on("leave", function (group) {
         this.transport.send(group, "/leave "+group);
       });
+      this.$on("hamburger-clicked", function (v) {
+        this.$set("showAppBar", !this.showAppBar);
+      });
+
       this.$watch("currentGroup.name", function (newVal, oldVal) {
         this.$broadcast("group_switched", newVal);
       });
@@ -323,6 +353,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       },
 
       onSwitch: function (group) {
+        if (this.$el.offsetWidth < 600) {
+          this.$set("showAppBar", false);
+        }
+
         if (!this._getGroupLog(group)) {
           alert('You have not joined group '+group);
           return true;
