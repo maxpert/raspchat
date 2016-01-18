@@ -16,7 +16,7 @@
    version="1.1"
    inkscape:version="0.91 r"
    sodipodi:docname="icon-badge-logo.svg"
-   inkscape:export-filename="/home/mxp/Repos/gorica/static/icon-badge-logo.png"
+   inkscape:export-filename="/home/mxp/Repos/gorica/static/badge-icon.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
   <defs
@@ -32,7 +32,7 @@
      inkscape:cx="151.07345"
      inkscape:cy="286.99629"
      inkscape:document-units="px"
-     inkscape:current-layer="layer2"
+     inkscape:current-layer="layer1"
      showgrid="false"
      units="px"
      inkscape:window-width="1600"
@@ -48,7 +48,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -56,10 +56,9 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(0,-540.36226)"
-     sodipodi:insensitive="true">
+     transform="translate(0,-540.36226)">
     <rect
-       style="fill:#0877c4;fill-opacity:1;stroke:none;stroke-width:20;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#08c49b;fill-opacity:1;stroke:none;stroke-width:20;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect5247"
        width="499.99994"
        height="499.99994"
@@ -70,12 +69,13 @@
   <g
      inkscape:groupmode="layer"
      id="layer2"
-     inkscape:label="Layer 2">
+     inkscape:label="Layer 2"
+     sodipodi:insensitive="true">
     <path
        inkscape:connector-curvature="0"
        id="path4714"
-       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:20.51299477;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="m 463.80028,144.05758 -77.22574,0 m -243.23476,-2.83664 -103.296346,-0.74268 0,197.55187 187.374736,0 57.66982,-60.89947 46.42728,133.68175 38.43583,-68.32625 94.48812,0 c 0.53334,-65.85014 1.06824,-131.70175 1.60151,-197.55184"
+       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:18.14720535;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 441.05676,156.70039 -66.30106,0 m -208.82575,-2.58588 -88.683606,-0.67703 0,180.08773 160.867916,0 49.5116,-55.51578 39.85948,121.86391 32.99853,-62.28603 81.12144,0 c 0.45789,-60.02879 0.91712,-120.05894 1.37495,-180.0877"
        inkscape:export-xdpi="90"
        inkscape:export-ydpi="90" />
   </g>

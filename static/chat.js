@@ -5,7 +5,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-(function (vue) {
+(function (vue, win, doc) {
   var md = new markdownit("default", {
     linkify: true,
   });
@@ -46,7 +46,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     ready: function () {
       this.hookImageLoads();
       this.$dispatch("chat-message-added", this.message);
-      
+
       this.$watch("message.msg", function () {
         this.hookImageLoads();
         this.$dispatch("chat-message-added", this.message);
@@ -75,10 +75,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     template: '#chat-messages',
     ready: function () {
       this.$el.addEventListener("click", function (event) {
-        event = event || window.event;
+        event = event || win.event;
 
         if (event.target.tagName == "A") {
-          window.open(event.target.href, "_blank");
+          win.open(event.target.href, "_blank");
           event.preventDefault();
           event.stopPropagation();
         }
@@ -257,6 +257,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       this.$on("leave", function (group) {
         this.transport.send(group, "/leave "+group);
       });
+
       this.$on("hamburger-clicked", function (v) {
         this.$set("showAppBar", !this.showAppBar);
       });
@@ -435,4 +436,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       }
     },
   });
-})(Vue);
+})(Vue, window, window.document);
