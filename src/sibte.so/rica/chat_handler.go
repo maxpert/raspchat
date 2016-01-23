@@ -8,75 +8,33 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 import (
-	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"log"
 	"math/rand"
-	"reflect"
+	"sibte.so/rica/consts"
 	"sync"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/speps/go-hashids"
-)
-
-const (
-	_FROM_SERVER = "SERVER"
-
-	_PING_COMMAND         = "ping"
-	_JOIN_GROUP_COMMAND   = "join-group"
-	_LEAVE_GROUP_COMMAND  = "leave-group"
-	_SET_NICK_COMMAND     = "set-nick"
-	_SEND_MSG_COMMAND     = "send-msg"
-	_LIST_MEMBERS_COMMAND = "list-group"
-	_SEND_RAW_MSG_COMMAND = "send-raw-msg"
-
-	_PING_REPLY            = "pong"
-	_JOIN_GROUP_REPLY      = "group-join"
-	_LEAVE_GROUP_REPLY     = "group-leave"
-	_SET_NICK_REPLY        = "nick-set"
-	_MEMBER_NICK_SET_REPLY = "member-nick-set"
-	_NEW_MSG_REPLY         = "new-msg"
-	_NEW_RAW_MSG_REPLY     = "new-raw-msg"
-	_LIST_MEMBERS_REPLY    = "group-list"
-	_GROUP_MSG_REPLY       = "group-message"
-	_ERROR_MSG_REPLY       = "error-msg"
-
-	_ERROR_INVALID_MSGTYPE_ERR = "Chat handler received invalid message type"
 )
 
 type ChatHandler struct {
 	sync.Mutex
-	id                  string
-	nick                string
-	groupInfoManager    GroupInfoManager
-	nickRegistry        *NickRegistry
-	connectionReadLock  *sync.Mutex
-	connectionWriteLock *sync.Mutex
-	connection          *websocket.Conn
-	incoming            chan interface{}
-	groups              map[string]interface{}
+	id               string
+	nick             string
+	groupInfoManager GroupInfoManager
+	nickRegistry     *NickRegistry
+	transport        IMessageTransport
+	incoming         chan interface{}
+	groups           map[string]interface{}
+	chatStore        *ChatLogStore
 }
 
-var pEventToStructMap map[string]reflect.Type
 var pHashId *hashids.HashID = hashids.New()
+var pSnowFlake *SnowFlake = DefaultSnowFlake()
 
-func initChatHandlerTypes() {
-	if pEventToStructMap == nil {
-		pEventToStructMap = make(map[string]reflect.Type)
-		pEventToStructMap[_SEND_MSG_COMMAND] = reflect.TypeOf(ChatMessage{})
-		pEventToStructMap[_JOIN_GROUP_COMMAND] = reflect.TypeOf(StringMessage{})
-		pEventToStructMap[_LEAVE_GROUP_COMMAND] = reflect.TypeOf(StringMessage{})
-		pEventToStructMap[_SET_NICK_COMMAND] = reflect.TypeOf(StringMessage{})
-		pEventToStructMap[_LIST_MEMBERS_COMMAND] = reflect.TypeOf(StringMessage{})
-		pEventToStructMap[_NEW_RAW_MSG_REPLY] = reflect.TypeOf(RecipientContentMessage{})
-	}
-}
-
-func NewChatHandler(nickReg *NickRegistry, groupInfoMan GroupInfoManager, connection *websocket.Conn) *ChatHandler {
+func NewChatHandler(nickReg *NickRegistry, groupInfoMan GroupInfoManager, trans IMessageTransport, store *ChatLogStore) *ChatHandler {
 	log.Println("New chat handler")
-	initChatHandlerTypes()
 	uid, _ := pHashId.Encode([]int{
 		int(rand.Int31n(1000)),
 		int(rand.Int31n(1000)),
@@ -84,81 +42,42 @@ func NewChatHandler(nickReg *NickRegistry, groupInfoMan GroupInfoManager, connec
 	})
 
 	ret := &ChatHandler{
-		id:                  uid,
-		nick:                uid,
-		nickRegistry:        nickReg,
-		groupInfoManager:    groupInfoMan,
-		connectionReadLock:  &sync.Mutex{},
-		connectionWriteLock: &sync.Mutex{},
-		connection:          connection,
-		incoming:            make(chan interface{}, 32),
-		groups:              make(map[string]interface{}, 0),
+		id:               uid,
+		nick:             uid,
+		nickRegistry:     nickReg,
+		groupInfoManager: groupInfoMan,
+		transport:        trans,
+		chatStore:        store,
+		incoming:         make(chan interface{}, 32),
+		groups:           make(map[string]interface{}, 0),
 	}
 
-	ret.groups[_FROM_SERVER] = struct{}{}
-	ret.groupInfoManager.AddUser(_FROM_SERVER, ret.id, ret.incoming)
+	ret.groups[ricaEvents.FROM_SERVER] = struct{}{}
+	ret.groupInfoManager.AddUser(ricaEvents.FROM_SERVER, ret.id, ret.incoming)
 	return ret
 }
 
-func pDecodeMessage(msg []byte) (ret interface{}, rErr error) {
-	eventMsg := &BaseMessage{}
-	rErr = json.Unmarshal(msg, eventMsg)
-	if rErr != nil {
-		log.Println("Unable to decode message type from msg", string(msg))
-		ret = nil
-		return
-	}
+func messageOf(event string) BaseMessage {
+	id, err := pSnowFlake.Next()
 
-	var mType reflect.Type
-	var ok bool
-	if mType, ok = pEventToStructMap[eventMsg.EventName]; !ok {
-		rErr = errors.New("Invalid message type")
-		ret = nil
-		return
-	}
-
-	log.Println("Deserializing ", mType.Name())
-	ret = reflect.New(mType).Interface()
-	rErr = json.Unmarshal(msg, ret)
-	return
-}
-
-func (h *ChatHandler) readSocket() (interface{}, error) {
-	h.connectionReadLock.Lock()
-	msgType, msg, err := h.connection.ReadMessage()
-	h.connectionReadLock.Unlock()
-
-	log.Println("Message Type", msgType, "Message", string(msg), "Error", err)
-
+	// If we get an error delay for 1ms and try again
 	if err != nil {
-		return nil, err
+		time.Sleep(1 * time.Millisecond)
+		id, _ = pSnowFlake.Next()
 	}
 
-	if msgType != websocket.TextMessage {
-		return nil, errors.New(_ERROR_INVALID_MSGTYPE_ERR)
+	return BaseMessage{
+		EventName: event,
+		Id:        id,
 	}
-
-	if jsonMsg, e := pDecodeMessage(msg); e == nil {
-		return jsonMsg, nil
-	} else {
-		log.Println("Invalid message", e)
-	}
-
-	return nil, err
-}
-
-func (h *ChatHandler) writeSocket(msg interface{}) error {
-	h.connectionWriteLock.Lock()
-	defer h.connectionWriteLock.Unlock()
-	return h.connection.WriteJSON(msg)
 }
 
 func (h *ChatHandler) socketLoop(socketChannel chan interface{}, errorChannel chan error) {
 	for {
-		msg, err := h.readSocket()
+		msg, err := h.transport.ReadMessage()
 
 		// If message type was invalid
-		if err != nil && err.Error() == _ERROR_INVALID_MSGTYPE_ERR {
+		if err != nil && err.Error() == ricaEvents.ERROR_INVALID_MSGTYPE_ERR {
 			log.Println("Skipping message....")
 			continue
 		}
@@ -184,22 +103,30 @@ func (h *ChatHandler) sendWelcome() {
 		msg = msg + "\n" + string(f)
 	}
 	welcomeMsg := &StringMessage{
-		BaseMessage: BaseMessage{_FROM_SERVER},
+		BaseMessage: messageOf(ricaEvents.FROM_SERVER),
 		Message:     msg,
 	}
-	h.writeSocket(welcomeMsg)
+	h.transport.WriteMessage(welcomeMsg.Id, welcomeMsg)
 
-	h.writeSocket(&NickMessage{
-		BaseMessage: BaseMessage{_SET_NICK_REPLY},
+	nickMsg := &NickMessage{
+		BaseMessage: messageOf(ricaEvents.SET_NICK_REPLY),
 		OldNick:     h.id,
 		NewNick:     h.id,
-	})
+	}
+
+	h.transport.WriteMessage(nickMsg.Id, nickMsg)
 }
 
 func (h *ChatHandler) handleInternalMessage(msg interface{}) {
+	baseMsg, ok := msg.(IEventMessage)
+
+	if !ok {
+		return
+	}
+
 	timer := StartStopWatch("handleInternnalMessage:" + h.id)
 	defer timer.LogDuration()
-	if err := h.writeSocket(msg); err != nil {
+	if err := h.transport.WriteMessage(baseMsg.Identity(), baseMsg); err != nil {
 		log.Println("Unable to write socket message", err)
 	}
 }
@@ -207,7 +134,7 @@ func (h *ChatHandler) handleInternalMessage(msg interface{}) {
 func (h *ChatHandler) handleMessage(msg interface{}) {
 	switch v := msg.(type) {
 	case *ChatMessage:
-		log.Println("Chat message", v.To, "=>", v.Message)
+		log.Println("Chat message", v.To)
 		h.onChatMessage(v)
 	case *StringMessage:
 		log.Println("String message", v.Message)
@@ -222,32 +149,38 @@ func (h *ChatHandler) handleMessage(msg interface{}) {
 
 func (h *ChatHandler) handleStringMessage(msg *StringMessage) {
 	switch msg.EventName {
-	case _JOIN_GROUP_COMMAND:
+	case ricaEvents.JOIN_GROUP_COMMAND:
 		h.onJoinGroup(msg)
-	case _LEAVE_GROUP_COMMAND:
+	case ricaEvents.LEAVE_GROUP_COMMAND:
 		h.onLeaveGroup(msg)
-	case _SET_NICK_COMMAND:
+	case ricaEvents.SET_NICK_COMMAND:
 		h.onSetNick(msg)
-	case _LIST_MEMBERS_COMMAND:
+	case ricaEvents.LIST_MEMBERS_COMMAND:
 		h.onListMembers(msg)
 	}
 }
 
 func (h *ChatHandler) onRecipientContentMessage(msg *RecipientContentMessage) {
 	switch msg.EventName {
-	case _SEND_RAW_MSG_COMMAND:
+	case ricaEvents.SEND_RAW_MSG_COMMAND:
 		log.Println("On send raw message")
-		h.sendTo(_FROM_SERVER, msg.To, msg.Message)
+		h.sendTo(ricaEvents.FROM_SERVER, msg.To, msg.Message)
 	}
 }
 
 func (h *ChatHandler) onChatMessage(msg *ChatMessage) {
+	if len(msg.Message) <= 0 {
+		log.Println("Ignoring message...", msg)
+	}
+
 	if _, ok := h.groups[msg.To]; ok {
 		h.publish(msg.To, &ChatMessage{
-			BaseMessage: BaseMessage{_GROUP_MSG_REPLY},
-			To:          msg.To,
-			From:        h.nick,
-			Message:     msg.Message,
+			RecipientMessage: RecipientMessage{
+				BaseMessage: messageOf(ricaEvents.GROUP_MSG_REPLY),
+				To:          msg.To,
+				From:        h.nick,
+			},
+			Message: msg.Message,
 		})
 	}
 }
@@ -255,7 +188,7 @@ func (h *ChatHandler) onChatMessage(msg *ChatMessage) {
 func (h *ChatHandler) onListMembers(msg *StringMessage) {
 	groupName := msg.Message
 	if groupName == "" {
-		groupName = _FROM_SERVER
+		groupName = ricaEvents.FROM_SERVER
 	}
 
 	membersIds := h.groupInfoManager.GetUsers(groupName)
@@ -271,10 +204,12 @@ func (h *ChatHandler) onListMembers(msg *StringMessage) {
 	}
 
 	h.incoming <- &RecipientContentMessage{
-		BaseMessage: BaseMessage{_LIST_MEMBERS_REPLY},
-		To:          groupName,
-		From:        _FROM_SERVER,
-		Message:     members,
+		RecipientMessage: RecipientMessage{
+			BaseMessage: messageOf(ricaEvents.LIST_MEMBERS_REPLY),
+			To:          groupName,
+			From:        ricaEvents.FROM_SERVER,
+		},
+		Message: members,
 	}
 }
 
@@ -288,7 +223,7 @@ func (h *ChatHandler) onJoinGroup(msg *StringMessage) {
 	h.groupInfoManager.AddUser(msg.Message, h.id, h.incoming)
 
 	h.publish(msg.Message, &RecipientMessage{
-		BaseMessage: BaseMessage{_JOIN_GROUP_REPLY},
+		BaseMessage: messageOf(ricaEvents.JOIN_GROUP_REPLY),
 		To:          msg.Message,
 		From:        h.nick,
 	})
@@ -299,7 +234,7 @@ func (h *ChatHandler) onLeaveGroup(msg *StringMessage) {
 	defer timer.LogDuration()
 
 	h.publish(msg.Message, &RecipientMessage{
-		BaseMessage: BaseMessage{_LEAVE_GROUP_REPLY},
+		BaseMessage: messageOf(ricaEvents.LEAVE_GROUP_REPLY),
 		To:          msg.Message,
 		From:        h.nick,
 	})
@@ -321,11 +256,11 @@ func (h *ChatHandler) onSetNick(msg *StringMessage) {
 	if err == nil {
 		h.nick = new_nick
 		nickMsg := &NickMessage{
-			BaseMessage: BaseMessage{_SET_NICK_REPLY},
+			BaseMessage: messageOf(ricaEvents.SET_NICK_REPLY),
 			OldNick:     old_nick,
 			NewNick:     new_nick,
 		}
-		err = h.writeSocket(nickMsg)
+		err = h.transport.WriteMessage(nickMsg.Id, nickMsg)
 
 		if err == nil {
 			h.publishOnJoinedChannels(nickMsg.EventName, nickMsg)
@@ -346,23 +281,30 @@ func (h *ChatHandler) publishOnJoinedChannels(eventName string, msg interface{})
 
 	for g, _ := range h.groups {
 		h.publish(g, &RecipientContentMessage{
-			BaseMessage: BaseMessage{_MEMBER_NICK_SET_REPLY},
-			To:          g,
-			From:        h.id,
-			Message:     msg,
+			RecipientMessage: RecipientMessage{
+				BaseMessage: messageOf(ricaEvents.MEMBER_NICK_SET_REPLY),
+				To:          g,
+				From:        h.id,
+			},
+			Message: msg,
 		})
 	}
 }
 
-func (h *ChatHandler) publish(groupName string, msg interface{}) {
+func (h *ChatHandler) publish(groupName string, msg IEventMessage) {
 	timer := StartStopWatch("publish:" + groupName)
 	defer timer.LogDuration()
+
+	h.transport.BeginBatch(msg.Identity(), msg)
+	h.chatStore.Save(groupName, msg.Identity(), msg)
 
 	groupMembers := h.groupInfoManager.GetUsers(groupName)
 	log.Println("Publish for member count:", len(groupMembers))
 	for _, id := range groupMembers {
 		h.sendTo(groupName, id, msg)
 	}
+
+	h.transport.FlushBatch(msg.Identity())
 }
 
 func (h *ChatHandler) sendTo(groupName, name string, msg interface{}) {
@@ -401,9 +343,9 @@ func (h *ChatHandler) Loop() {
 selectLoop:
 	for {
 		select {
-		case <-time.After(5 * time.Second):
+		case <-time.After(30 * time.Second):
 			h.incoming <- &PingMessage{
-				BaseMessage: BaseMessage{_PING_COMMAND},
+				BaseMessage: messageOf(ricaEvents.PING_COMMAND),
 				Type:        int(time.Now().Unix()),
 			}
 		case m := <-h.incoming:

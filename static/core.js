@@ -23,6 +23,15 @@ window.$glueFunctions = function (obj) {
   }
 };
 
+window.$mix = function (){
+    var ret = {};
+    for(var i=0; i<arguments.length; i++)
+        for(var key in arguments[i])
+            if(arguments[i].hasOwnProperty(key))
+                ret[key] = arguments[i][key];
+    return ret;
+};
+
 window.core = (function(win, doc) {
   var SERVER_ALIAS = 'SERVER';
 
@@ -37,18 +46,13 @@ window.core = (function(win, doc) {
   var giffer = {
     search: function (keywords, url_callback) {
       keywords = encodeURIComponent(keywords);
-      var oReq = new XMLHttpRequest();
-      oReq.addEventListener("load", function (r) {
-        var resp = JSON.parse(oReq.response);
-        if (resp && resp.url){
-          url_callback(resp.url, resp);
-          return;
-        }
-
-        url_callback(null, null);
-      });
-      oReq.open("get", "/gif?q="+keywords);
-      oReq.send();
+      qwest.get("/gif", {"q": keywords}, {responseType: "json"})
+           .then(function (xhr, response) {
+             url_callback(response.url, response);
+           })
+           .catch(function (e, xhr, response) {
+             url_callback(null, null);
+           });
     }
   };
 
@@ -242,6 +246,9 @@ window.core = (function(win, doc) {
       },
 
       _handleMessage: function (msg) {
+
+        // Switch case for handling message types
+        // Ideal is to create a map and invoke methods directly
         switch (msg['@']) {
           case SERVER_ALIAS:
             this._completeHandShake(msg);
@@ -294,13 +301,45 @@ window.core = (function(win, doc) {
       },
 
       _on_group_joined: function (msg) {
-        this.events.fire('message', {
+        var events = this.events;
+        events.fire('message', {
           from: SERVER_ALIAS,
           to: SERVER_ALIAS,
           delivery_time: new Date(),
           msg: msg.from + " joined " + msg.to
         });
-        this.events.fire('joined', msg);
+        events.fire('joined', msg);
+
+        var me = this;
+        var encodedGroupName = encodeURIComponent(msg.to);
+        qwest.get("/chat/api/channel/"+encodedGroupName+"/message", null, {responseType: 'json'})
+             .then(function (xhr, response) {
+               me._on_group_history_recvd(msg.to, response);
+             })
+             .catch(function (err, xhr, response) {
+               events.fire('history-error', response);
+             });
+      },
+
+      _on_group_history_recvd: function (grp, hist) {
+        var historyMessages = hist.messages.map(this._prepareMetaMessage);
+        this.events.fire('history', $mix(hist, {messages: historyMessages}));
+      },
+
+      _prepareMetaMessage: function (msg) {
+        var ret = $mix(msg);
+        switch (msg['@']) {
+          case 'group-join':
+            ret.meta = {action: 'joined'};
+            break;
+          case 'group-leave':
+            ret.meta = {action: 'leave'};
+            break;
+          default:
+            ret.meta = null;
+        }
+
+        return ret;
       },
 
       _on_group_members_list: function (to, list) {

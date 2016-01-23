@@ -19,9 +19,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   });
 
   vue.filter('avatar_url', function (value) {
-    // http://api.adorable.io/avatars/face/eyes6/nose7/face1/AA0000
-    // return 'http://api.adorable.io/avatars/256/zmg-' + value + '.png';
-    return 'https://robohash.org/raspchat-'+value;
+    // return 'http://api.adorable.io/avatars/face/eyes6/nose7/face1/AA0000';
+    return 'http://api.adorable.io/avatars/256/zmg-' + value + '.png';
   });
 
   vue.component('chrome-bar', vue.extend({
@@ -124,6 +123,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   vue.component('app-bar', vue.extend({
     template: '#app-bar',
     data: function () {
+      return {};
     },
     methods: {
     }
@@ -250,6 +250,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       this.transport.events.on('joined', this.onJoin);
       this.transport.events.on('leave', this.onLeave);
       this.transport.events.on('switch', this.onSwitch);
+      this.transport.events.on('history', this.onHistoryRecv);
       this.transport.events.on('nick-changed', this.changeNick);
       this.transport.events.on('members-list', this.onMembersList);
 
@@ -390,7 +391,23 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return false;
       },
 
-      _appendMessage: function (m) {
+      onHistoryRecv: function (historyObj) {
+        var msgs = historyObj.messages;
+        for (var i in msgs) {
+          var m = msgs[i];
+          if (!m.meta) {
+            this._appendMessage(m, true);
+          } else {
+            switch (m.meta['action']) {
+              case 'joined':
+                this.onJoin(m);
+                break;
+            }
+          }
+        }
+      },
+
+      _appendMessage: function (m, silent) {
         var groupLog = this._getOrCreateGroupLog(m.to);
 
         if (!this.currentGroup.name) {
@@ -403,6 +420,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           lastMsg.msg += "\n\n" + m.msg;
         } else {
           groupLog.push(m);
+        }
+
+        if (silent) {
+          return;
         }
 
         this.$broadcast('message_new', m);

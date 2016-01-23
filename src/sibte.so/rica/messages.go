@@ -1,7 +1,21 @@
 package rica
 
+type IEventMessage interface {
+	Identity() uint64
+	Event() string
+}
+
 type BaseMessage struct {
 	EventName string `json:"@"`
+	Id        uint64 `json:"!id,omitempty"`
+}
+
+func (b *BaseMessage) Identity() uint64 {
+	return b.Id
+}
+
+func (b *BaseMessage) Event() string {
+	return b.EventName
 }
 
 type PingMessage struct {
@@ -22,17 +36,13 @@ type RecipientMessage struct {
 }
 
 type ChatMessage struct {
-	BaseMessage
-	To      string `json:"to"`
-	From    string `json:"from"`
+	RecipientMessage
 	Message string `json:"msg"`
 }
 
-type ErrorMessage struct {
-	BaseMessage
-	Type  string      `json:"error_type"`
-	Error string      `json:"error"`
-	Body  interface{} `json:"body"`
+type RecipientContentMessage struct {
+	RecipientMessage
+	Message interface{} `json:"pack_msg"`
 }
 
 type NickMessage struct {
@@ -41,20 +51,14 @@ type NickMessage struct {
 	NewNick string `json:"newNick"`
 }
 
-type RecipientContentMessage struct {
-	BaseMessage
-	To      string      `json:"to"`
-	From    string      `json:"from"`
-	Message interface{} `json:"pack_msg"`
-}
-
-type EventMessage struct {
-	BaseMessage
-	Name string      `json:"_en"`
-	Body interface{} `json:"event"`
-}
-
 type StringMessage struct {
 	BaseMessage
 	Message string `json:"msg"`
+}
+
+type ErrorMessage struct {
+	BaseMessage
+	Type  string      `json:"error_type"`
+	Error string      `json:"error"`
+	Body  interface{} `json:"body"`
 }

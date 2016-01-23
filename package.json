@@ -1,19 +1,43 @@
 {
-  "name": "gorica",
-  "version": "0.5.0",
-  "description": "Basic chat server",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/maxpert/raspchat.git"
-  },
-  "author": "",
+  "name": "app",
+  "productName": "App",
+  "version": "0.0.0",
+  "description": "",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/maxpert/raspchat/issues"
+  "repository": "user/repo",
+  "author": {
+    "name": "",
+    "email": "",
+    "url": ""
   },
-  "homepage": "https://github.com/maxpert/raspchat#readme"
+  "electronVersion": "0.36.0",
+  "scripts": {
+    "test": "xo",
+    "start": "electron .",
+    "build": "electron-packager . $npm_package_productName --out=dist --ignore='^/dist$' --prune --asar --all --version=$npm_package_electronVersion"
+  },
+  "files": [
+    "index.js",
+    "index.html",
+    "index.css"
+  ],
+  "keywords": [
+    "electron-app",
+    "electron"
+  ],
+  "dependencies": {
+    "electron-debug": "^0.5.0"
+  },
+  "devDependencies": {
+    "electron-packager": "^5.0.0",
+    "electron-prebuilt": "^0.36.0",
+    "xo": "^0.12.0"
+  },
+  "xo": {
+    "esnext": true,
+    "envs": [
+      "node",
+      "browser"
+    ]
+  }
 }

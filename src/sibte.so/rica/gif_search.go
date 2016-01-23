@@ -5,31 +5,27 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
-	"path"
 	"strings"
-	"sync"
 
+	"github.com/boltdb/bolt"
 	"github.com/julienschmidt/httprouter"
-	"github.com/steveyen/gkvlite"
 )
 
 type atomic_store struct {
-	sync.Mutex
-	store *gkvlite.Store
+	store *bolt.DB
 }
 
 var kvStore *atomic_store
 
 func FindRightGif(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	q := strings.ToLower(r.FormValue("q"))
+	log.Println("GIF Searching...", q)
 
 	if cache_val, ok := kvStore.get(q); ok {
 		w.Write([]byte(cache_val))
 		return
 	}
 
-	log.Println("Searching...", q)
 	qreader := strings.NewReader("text=" + q)
 	resp, err := http.Post("https://rightgif.com/search/web", "application/x-www-form-urlencoded", qreader)
 	if err != nil {
@@ -45,36 +41,49 @@ func FindRightGif(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func (me *atomic_store) get(key string) (string, bool) {
-	me.Lock()
-	defer me.Unlock()
+	tx, err := me.store.Begin(false)
+	if err != nil {
+		return "", false
+	}
+	defer tx.Rollback()
 
-	c := me.store.GetCollection("rightgif")
+	bucket := tx.Bucket([]byte("rightgif"))
 
-	ret, err := c.Get([]byte(key))
-	return string(ret), (err != nil)
+	ret := bucket.Get([]byte(key))
+	if ret == nil {
+		return "", false
+	}
+
+	return string(ret), true
 }
 
 func (me *atomic_store) set(key, value string) bool {
-	me.Lock()
-	defer me.Unlock()
+	tx, err := me.store.Begin(true)
+	if err != nil {
+		return false
+	}
+	defer tx.Rollback()
 
-	c := me.store.GetCollection("rightgif")
-
-	err := c.Set([]byte(key), []byte(value))
-	return err == nil && me.store.Flush() == nil
+	bucket := tx.Bucket([]byte("rightgif"))
+	return bucket.Put([]byte(key), []byte(value)) == nil && tx.Commit() == nil
 }
 
-func InitGifCache(dbPath string) {
-	f, _ := os.OpenFile(path.Join(dbPath, "gif.cache"), os.O_RDWR|os.O_CREATE, 0666)
-	s, err := gkvlite.NewStore(f)
+func initGifCache() {
+	db, err := bolt.Open(CurrentAppConfig.DBPath+"/gifstore.bolt", 0600, nil)
 
 	if err != nil {
 		log.Println("Gif search error", err.Error())
 		return
 	}
 
-	s.SetCollection("rightgif", nil)
+	tx, err := db.Begin(true)
+	if err == nil {
+		defer tx.Rollback()
+		tx.CreateBucket([]byte("rightgif"))
+		tx.Commit()
+	}
+
 	kvStore = &atomic_store{
-		store: s,
+		store: db,
 	}
 }

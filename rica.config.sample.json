@@ -1,0 +1,7 @@
+{
+  "bind_address": ":80",
+  "log_file": "./server.log",
+  "db_path": "../rica_db",
+  "gcm_token": "",
+  "allow_hot_reboot": true
+}

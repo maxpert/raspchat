@@ -55,7 +55,10 @@ func _installSocketMux(mux *http.ServeMux) (err error) {
 		return
 	}
 
-	mux.Handle("/chat", rica.NewChatService())
+	s := rica.NewChatService().WithRESTRoutes("/chat")
+
+	mux.Handle("/chat", s)
+	mux.Handle("/chat/", s)
 	return
 }
 
@@ -71,23 +74,19 @@ func _installHttpRoutes(mux *http.ServeMux) (err error) {
 	return
 }
 
-func parseArgs() (addr, logFile, dbPath, mode string) {
-	flag.StringVar(&addr, "bind", ":8080", "Bind address for the service")
-	flag.StringVar(&logFile, "log", "", "Log file to write log output to")
-	flag.StringVar(&dbPath, "dbPath", "/tmp", "Path to database directory")
-	flag.StringVar(&mode, "mode", "dev", "Execution mode dev/prod (default: dev)")
+func parseArgs() (filePath string) {
+	flag.StringVar(&filePath, "config", "", "Path to configuration file")
 	flag.Parse()
 	return
 }
 
 func main() {
-	bindAddr, logFile, dbPath, mode := parseArgs()
+	rica.LoadApplicationConfig(parseArgs())
+	conf := rica.CurrentAppConfig
 
-	rica.InitGifCache(dbPath)
-
-	if logFile != "" {
+	if conf.LogFilePath != "" {
 		log.SetOutput(&lumberjack.Logger{
-			Filename:   logFile,
+			Filename:   conf.LogFilePath,
 			MaxBackups: 3,
 			MaxSize:    5,
 			MaxAge:     15,
@@ -100,15 +99,15 @@ func main() {
 	_installHttpRoutes(mux)
 
 	endless.DefaultHammerTime = 10 * time.Second
-	if mode == "dev" {
+	if conf.AllowHotRestart == false {
 		server := &http.Server{
-			Addr:    bindAddr,
+			Addr:    conf.BindAddress,
 			Handler: mux,
 		}
-		// server := endless.NewServer(bindAddr, mux)
-		log.Println("Starting server...", bindAddr)
+
+		log.Println("Starting server...", conf.BindAddress)
 		log.Panic(server.ListenAndServe())
 	} else {
-		endless.ListenAndServe(bindAddr, mux)
+		endless.ListenAndServe(conf.BindAddress, mux)
 	}
 }
