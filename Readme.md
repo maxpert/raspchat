@@ -11,7 +11,7 @@ Once you have installed both just cd to directory and run ```./get_dependencies.
 
 # Demo
 
-Basic demo is available [Here](http://raspchat.sibte.so). Do note the server is running on Raspberry Pi 1 Model B.
+Basic demo is available [Here](http://raspchat.ngrok.io). Do note the server is running on Raspberry Pi 1 Model B.
 
 ## Features:
 
