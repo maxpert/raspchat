@@ -30,3 +30,4 @@ static/bower_components/
 static/*.min.js
 src/github.com/
 src/gopkg.in/
+rica.config.*.json
