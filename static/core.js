@@ -25,6 +25,11 @@ window.$glueFunctions = function (obj) {
 
 window.$mix = function (){
     var ret = {};
+    if (Object.assign) {
+      var args = Array.prototype.slice.call(arguments);
+      return Object.assign.apply(Object, args);
+    }
+    
     for(var i=0; i<arguments.length; i++)
         for(var key in arguments[i])
             if(arguments[i].hasOwnProperty(key))
@@ -322,7 +327,7 @@ window.core = (function(win, doc) {
       },
 
       _on_group_history_recvd: function (grp, hist) {
-        var historyMessages = hist.messages.map(this._prepareMetaMessage);
+        var historyMessages = hist.messages.map(this._prepareMetaMessage).reverse();
         this.events.fire('history', $mix(hist, {messages: historyMessages}));
       },
 

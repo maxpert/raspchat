@@ -19,14 +19,17 @@ Basic demo is available [Here](http://raspchat.ngrok.io). Do note the server is 
  * Basic nick support
  * Channel support
  * Markdown support
+ * Message history support
+ * GCM push notification support (incomplete)
 
 
-## TODO:
+## Coming soon:
 
+ * Frontend code refactoring (React + Redux)
  * Improve build and deploy script
  * Introduce admin panel with:
    * Reserved alias authorization
    * IP limiting/banning
    * Channel management and permissions
- * Loadable extension system
- * Scheduled chat export system (TBD)
+ * Loadable extension (LUA)
+ * Scheduled chat log exports (TBD)
