@@ -3,5 +3,6 @@
   "log_file": "./server.log",
   "db_path": "../rica_db",
   "gcm_token": "",
+  "allowed_origins": [],
   "allow_hot_reboot": true
 }

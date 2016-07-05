@@ -11,10 +11,11 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
-	"sibte.so/rica/consts"
 	"strings"
 	"sync"
 	"time"
+
+	"sibte.so/rica/consts"
 
 	"github.com/speps/go-hashids"
 )

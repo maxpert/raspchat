@@ -8,11 +8,12 @@ import (
 )
 
 type ApplicationConfig struct {
-	BindAddress     string `json:"bind_address"`
-	LogFilePath     string `json:"log_file"`
-	DBPath          string `json:"db_path"`
-	AllowHotRestart bool   `json:"allow_hot_reboot"`
-	GCMToken        string `json:"gcm_token"`
+	BindAddress     string   `json:"bind_address"`
+	LogFilePath     string   `json:"log_file"`
+	DBPath          string   `json:"db_path"`
+	AllowHotRestart bool     `json:"allow_hot_reboot"`
+	GCMToken        string   `json:"gcm_token"`
+	AllowedOrigins  []string `json:"allowed_origins"`
 }
 
 var CurrentAppConfig ApplicationConfig
@@ -24,6 +25,7 @@ func LoadApplicationConfig(filePath string) {
 		conf.BindAddress = ":8080"
 		conf.DBPath = "/tmp"
 		conf.LogFilePath = ""
+		conf.AllowedOrigins = make([]string, 0)
 		return
 	}
 
@@ -35,4 +37,7 @@ func LoadApplicationConfig(filePath string) {
 	if err := json.Unmarshal(content, &CurrentAppConfig); err != nil {
 		log.Panic(err)
 	}
+
+	log.Println("=== Loaded configuration")
+	log.Println(CurrentAppConfig)
 }

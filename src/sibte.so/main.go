@@ -22,32 +22,31 @@ import (
 	"sibte.so/rica"
 )
 
-var index_bytes []byte
+var indexPageCache []byte
 
 func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	if index_bytes == nil {
+	if indexPageCache == nil {
 		filedat, err := ioutil.ReadFile("static/index.html")
 
 		if err != nil {
-			fmt.Fprintf(w, "hit /static/test.html")
+			log.Println("HIT /static/test.html")
 		}
 
-		index_bytes = filedat
+		indexPageCache = filedat
 	}
 
-	w.Write(index_bytes)
+	w.Write(indexPageCache)
 }
 
 func clearCache(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	index_bytes = nil
-
+	indexPageCache = nil
 	fmt.Fprint(w, "Done")
 }
 
-var _groupInfoManager rica.GroupInfoManager = rica.NewInMemoryGroupInfo()
-var _nickRegistry *rica.NickRegistry = rica.NewNickRegistry()
+var _groupInfoManager = rica.NewInMemoryGroupInfo()
+var _nickRegistry = rica.NewNickRegistry()
 
-func _installSocketMux(mux *http.ServeMux) (err error) {
+func _installSocketMux(mux *http.ServeMux, appConfig *rica.ApplicationConfig) (err error) {
 	err = nil
 
 	if err != nil {
@@ -55,14 +54,14 @@ func _installSocketMux(mux *http.ServeMux) (err error) {
 		return
 	}
 
-	s := rica.NewChatService().WithRESTRoutes("/chat")
+	s := rica.NewChatService(appConfig).WithRESTRoutes("/chat")
 
 	mux.Handle("/chat", s)
 	mux.Handle("/chat/", s)
 	return
 }
 
-func _installHttpRoutes(mux *http.ServeMux) (err error) {
+func _installHTTPRoutes(mux *http.ServeMux) (err error) {
 	err = nil
 	router := httprouter.New()
 	router.GET("/", index)
@@ -95,8 +94,8 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	_installSocketMux(mux)
-	_installHttpRoutes(mux)
+	_installSocketMux(mux, &conf)
+	_installHTTPRoutes(mux)
 
 	endless.DefaultHammerTime = 10 * time.Second
 	if conf.AllowHotRestart == false {

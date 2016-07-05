@@ -24,13 +24,37 @@ type ChatService struct {
 	httpMux      *http.ServeMux
 }
 
-func NewChatService() *ChatService {
+func NewChatService(appConfig *ApplicationConfig) *ChatService {
 	initChatHandlerTypes()
 	initGifCache()
 	store, e := NewChatLogStore(CurrentAppConfig.DBPath+"/chats.bolt.db", []byte("chats"))
+	allowedOrigins := appConfig.AllowedOrigins
 
 	if e != nil {
 		log.Panic(e)
+	}
+
+	wsUpgrader := &websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+
+	if len(allowedOrigins) > 0 {
+		wsUpgrader.CheckOrigin = func(r *http.Request) bool {
+			origin := r.Header.Get("Origin")
+			if origin == "" {
+				return true
+			}
+
+			for _, item := range allowedOrigins {
+				if strings.Compare(item, origin) == 0 {
+					return true
+				}
+			}
+
+			log.Println("Unable to find origin " + origin)
+			return false
+		}
 	}
 
 	return &ChatService{
@@ -38,11 +62,7 @@ func NewChatService() *ChatService {
 		nickRegistry: NewNickRegistry(),
 		gcmWorker:    NewGCMWorker(CurrentAppConfig.GCMToken),
 		chatStore:    store,
-		upgrader: &websocket.Upgrader{
-			ReadBufferSize:  1024,
-			WriteBufferSize: 1024,
-			// CheckOrigin:     func(_ *http.Request) bool { return true },
-		},
+		upgrader:     wsUpgrader,
 	}
 }
 
