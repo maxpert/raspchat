@@ -12,6 +12,7 @@ import (
 	"log"
 	"math/rand"
 	"sibte.so/rica/consts"
+	"strings"
 	"sync"
 	"time"
 
@@ -169,8 +170,10 @@ func (h *ChatHandler) onRecipientContentMessage(msg *RecipientContentMessage) {
 }
 
 func (h *ChatHandler) onChatMessage(msg *ChatMessage) {
-	if len(msg.Message) <= 0 {
-		log.Println("Ignoring message...", msg)
+	strMsg := strings.TrimSpace(msg.Message)
+	if len(strMsg) <= 0 || len(strMsg) > 512 {
+		log.Println("Ignoring message... due to length volation")
+		return
 	}
 
 	if _, ok := h.groups[msg.To]; ok {

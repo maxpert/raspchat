@@ -41,6 +41,7 @@ func NewChatService() *ChatService {
 		upgrader: &websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
+			// CheckOrigin:     func(_ *http.Request) bool { return true },
 		},
 	}
 }
@@ -77,7 +78,8 @@ func (c *ChatService) httpRoutes(prefix string, router *httprouter.Router) http.
 
 func (c *ChatService) upgradeConnectionToWebSocket(w http.ResponseWriter, req *http.Request) bool {
 	log.Println("New websocket connection request")
-	if conn, err := c.upgrader.Upgrade(w, req, nil); err == nil {
+	conn, err := c.upgrader.Upgrade(w, req, nil)
+	if err == nil {
 		log.Println("Socket upgraded!!!")
 		transporter := NewWebsocketMessageTransport(conn)
 		handler := NewChatHandler(c.nickRegistry, c.groupInfo, transporter, c.chatStore)
@@ -85,6 +87,7 @@ func (c *ChatService) upgradeConnectionToWebSocket(w http.ResponseWriter, req *h
 		return true
 	}
 
+	log.Println("Error upgrading connection...", err)
 	return false
 }
 
