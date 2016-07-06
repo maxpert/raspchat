@@ -29,7 +29,7 @@ window.$mix = function (){
       var args = Array.prototype.slice.call(arguments);
       return Object.assign.apply(Object, args);
     }
-    
+
     for(var i=0; i<arguments.length; i++)
         for(var key in arguments[i])
             if(arguments[i].hasOwnProperty(key))
@@ -40,31 +40,20 @@ window.$mix = function (){
 window.core = (function(win, doc) {
   var SERVER_ALIAS = 'SERVER';
 
-  var validCommandRegex = /^\/([a-zA-Z]+)\s*(.*)$/i;
-  var nickRegex = /^\/nick\s+([A-Za-z0-9]+)$/i;
-  var gifRegex = /^\/gif\s+(.+)$/i;
-  var joinRegex = /^\/join\s+([A-Za-z0-9]+)$/i;
-  var leaveRegex = /^\/leave\s+([A-Za-z0-9]+)$/i;
-  var listRegex = /^\/list\s+([A-Za-z0-9]+)$/i;
-  var switchRegex = /^\/switch\s+([A-Za-z0-9]+)$/i;
-
-  var giffer = {
-    search: function (keywords, url_callback) {
-      keywords = encodeURIComponent(keywords);
-      qwest.get("/gif", {"q": keywords}, {responseType: "json"})
-           .then(function (xhr, response) {
-             url_callback(response.url, response);
-           })
-           .catch(function (e, xhr, response) {
-             url_callback(null, null);
-           });
-    }
+  var validCommandRegex = /^\/(nick|gif|join|leave|list|switch)\s*(.*)$/i;
+  var userCommandToEventsMap = {
+    'list': {eventName: 'list-group', paramRequired: false, defaultParam: false},
+    'nick': {eventName: 'set-nick', paramRequired: true},
+    'switch': {eventName: 'switch-group', paramRequired: true},
+    'join': {eventName: 'join-group', paramRequired: true},
+    'leave': {eventName: 'leave-group', paramRequired: false, defaultParam: false},
+    'gif': {eventName: 'send-gif', paramRequired: true}
   };
-
   var processComand = function (cmd, callback) {
     var match = cmd.match(validCommandRegex);
 
-    if (!match){
+    // map should have command
+    if (!match || !userCommandToEventsMap[match[1]]){
       return false;
     }
 
@@ -72,51 +61,19 @@ window.core = (function(win, doc) {
       return true;
     }
 
-    match = cmd.match(listRegex);
-    if (match) {
-      callback("list-group", (match[1] && match[1].trim()) || SERVER_ALIAS);
-      return true;
+    // Invoke matched command
+    var selectedCmd = userCommandToEventsMap[match[1]];
+    var cmdParam = match[2];
+    if (selectedCmd.paramRequired && !cmdParam) {
+      return false;
+    }
+    else
+    {
+      cmdParam = cmdParam || selectedCmd.defaultParam;
     }
 
-    match = cmd.match(nickRegex);
-    if (match) {
-      callback("set-nick", match[1]);
-      return true;
-    }
-
-    match = cmd.match(switchRegex);
-    if (match) {
-      callback("switch-group", match[1]);
-      return true;
-    }
-
-    match = cmd.match(joinRegex);
-    if (match) {
-      callback("join-group", match[1]);
-      return true;
-    }
-
-    match = cmd.match(leaveRegex);
-    if (match) {
-      callback("leave-group", match[1]);
-      return true;
-    }
-
-    match = cmd.match(gifRegex);
-    if (match) {
-      giffer.search(match[1], function (url, obj) {
-        var t = cmd;
-        if (url) {
-          t = "!["+cmd+"]("+url+")";
-        }
-
-        callback("send-msg", t);
-      });
-
-      return true;
-    }
-
-    return false;
+    callback(selectedCmd.eventName, cmdParam);
+    return true;
   };
 
   var EventEmitter = function () {
@@ -177,16 +134,57 @@ window.core = (function(win, doc) {
         this.sock.send(JSON.stringify({"@": "send-raw-msg", to: to, msg: msg}));
       },
 
+      isValidCmd: function (msg) {
+        var match = msg.match(validCommandRegex);
+        if (!match) {
+          return false;
+        }
+
+        return true;
+      },
+
+      getHistory: function (grp, offset, limit) {
+        offset = offset || 0;
+        limit = limit || 50;
+        var me = this;
+        var encodedGroupName = encodeURIComponent(grp);
+        qwest.get("/chat/api/channel/"+encodedGroupName+"/message", {limit: limit, offset: offset}, {responseType: 'json'})
+             .then(function (xhr, response) {
+               me._on_group_history_recvd(grp, response);
+             })
+             .catch(function (err, xhr, response) {
+               events.fire('history-error', response);
+             });
+      },
+
       send: function (to, msg) {
         var me = this;
-        var processed = processComand(msg, function(cmd, value){
+        var processed = processComand(msg, function(cmd, cmdParam){
           if (cmd == "switch-group") {
-            me.events.fire('switch', value);
+            me.events.fire('switch', cmdParam);
             return;
           }
 
-          var m = {'@': cmd, to: to, msg: value};
-          me.sock.send(JSON.stringify(m));
+          if (cmd == "send-gif") {
+            giffer.search(cmdParam, function (url, obj) {
+              var t = msg;
+              if (url) {
+                t = "> !["+cmdParam+"]("+url+")\n\n> **GIF** "+cmdParam+"\n";
+              }
+
+              me.sock.send(JSON.stringify({"@": "send-msg", to: to, msg: t}));
+            });
+
+            return;
+          }
+
+          // Populate /leave <group-name> if <group-name> was not provided
+          // Populate /list <group-name> if <group-name> was not provided
+          if (cmd == "leave-group" || cmd == "list-group") {
+            cmdParam = cmdParam || to;
+          }
+
+          me.sock.send(JSON.stringify({'@': cmd, to: to, msg: cmdParam}));
         });
 
         if (!processed) {
@@ -203,7 +201,7 @@ window.core = (function(win, doc) {
             this.sock.close();
           }
         }catch(e){
-          console.error(e);
+          console && console.error(e);
         }
 
         this.sock = new WebSocket(this.url);
@@ -229,7 +227,7 @@ window.core = (function(win, doc) {
         try {
           data = JSON.parse(e.data);
         }catch(er){
-          console.error("Error decoding", e.data, er);
+          console && console.error("Error decoding", e.data, er);
         }
 
         if (data['@']) {
@@ -240,13 +238,13 @@ window.core = (function(win, doc) {
       _completeHandShake: function (msg) {
         if (!this.handshakeCompleted) {
           this.handshakeCompleted = true;
+          this.setNick(this.nick);
           this.events.fire('handshake', SERVER_ALIAS);
           this.events.fire('message', {
             from: SERVER_ALIAS,
             to: SERVER_ALIAS,
             msg: "```"+msg.msg+"```",
           });
-          this.setNick(this.nick);
         }
       },
 
@@ -313,17 +311,9 @@ window.core = (function(win, doc) {
           delivery_time: new Date(),
           msg: msg.from + " joined " + msg.to
         });
-        events.fire('joined', msg);
 
-        var me = this;
-        var encodedGroupName = encodeURIComponent(msg.to);
-        qwest.get("/chat/api/channel/"+encodedGroupName+"/message", null, {responseType: 'json'})
-             .then(function (xhr, response) {
-               me._on_group_history_recvd(msg.to, response);
-             })
-             .catch(function (err, xhr, response) {
-               events.fire('history-error', response);
-             });
+        events.fire('joined', msg);
+        this.getHistory(msg.to);
       },
 
       _on_group_history_recvd: function (grp, hist) {
@@ -376,7 +366,28 @@ window.core = (function(win, doc) {
       },
   };
 
+  Transport.HelpMessage = "Valid commands are: \n"+
+            "/help for this help :)\n" +
+            "/list for list of members in a group\n"+
+            "/gif <gif-keywords> to send a gif \n"+
+            "/join <group_name> to join a group (case-sensitive)\n"+
+            "/nick <new_name> for changing your nick (case-sensitive)\n"+
+            "/switch <group_name> to switch to a joined group (case-sensitive)\n";
+
   var _globalTransport = {};
+
+  var giffer = {
+    search: function (keywords, url_callback) {
+      keywords = encodeURIComponent(keywords);
+      qwest.get("/gif", {"q": keywords}, {responseType: "json"})
+           .then(function (xhr, response) {
+             url_callback(response.url, response);
+           })
+           .catch(function (e, xhr, response) {
+             url_callback(null, null);
+           });
+    }
+  };
 
   return {
     Transport: Transport,

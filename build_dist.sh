@@ -5,8 +5,7 @@ mkdir -p dist
 mkdir -p dist/static
 
 echo "Compiling server..."
-./build_raspberry.sh
-mv arm-server ./dist
+./build_server.sh
 
 echo "Packaging client assets..."
 ./compile_assets.sh

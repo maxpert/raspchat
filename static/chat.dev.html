@@ -135,7 +135,7 @@
   <template id="chat-messages">
   <div class="chat-log-container">
     <div class="chat-log">
-      <div class="chat-messages">
+      <div class="chat-messages" @scroll="onScroll">
       <div class="chat-message" v-for="m in messages">
         <chat-message :message="m" @chat-message-added="scrollToBottom"/>
       </div>
@@ -146,7 +146,7 @@
 
   <template id="chat-message">
   <div v-if="message.isMeta">
-    <pre class="meta-message">{{{message.msg}}}</pre>
+    <pre class="meta-message">{{{message.msg | escape_html}}}</pre>
   </div>
   <div class="incomingMessage code-font" v-else>
     <table width="100%" border="0" style="max-width: 100%;">
@@ -174,9 +174,19 @@
 <script src="/static/bower_components/moment/moment.js"></script>
 <script src="/static/bower_components/vue/dist/vue.js"></script>
 <script src="/static/bower_components/qwest/qwest.min.js"></script>
+<script src="/static/bower_components/he/he.js"></script>
 <script src="/static/core.js"></script>
 <script src="/static/rtc.js"></script>
 <script src="/static/peer_negotiator.js"></script>
 <script src="/static/file_transfer.js"></script>
-<script src="/static/chat.js"></script>
+
+<script src="/static/components/filters.js"></script>
+<script src="/static/components/app-bar.js"></script>
+<script src="/static/components/chat-compose.js"></script>
+<script src="/static/components/chat-log.js"></script>
+<script src="/static/components/chat-message.js"></script>
+<script src="/static/components/chrome-bar.js"></script>
+<script src="/static/components/group-list.js"></script>
+<script src="/static/components/toggle-buttons.js"></script>
+<script src="/static/components/chat.js"></script>
 </html>

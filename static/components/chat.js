@@ -6,223 +6,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 (function (vue, win, doc) {
-  var md = new markdownit("default", {
-    linkify: true,
-  });
-
-  vue.filter('markdown', function (value) {
-    return md.render(value);
-  });
-
-  vue.filter('better_date', function (value) {
-    return moment(value).calendar();
-  });
-
-  vue.filter('avatar_url', function (value) {
-    // return 'http://api.adorable.io/avatars/face/eyes6/nose7/face1/AA0000';
-    return 'http://api.adorable.io/avatars/256/zmg-' + value + '.png';
-  });
-
-  vue.component('chrome-bar', vue.extend({
-    props: ['title', 'userId'],
-    template: '#chrome-bar',
-    data: function () {
-      return {
-        hamburgerActive: false,
-      };
-    },
-    methods: {
-      hamburgerClicked: function () {
-        this.$set('hamburgerActive', !this.hamburgerActive);
-        this.$dispatch("hamburger-clicked", this.hamburgerActive);
-      }
-    }
-  }));
-
-  vue.component('chat-message', vue.extend({
-    props: ['message'],
-    template: '#chat-message',
-    ready: function () {
-      this.hookImageLoads();
-      this.$dispatch("chat-message-added", this.message);
-
-      this.$watch("message.msg", function () {
-        this.hookImageLoads();
-        this.$dispatch("chat-message-added", this.message);
-      }.bind(this));
-    },
-    methods: {
-      imageLoaded: function () {
-        var me = this;
-        me.$dispatch('chat-image-loaded');
-      },
-      hookImageLoads: function () {
-        var imgs = this.$el.parentNode.querySelectorAll("img");
-        for(var i in imgs){
-          var img = imgs[i];
-          if (img.addEventListener){
-            img.removeEventListener("load", this.imageLoaded);
-            img.addEventListener("load", this.imageLoaded, false);
-          }
-        }
-      }
-    }
-  }));
-
-  vue.component('chat-log', vue.extend({
-    props: ['messages'],
-    template: '#chat-messages',
-    ready: function () {
-      this.$el.addEventListener("click", function (event) {
-        event = event || win.event;
-
-        if (event.target.tagName == "A") {
-          win.open(event.target.href, "_blank");
-          event.preventDefault();
-          event.stopPropagation();
-        }
-      }, false);
-
-      this.$on('chat-image-loaded', this.scrollToBottom);
-    },
-    methods: {
-      scrollToBottom: function () {
-        this.cont = this.cont || this.$el.querySelector(".chat-messages");
-        this.cont.scrollTop = this.cont.scrollHeight;
-      },
-    },
-  }));
-
-  vue.component('chat-compose', vue.extend({
-    template: '#chat-compose',
-    data: function () {
-      return {
-        message: '',
-      };
-    },
-    methods: {
-      enterPressed: function (e) {
-        var msg = this.message;
-        if (e.shiftKey){
-          this.$set('message', msg+'\n');
-          return;
-        }
-
-        this.$set('message', '');
-        this.$dispatch('send-message', msg);
-        this.$el.querySelector(".msg").focus();
-      },
-
-      tabPressed: function () {
-        var msg = this.$get('message');
-        this.$set('message', msg+'  ');
-      },
-    },
-  }));
-
-  vue.component('app-bar', vue.extend({
-    template: '#app-bar',
-    data: function () {
-      return {};
-    },
-    methods: {
-    }
-  }));
-
-  vue.component('groups-list', vue.extend({
-    template: '#groups-list',
-    data: function () {
-      return {
-        groups: [],
-        selected: "",
-      };
-    },
-    ready: function () {
-      this.groupsInfo = {};
-      this.$on("group_joined", this.groupJoined);
-      this.$on("group_switched", this.groupSwitch);
-      this.$on("group_left", this.groupLeft);
-      this.$on("message_new", this.newMessage)
-    },
-    methods: {
-      selectGroup: function (id) {
-        this._setUnread(id, 0);
-        this.$set("selected", id);
-        this.$dispatch("switch", id);
-      },
-
-      leaveGroup: function (id) {
-        this.$dispatch("leave", id);
-      },
-
-      groupSwitch: function (group) {
-        this.selectGroup(group);
-      },
-
-      groupJoined: function (group) {
-        var groupInfo = this.groupsInfo[group] = this.groupsInfo[group] || {name: group, unread: 0, index: this.groups.length};
-        this.groups.push(groupInfo);
-      },
-
-      groupLeft: function (group) {
-        var g = this.groupsInfo[group] || {index: -1};
-        if (g.index != -1){
-          this.groups.splice(g.index, 1);
-        }
-      },
-
-      newMessage: function (msg) {
-        if (this.selected == msg.to || !this.groupsInfo[msg.to]) {
-          return true;
-        }
-
-        this._setUnread(msg.to, this._getUnread(msg.to) + 1);
-        return true;
-      },
-
-      _getUnread: function (g) {
-        return (this.groupsInfo[g] && this.groupsInfo[g].unread) || 0;
-      },
-
-      _setUnread: function (g, count) {
-        vue.set(this.groupsInfo[g], "unread", count);
-        return true;
-      }
-    }
-  }));
-
-  var ToggleButtonMixin = {
-    data: function () {
-      return {enabled: false};
-    },
-    methods: {
-      toggle: function () {
-        this.$set("enabled", !this.$get("enabled"));
-      }
-    }
-  };
-
-  vue.component('sound-notification-button', vue.extend({
-    template: '#sound-notification-button',
-    mixins: [ToggleButtonMixin],
-    props: ["defaultEnabled", "ignoreFor"],
-    ready: function () {
-      if (this.defaultEnabled){
-        this.$set("enabled", true);
-      }
-
-      this.$on("message_new", this.onNotification);
-    },
-    methods: {
-      onNotification: function (msg) {
-        if (this.enabled && msg.from != this.ignoreFor){
-          var snd = new Audio("/static/ping.mp3");
-          snd.play();
-        }
-      }
-    }
-  }));
-
   var groupsLog = {};
   var vueApp = new vue({
     el: '#root',
@@ -277,21 +60,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
       sendMessage: function (msg) {
         // Don't let user send message on default group
-        if (this.currentGroup.name == this.defaultGroup && msg[0] != "/"){
-          this._appendMetaMessage(
-            this.defaultGroup,
-            "You can only send a command here ...\n"+
-            "Valid commands are: \n"+
-            "/list for list of members in a group\n"+
-            "/join <group_name> to join a group (case-sensitive)\n"+
-            "/nick <new_name> for changing your nick (case-sensitive)\n"+
-            "/switch <group_name> to switch to a joined group (case-sensitive)\n"
-          );
-          return;
-        }
-
-        if (msg.match(/^\/list$/i)) {
-          this.transport.send(this.currentGroup.name, "/list "+this.currentGroup.name);
+        if (msg[0] == '/' && (!this.transport.isValidCmd(msg) || msg.toLowerCase().startsWith("/help")))
+        {
+          this._appendMetaMessage(this.currentGroup.name, core.Transport.HelpMessage);
           return;
         }
 
@@ -319,7 +90,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         this._appendMessage({
           to: group,
           from: this.defaultGroup,
-          msg: "Group members for **"+group+"**\n\n - " + list.join("\n - "),
+          msg: "Channel members for **"+group+"**\n\n - " + list.join("\n - "),
           delivery_time: new Date()
         });
       },
@@ -386,25 +157,31 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           return true;
         }
 
+        this.$broadcast('group-switching', group);
         this.$set('currentGroup.name', group);
         this.$set('currentGroup.messages', groupsLog[group]);
+        this.$broadcast('group-switched', group);
         return false;
       },
 
       onHistoryRecv: function (historyObj) {
         var msgs = historyObj.messages;
+
+        this._clearGroupLogs();
         for (var i in msgs) {
           var m = msgs[i];
           if (!m.meta) {
             this._appendMessage(m, true);
           } else {
-            switch (m.meta['action']) {
+            switch (m.meta.action) {
               case 'joined':
                 this.onJoin(m);
                 break;
             }
           }
         }
+
+        this.$broadcast('history-added', historyObj.id);
       },
 
       _appendMessage: function (m, silent) {
@@ -422,6 +199,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           groupLog.push(m);
         }
 
+        this._limitGroupHistory(m.to);
+
         if (silent) {
           return;
         }
@@ -438,8 +217,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
 
         groupLog.push({isMeta: true, msg: msg});
-        if (groupLog.length > 100) {
-          groupLog.splice(0, 100 - groupLog.length);
+        this._limitGroupHistory(group);
+      },
+
+      _limitGroupHistory: function (group, limit) {
+        limit = limit || 100;
+        var log = this._getOrCreateGroupLog(group);
+
+        if (log.length > limit) {
+          log.splice(0, log.length - limit);
         }
       },
 
@@ -450,6 +236,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
 
         return groupsLog[g];
+      },
+
+      _clearGroupLogs: function (g) {
+        var logs = this._getGroupLog(g);
+        if (logs) logs = [];
       },
 
       _getGroupLog: function (g) {
