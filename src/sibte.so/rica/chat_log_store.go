@@ -60,14 +60,14 @@ func (c *ChatLogStore) Save(group string, id uint64, msg IEventMessage) error {
 	return nil
 }
 
-func (c *ChatLogStore) GetMessagesFor(group string, offset uint, limit uint) ([]IEventMessage, error) {
+func (c *ChatLogStore) GetMessagesFor(group string, start_id string, offset uint, limit uint) ([]IEventMessage, error) {
 	tx, err := c.store.Begin(false)
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback()
 
-	ret := make([]IEventMessage, 0)
+	var ret []IEventMessage
 	bkt := tx.Bucket(c.bucket)
 
 	if bkt == nil {
@@ -79,10 +79,14 @@ func (c *ChatLogStore) GetMessagesFor(group string, offset uint, limit uint) ([]
 		return ret, nil
 	}
 
-	maxIdBytes := c.idToBytes(^uint64(0))
-	endBytesId := append([]byte(group), maxIdBytes...)
+	maxIDBytes := c.idToBytes(^uint64(0))
+	endBytesID := append([]byte(group), maxIDBytes...)
+	if start_id != "" {
+		endBytesID = []byte(start_id)
+	}
+
 	i := uint(0)
-	for k, v := csr.Seek(endBytesId); true; k, v = csr.Prev() {
+	for k, v := csr.Seek(endBytesID); true; k, v = csr.Prev() {
 		i++
 
 		if k == nil || bytes.HasPrefix(k, []byte(group)) == false {

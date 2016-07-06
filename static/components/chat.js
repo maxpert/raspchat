@@ -28,7 +28,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       this.transport.events.on('disconnected', this.onDisconnected);
       this.transport.events.on('handshake', this.onHandshaked);
 
-      this.transport.events.on("raw-message", this.onRawMessage);
+      this.transport.events.on('raw-message', this.onRawMessage);
       this.transport.events.on('message', this.onMessage);
       this.transport.events.on('joined', this.onJoin);
       this.transport.events.on('leave', this.onLeave);
@@ -201,11 +201,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
         this._limitGroupHistory(m.to);
 
+        // no need
         if (silent) {
           return;
         }
 
-        this.$broadcast('message_new', m);
+        this.$broadcast('message_new', m, {noSound: m.to == this.defaultGroup});
       },
 
       _appendMetaMessage: function (group, msg) {
@@ -240,7 +241,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
       _clearGroupLogs: function (g) {
         var logs = this._getGroupLog(g);
-        if (logs) logs = [];
+        if (logs) logs.splice(0, logs.length);
       },
 
       _getGroupLog: function (g) {

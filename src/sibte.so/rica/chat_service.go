@@ -139,11 +139,12 @@ func (c *ChatService) onPushPost(w http.ResponseWriter, req *http.Request, _ htt
 
 func (c *ChatService) onGetChatHistory(w http.ResponseWriter, req *http.Request, p httprouter.Params) {
 	log.Println("Get chat history...")
-	groupId := p.ByName("id")
+	groupID := p.ByName("id")
 
 	queryParams := req.URL.Query()
 	var offset uint = 0
 	var limit uint = 20
+	startID := queryParams.Get("start_id")
 
 	if o, err := strconv.ParseUint(queryParams.Get("offset"), 10, 32); err == nil {
 		offset = uint(o)
@@ -154,13 +155,14 @@ func (c *ChatService) onGetChatHistory(w http.ResponseWriter, req *http.Request,
 	}
 
 	log.Println("Limit =", limit, "Offset =", offset)
-	log, err := c.chatStore.GetMessagesFor(groupId, offset, limit)
+	log, err := c.chatStore.GetMessagesFor(groupID, startID, offset, limit)
 	if err == nil {
 		response := make(map[string]interface{})
 		response["limit"] = limit
 		response["offset"] = offset
 		response["messages"] = log
-		response["id"] = groupId
+		response["start_id"] = startID
+		response["id"] = groupID
 		json.NewEncoder(w).Encode(response)
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)

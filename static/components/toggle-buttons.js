@@ -29,8 +29,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       this.$on("message_new", this.onNotification);
     },
     methods: {
-      onNotification: function (msg) {
-        if (this.enabled && msg.from != this.ignoreFor){
+      onNotification: function (msg, metaInfo) {
+        if (this.enabled && !metaInfo.noSound && msg.from != this.ignoreFor){
           var snd = new Audio("/static/ping.mp3");
           snd.play();
         }
