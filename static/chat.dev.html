@@ -23,12 +23,14 @@
   <meta name="msapplication-TileImage" content="/static/favicon/ms-icon-144x144.png" />
   <meta name="theme-color" content="#00897B" />
   <meta charset="utf-8" />
-  <meta name="robots" content="noindex"/>
+  <meta name="robots" content="noindex" />
+  <meta name="google-signin-client_id" content="771970622775-pvkunch0rhec1gd6bddsu8mcnl7bbvlo.apps.googleusercontent.com" />
 
   <link href='//fonts.googleapis.com/css?family=Roboto+Mono' rel='stylesheet' type='text/css' />
   <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" />
   <link href='./default.css' rel='stylesheet' type='text/css' />
-  <script src="./emojify.min.js"></script>
+  <script src="./emojify.min.js" async defer></script>
+  <script src="//apis.google.com/js/platform.js"></script>
 
   <title>Raspchat</title>
 </head>
@@ -61,13 +63,23 @@
         </div>
       </slot>
     </template>
-    <form class="login-form" @submit.stop.prevent="connect" v-else>
-      <center>
-        <input type="text" placeholder="Enter a nick" v-model="nick" />
-        <button type="submit">Connect</button>
-      </center>
-    </form>
+    <login-form @login="onSignedIn" v-else/>
   </div>
+
+  <template id="login-form">
+    <center style="margin: 10em 0 0 0;" v-show="isReady">
+      <div v-if="isSignedIn">
+        <form class="login-form" @submit.stop.prevent="signin">
+          Nick:
+          <input type="text" placeholder="Nick" v-model="nick" />
+          <input type="submit" value="Connect" :disabled="!isValidNick" />
+        </form>
+      </div>
+      <div v-else>
+        <google-sign-in @success="googleSignInSuccess" />
+      </div>
+    </center>
+  </template>
 
   <template id="chat-compose">
     <div class="bottomBar">
@@ -189,5 +201,6 @@
 <script src="/static/components/chrome-bar.js"></script>
 <script src="/static/components/group-list.js"></script>
 <script src="/static/components/toggle-buttons.js"></script>
+<script src="/static/components/sign-in.js"></script>
 <script src="/static/components/chat.js"></script>
 </html>

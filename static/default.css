@@ -38,7 +38,11 @@ body {
 .login-form {
   display: block;
   clear: both;
-  color: white;
+  font-family: 'Roboto Mono', "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
+}
+
+.login-form * {
+  font-family: 'Roboto Mono', "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
 }
 
 .chrome-bar {

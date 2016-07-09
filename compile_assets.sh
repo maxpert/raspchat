@@ -26,4 +26,5 @@ uglifyjs --compress --mangle --output static/app.min.js -- \
   static/components/chrome-bar.js \
   static/components/group-list.js \
   static/components/toggle-buttons.js \
+  static/components/sign-in.js \
   static/components/chat.js

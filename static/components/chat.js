@@ -52,6 +52,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     },
 
     methods: {
+      onSignedIn: function (nick) {
+        this.$set('nick', nick);
+        this.connect();
+      },
+
       connect: function () {
         this.$set("isConnecting", true);
         this.$set("isConnected", true);

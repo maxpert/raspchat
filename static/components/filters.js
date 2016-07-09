@@ -15,6 +15,10 @@
     return he.encode(value);
   });
 
+  vue.filter('falsy_to_block_display', function (value) {
+    return value ? 'block' : 'none';
+  });
+
 
   var fragmentNode = document.createDocumentFragment();
   var virtualDiv = document.createElement('div');
