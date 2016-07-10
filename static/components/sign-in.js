@@ -5,7 +5,8 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-(function (vue, win, doc) {
+(function (vue, win, doc, raspconfig) {
+  var signInConfig = raspconfig.externalSignIn || {};
 
   var InvalidNickCharactersRegex = /[^a-zA-Z0-9]+/ig
 
@@ -13,18 +14,42 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     template: '<div id="google-sign-in"></div>',
 
     ready: function () {
-      gapi.signin2.render('google-sign-in', {
-       'scope': 'profile email',
-       'width': 240,
-       'height': 50,
-       'longtitle': true,
-       'theme': 'light',
-       'onsuccess': this.onSuccess,
-       'onfailure': this.onFailure
-     });
+      if (!signInConfig.googleClientId) {
+        return;
+      }
+
+      var head = doc.querySelector('head');
+      var meta = doc.createElement('meta');
+      meta.name = 'google-signin-client_id';
+      meta.content = signInConfig.googleClientId;
+      head.appendChild(meta);
+      vue.nextTick(this.loadScript);
    },
 
    methods: {
+     loadScript: function () {
+       var funcName = '__google_sign_in_'+(new Date().getTime());
+       var me = this;
+       win[funcName] = this.scriptLoaded;
+       var head = doc.querySelector('head');
+       var script = doc.createElement('script');
+       script.type='text/javascript';
+       script.src='//apis.google.com/js/platform.js?onload='+funcName;
+       head.appendChild(script);
+     },
+
+     scriptLoaded: function () {
+       gapi.signin2.render('google-sign-in', {
+        'scope': 'profile email',
+        'width': 240,
+        'height': 50,
+        'longtitle': true,
+        'theme': 'light',
+        'onsuccess': this.onSuccess,
+        'onfailure': this.onFailure
+      });
+     },
+
      onSuccess: function (user) {
        var profile = user.getBasicProfile();
        var userId = (profile.getEmail().split("@"))[0];
@@ -53,6 +78,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     ready: function () {
       this.$set('isReady', true);
       this.$watch('nick', this.onNickChanged);
+      if (!raspconfig.externalSignIn) {
+        this.$set('isSignedIn', true);
+      }
     },
 
     methods: {
@@ -85,4 +113,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       }
     }
   });
-})(Vue, window, window.document);
+})(Vue, window, window.document, window.RaspConfig);

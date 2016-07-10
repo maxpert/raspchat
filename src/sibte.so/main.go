@@ -8,16 +8,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/fvbock/endless"
 	"github.com/julienschmidt/httprouter"
-	"gopkg.in/natefinch/lumberjack.v2"
 
 	"sibte.so/rica"
 )
@@ -43,6 +46,32 @@ func clearCache(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Fprint(w, "Done")
 }
 
+func getChatConfig(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	appConfig := rica.CurrentAppConfig
+	isJs := false
+
+	if strings.HasSuffix(params.ByName("type"), ".js") {
+		isJs = true
+	}
+
+	if isJs {
+		w.Header().Add("Content-Type", "text/javascript")
+	} else {
+		w.Header().Add("Content-Type", "application/json")
+	}
+
+	config := make(map[string]interface{})
+	config["webSocketConnectionUri"] = appConfig.WebSocketUrl
+	config["webSocketSecureConnectionUri"] = appConfig.WebSocketSecureUrl
+	config["externalSignIn"] = appConfig.ExternalSignIn
+
+	if isJs {
+		fmt.Fprint(w, "window.RaspConfig=")
+	}
+
+	json.NewEncoder(w).Encode(config)
+}
+
 var _groupInfoManager = rica.NewInMemoryGroupInfo()
 var _nickRegistry = rica.NewNickRegistry()
 
@@ -65,6 +94,7 @@ func _installHTTPRoutes(mux *http.ServeMux) (err error) {
 	err = nil
 	router := httprouter.New()
 	router.GET("/", index)
+	router.GET("/config/:type", getChatConfig)
 	router.GET("/gif", rica.FindRightGif)
 	router.GET("/_clear", clearCache)
 	router.ServeFiles("/static/*filepath", http.Dir("./static"))

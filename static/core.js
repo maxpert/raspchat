@@ -37,7 +37,7 @@ window.$mix = function (){
     return ret;
 };
 
-window.core = (function(win, doc) {
+window.core = (function(win, doc, raspconfig) {
   var SERVER_ALIAS = 'SERVER';
 
   var validCommandRegex = /^\/(nick|gif|join|leave|list|switch)\s*(.*)$/i;
@@ -74,6 +74,30 @@ window.core = (function(win, doc) {
 
     callback(selectedCmd.eventName, cmdParam);
     return true;
+  };
+
+  var getWebSocketConnectionUri = function () {
+    var loc = win.location;
+    var isSecure = loc.protocol.toLowerCase().endsWith("s:");
+    var wsUri = raspconfig && raspconfig.webSocketConnectionUri;
+    var wssUri = raspconfig && raspconfig.webSocketSecureConnectionUri;
+    var templateString = (isSecure ? wssUri : wsUri) || "{protocol}//{host}/chat";
+    var resultString = ""+templateString;
+    var replacableHrefProperties = {
+      "host": "{host}",
+      "port": "{port}",
+      "hostname": "{hostname}",
+      "pathname": "{path}"
+    };
+    for (var property in replacableHrefProperties) {
+      var placeHolder = replacableHrefProperties[property];
+      if (resultString.indexOf(placeHolder) > -1) {
+        resultString = resultString.replace(placeHolder, ""+loc[property]);
+      }
+    }
+
+    resultString.replace("{protocol}", isSecure ? "wss:" : "ws:");
+    return resultString;
   };
 
   var EventEmitter = function () {
@@ -117,7 +141,7 @@ window.core = (function(win, doc) {
     this.events = new EventEmitter();
     this.sock = null;
     this.handshakeCompleted = false;
-    this.url = url || ('ws://'+win.location.host+'/chat');
+    this.url = url || getWebSocketConnectionUri();
   };
 
   Transport.prototype = {
@@ -397,4 +421,4 @@ window.core = (function(win, doc) {
       return _globalTransport[name];
     },
   };
-})(window, window.document);
+})(window, window.document, window.RaspConfig);

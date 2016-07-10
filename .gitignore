@@ -32,4 +32,5 @@ src/github.com/
 src/gopkg.in/
 src/golang.org/
 src/sourcegraph.com/
+src/honnef.co/
 rica.config.*.json

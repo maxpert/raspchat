@@ -4,5 +4,8 @@
   "db_path": "../rica_db",
   "gcm_token": "",
   "allowed_origins": [],
+  "websocket_url": "ws://{host}/chat",
+  "websocketsecure_url": "wss://{host}/chat",
+  "external_sign_in": null,
   "allow_hot_reboot": true
 }
