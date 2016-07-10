@@ -34,7 +34,7 @@
   });
 
   vue.filter('avatar_url', function (value) {
-    // return 'http://api.adorable.io/avatars/face/eyes6/nose7/face1/AA0000';
-    return 'http://api.adorable.io/avatars/256/zmg-' + value + '.png';
+    // return '//api.adorable.io/avatars/face/eyes6/nose7/face1/AA0000';
+    return '//api.adorable.io/avatars/256/zmg-' + value + '.png';
   });
 })(Vue, window, window.document);
