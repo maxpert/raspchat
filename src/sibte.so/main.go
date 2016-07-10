@@ -17,10 +17,9 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/natefinch/lumberjack.v2"
-
 	"github.com/fvbock/endless"
 	"github.com/julienschmidt/httprouter"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"sibte.so/rica"
 )
@@ -128,15 +127,11 @@ func main() {
 	_installHTTPRoutes(mux)
 
 	endless.DefaultHammerTime = 10 * time.Second
-	if conf.AllowHotRestart == false {
-		server := &http.Server{
-			Addr:    conf.BindAddress,
-			Handler: mux,
-		}
-
-		log.Println("Starting server...", conf.BindAddress)
-		log.Panic(server.ListenAndServe())
-	} else {
-		endless.ListenAndServe(conf.BindAddress, mux)
+	server := &http.Server{
+		Addr:    conf.BindAddress,
+		Handler: mux,
 	}
+
+	log.Println("Starting server...", conf.BindAddress)
+	log.Panic(server.ListenAndServe())
 }
