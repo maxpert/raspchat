@@ -15,7 +15,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/natefinch/lumberjack.v2"
