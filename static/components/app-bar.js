@@ -8,8 +8,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 (function (vue, win, doc) {
   vue.component('app-bar', vue.extend({
     template: '#app-bar',
+    props: ['userId'],
     data: function () {
       return {};
+    },
+    ready: function () {
     },
     methods: {
     }

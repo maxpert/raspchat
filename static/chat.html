@@ -28,6 +28,7 @@
   <link href='//fonts.googleapis.com/css?family=Roboto+Mono' rel='stylesheet' type='text/css' />
   <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" />
   <link href='./default.css' rel='stylesheet' type='text/css' />
+  <script type='text/javascript' src="./notification.min.js" async defer></script>
   <script type='text/javascript' src="./emojify.min.js" async defer></script>
   <script type='text/javascript' src="/config/client.js"></script>
 
@@ -39,7 +40,7 @@
       <slot name="windowBox">
         <div class="chrome-body">
           <div class="chrome-body-container" :class="{'show-appbar': showAppBar}">
-            <slot name="appBar"><app-bar :show="showAppBar"/></slot>
+            <slot name="appBar"><app-bar :show="showAppBar" :user-id="nick"/></slot>
 
             <slot name="chatBox">
               <div class="chat-box">
@@ -104,7 +105,8 @@
         <div style="margin: 5px;">Settings</div>
         <hr style="margin: 5px 0;"/>
         <div class="additional-buttons">
-          <sound-notification-button default-enabled="{{true}}" :ignore-for="userId"/>
+          <slot><toast-notification-button :ignore-for="userId"/></slot>
+          <slot><sound-notification-button default-enabled="{{true}}" :ignore-for="userId" /></slot>
         </div>
 
       </div>
@@ -115,6 +117,13 @@
     <a href="#" class="inline-button code-font" @click.stop.prevent="toggle">
       <i class="fa fa-bell" v-if="enabled"></i>
       <i class="fa fa-bell-o" v-else></i>
+    </a>
+  </template>
+
+  <template id="toast-notification-button">
+    <a href="#" class="inline-button code-font" @click.stop.prevent="toggle">
+      <i class="fa fa-comment" v-if="enabled"></i>
+      <i class="fa fa-comment-o" v-else></i>
     </a>
   </template>
 

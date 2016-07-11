@@ -211,7 +211,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           return;
         }
 
-        this.$broadcast('message_new', m, {noSound: m.to == this.defaultGroup});
+        this.$broadcast('message_new', m, {noNotification: m.to == this.defaultGroup});
       },
 
       _appendMetaMessage: function (group, msg) {
