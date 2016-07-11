@@ -140,8 +140,6 @@ func (h *ChatHandler) handleMessage(msg interface{}) {
 		h.handleStringMessage(v)
 	case *RecipientContentMessage:
 		h.onRecipientContentMessage(v)
-	default:
-		log.Println("Unknown", v)
 	}
 }
 
