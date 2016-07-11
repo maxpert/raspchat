@@ -74,6 +74,8 @@ func messageOf(event string) BaseMessage {
 }
 
 func (h *ChatHandler) socketReaderLoop(socketChannel chan interface{}, errorChannel chan error) {
+	defer h.recoverFromErrors()
+
 	for {
 		msg, err := h.transport.ReadMessage()
 
