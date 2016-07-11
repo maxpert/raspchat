@@ -74,7 +74,7 @@ func NewGCMTransport(client string, worker *GCMWorker) *GCMTransport {
 
 func (h *GCMTransport) ReadMessage() (IEventMessage, error) {
 	str := <-h.request
-	return pDecodeMessage([]byte(str))
+	return transportDecodeMessage([]byte(str))
 }
 
 func (h *GCMTransport) WriteMessage(id uint64, msg IEventMessage) error {

@@ -29,8 +29,6 @@ func (h *WebsocketMessageTransport) ReadMessage() (IEventMessage, error) {
 	msgType, msg, err := h.connection.ReadMessage()
 	h.connectionReadLock.Unlock()
 
-	log.Println("Message Type", msgType, "Message", string(msg), "Error", err)
-
 	if err != nil {
 		return nil, err
 	}
@@ -39,12 +37,13 @@ func (h *WebsocketMessageTransport) ReadMessage() (IEventMessage, error) {
 		return nil, errors.New(ricaEvents.ERROR_INVALID_MSGTYPE_ERR)
 	}
 
-	if jsonMsg, e := pDecodeMessage(msg); e == nil {
+	var e error
+	if jsonMsg, e := transportDecodeMessage(msg); e == nil {
 		return jsonMsg, nil
-	} else {
-		log.Println("Invalid message", e)
 	}
 
+	log.Println("Invalid message", e)
+	log.Println("Message Type", msgType, "Message", string(msg), "Error", err)
 	return nil, err
 }
 
@@ -59,9 +58,7 @@ func (h *WebsocketMessageTransport) writeMessageOnSocket(msg IEventMessage) erro
 }
 
 func (h *WebsocketMessageTransport) FlushBatch(id uint64) {
-	log.Println("Websocket published message id", id)
 }
 
 func (h *WebsocketMessageTransport) BeginBatch(id uint64, msg IEventMessage) {
-	log.Println("Websocket published message id", id)
 }

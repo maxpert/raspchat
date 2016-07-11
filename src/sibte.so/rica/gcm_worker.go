@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"sync"
 )
@@ -47,7 +46,6 @@ func (g *GCMWorker) Enqueue(to string, id uint64, message interface{}) {
 	var work *GCMDeliveryWork = nil
 	ok := false
 	if work, ok = g.deliveryMap[id]; !ok {
-		log.Println("Creating new delivery work for id", id)
 		work = &GCMDeliveryWork{
 			DeliveryIds: []string{},
 			Message:     message,
@@ -117,7 +115,6 @@ func (g *GCMWorker) sendPushRequest(registrationIds []string, body []byte) error
 
 	resp, err := client.Do(req)
 
-	log.Println("Push response ==> ", resp.Status, err)
 	if err != nil {
 		return err
 	}

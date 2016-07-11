@@ -74,16 +74,12 @@ func (c *ChatService) WithRESTRoutes(prefix string) http.Handler {
 }
 
 func (c *ChatService) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	log.Println("Handling", req.URL.Path)
 	if strings.HasPrefix(req.URL.Path, "/chat/api") {
-		log.Println("Handling HTTP API call")
 		c.httpMux.ServeHTTP(w, req)
 		return
 	}
 
-	if c.upgradeConnectionToWebSocket(w, req) {
-		log.Println("Connection upgraded to WS")
-	}
+	c.upgradeConnectionToWebSocket(w, req)
 }
 
 func (c *ChatService) httpRoutes(prefix string, router *httprouter.Router) http.Handler {
@@ -97,10 +93,8 @@ func (c *ChatService) httpRoutes(prefix string, router *httprouter.Router) http.
 }
 
 func (c *ChatService) upgradeConnectionToWebSocket(w http.ResponseWriter, req *http.Request) bool {
-	log.Println("New websocket connection request")
 	conn, err := c.upgrader.Upgrade(w, req, nil)
 	if err == nil {
-		log.Println("Socket upgraded!!!")
 		transporter := NewWebsocketMessageTransport(conn)
 		handler := NewChatHandler(c.nickRegistry, c.groupInfo, transporter, c.chatStore)
 		go handler.Loop()
@@ -126,7 +120,6 @@ func (c *ChatService) onPushSubscribe(w http.ResponseWriter, req *http.Request, 
 
 func (c *ChatService) onPushPost(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
 	token := req.FormValue("gcm_sub_token")
-	log.Println("Received new POST message request...", req.Method, " => ", token != "")
 	t := NewGCMTransport(token, c.gcmWorker)
 	if msg, err := ioutil.ReadAll(req.Body); req.Method == "POST" && err == nil {
 		t.PostMessage(string(msg))
@@ -138,7 +131,6 @@ func (c *ChatService) onPushPost(w http.ResponseWriter, req *http.Request, _ htt
 }
 
 func (c *ChatService) onGetChatHistory(w http.ResponseWriter, req *http.Request, p httprouter.Params) {
-	log.Println("Get chat history...")
 	groupID := p.ByName("id")
 
 	queryParams := req.URL.Query()
@@ -154,13 +146,12 @@ func (c *ChatService) onGetChatHistory(w http.ResponseWriter, req *http.Request,
 		limit = uint(l)
 	}
 
-	log.Println("Limit =", limit, "Offset =", offset)
-	log, err := c.chatStore.GetMessagesFor(groupID, startID, offset, limit)
+	chatLog, err := c.chatStore.GetMessagesFor(groupID, startID, offset, limit)
 	if err == nil {
 		response := make(map[string]interface{})
 		response["limit"] = limit
 		response["offset"] = offset
-		response["messages"] = log
+		response["messages"] = chatLog
 		response["start_id"] = startID
 		response["id"] = groupID
 		json.NewEncoder(w).Encode(response)

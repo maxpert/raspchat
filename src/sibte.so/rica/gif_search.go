@@ -19,7 +19,6 @@ var kvStore *atomic_store
 
 func FindRightGif(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	q := strings.ToLower(r.FormValue("q"))
-	log.Println("GIF Searching...", q)
 
 	if cache_val, ok := kvStore.get(q); ok {
 		w.Write([]byte(cache_val))

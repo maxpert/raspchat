@@ -36,7 +36,6 @@ var pHashId *hashids.HashID = hashids.New()
 var pSnowFlake *SnowFlake = DefaultSnowFlake()
 
 func NewChatHandler(nickReg *NickRegistry, groupInfoMan GroupInfoManager, trans IMessageTransport, store *ChatLogStore) *ChatHandler {
-	log.Println("New chat handler")
 	uid, _ := pHashId.Encode([]int{
 		int(rand.Int31n(1000)),
 		int(rand.Int31n(1000)),
@@ -74,7 +73,7 @@ func messageOf(event string) BaseMessage {
 	}
 }
 
-func (h *ChatHandler) socketLoop(socketChannel chan interface{}, errorChannel chan error) {
+func (h *ChatHandler) socketReaderLoop(socketChannel chan interface{}, errorChannel chan error) {
 	for {
 		msg, err := h.transport.ReadMessage()
 
@@ -136,13 +135,10 @@ func (h *ChatHandler) handleInternalMessage(msg interface{}) {
 func (h *ChatHandler) handleMessage(msg interface{}) {
 	switch v := msg.(type) {
 	case *ChatMessage:
-		log.Println("Chat message", v.To)
 		h.onChatMessage(v)
 	case *StringMessage:
-		log.Println("String message", v.Message)
 		h.handleStringMessage(v)
 	case *RecipientContentMessage:
-		log.Println("Recipient message", v)
 		h.onRecipientContentMessage(v)
 	default:
 		log.Println("Unknown", v)
@@ -165,7 +161,6 @@ func (h *ChatHandler) handleStringMessage(msg *StringMessage) {
 func (h *ChatHandler) onRecipientContentMessage(msg *RecipientContentMessage) {
 	switch msg.EventName {
 	case ricaEvents.SEND_RAW_MSG_COMMAND:
-		log.Println("On send raw message")
 		h.sendTo(ricaEvents.FROM_SERVER, msg.To, msg.Message)
 	}
 }
@@ -173,7 +168,6 @@ func (h *ChatHandler) onRecipientContentMessage(msg *RecipientContentMessage) {
 func (h *ChatHandler) onChatMessage(msg *ChatMessage) {
 	strMsg := strings.TrimSpace(msg.Message)
 	if len(strMsg) <= 0 || len(strMsg) > 512 {
-		log.Println("Ignoring message... due to length volation")
 		return
 	}
 
@@ -253,7 +247,6 @@ func (h *ChatHandler) onSetNick(msg *StringMessage) {
 	timer := StartStopWatch("onSetNick")
 	defer timer.LogDuration()
 
-	log.Println("Setting nick")
 	old_nick := h.nick
 	new_nick, err := h.nickRegistry.SetNick(h.id, msg.Message)
 
@@ -268,7 +261,6 @@ func (h *ChatHandler) onSetNick(msg *StringMessage) {
 
 		if err == nil {
 			h.publishOnJoinedChannels(nickMsg.EventName, nickMsg)
-			log.Println("On set nick", err)
 			return
 		}
 	}
@@ -303,7 +295,6 @@ func (h *ChatHandler) publish(groupName string, msg IEventMessage) {
 	h.chatStore.Save(groupName, msg.Identity(), msg)
 
 	groupMembers := h.groupInfoManager.GetUsers(groupName)
-	log.Println("Publish for member count:", len(groupMembers))
 	for _, id := range groupMembers {
 		h.sendTo(groupName, id, msg)
 	}
@@ -312,10 +303,8 @@ func (h *ChatHandler) publish(groupName string, msg IEventMessage) {
 }
 
 func (h *ChatHandler) sendTo(groupName, name string, msg interface{}) {
-	log.Println("sendTo", groupName, name)
 	tmp := h.groupInfoManager.GetUserInfoObject(groupName, name)
 	if tmp == nil {
-		log.Println("Skipping publish to", name)
 		return
 	}
 
@@ -337,7 +326,7 @@ func (h *ChatHandler) Loop() {
 	errorChannel := make(chan error)
 	sockChannel := make(chan interface{}, 32)
 
-	go h.socketLoop(sockChannel, errorChannel)
+	go h.socketReaderLoop(sockChannel, errorChannel)
 	defer h.recoverFromErrors()
 	defer func() {
 		close(errorChannel)

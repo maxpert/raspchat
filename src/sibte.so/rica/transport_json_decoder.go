@@ -3,7 +3,6 @@ package rica
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"reflect"
 
 	"sibte.so/rica/consts"
@@ -24,11 +23,10 @@ func initChatHandlerTypes() {
 	}
 }
 
-func pDecodeMessage(msg []byte) (ret IEventMessage, rErr error) {
+func transportDecodeMessage(msg []byte) (ret IEventMessage, rErr error) {
 	eventMsg := &BaseMessage{}
 	rErr = json.Unmarshal(msg, eventMsg)
 	if rErr != nil {
-		log.Println("Unable to decode message type from msg", string(msg))
 		ret = nil
 		return
 	}
@@ -41,7 +39,6 @@ func pDecodeMessage(msg []byte) (ret IEventMessage, rErr error) {
 		return
 	}
 
-	log.Println("Deserializing ", mType.Name())
 	ret = reflect.New(mType).Interface().(IEventMessage)
 	rErr = json.Unmarshal(msg, ret)
 	return

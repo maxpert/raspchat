@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/boltdb/bolt"
 )
@@ -109,7 +108,6 @@ func (c *ChatLogStore) GetMessagesFor(group string, start_id string, offset uint
 		ret = append(ret, msg)
 	}
 
-	log.Println("Chat log store conversations ->", len(ret))
 	return ret, nil
 }
 
