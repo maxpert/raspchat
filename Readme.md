@@ -7,7 +7,7 @@ For compiling you need:
  * Go 1.5+
  * Node 5+ (with npm)
 
-Once you have installed both just cd to directory and run ```./get_dependencies.sh && ./build_dist.sh``` (creates a dist folder). Project can run on vitally any machine go can cross compile to.
+Once you have installed both just cd to directory and run ```./get_dependencies.sh && ./build_dist.sh``` (creates a dist folder). Project can run on almost any machine that go can cross compile to.
 
 # Demo
 
