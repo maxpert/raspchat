@@ -17,7 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fvbock/endless"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/natefinch/lumberjack.v2"
 
