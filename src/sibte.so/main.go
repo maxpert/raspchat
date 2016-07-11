@@ -125,7 +125,6 @@ func main() {
 	_installSocketMux(mux, &conf)
 	_installHTTPRoutes(mux)
 
-	endless.DefaultHammerTime = 10 * time.Second
 	server := &http.Server{
 		Addr:    conf.BindAddress,
 		Handler: mux,
