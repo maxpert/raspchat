@@ -2,13 +2,7 @@
 
 export PATH=`pwd`/node_modules/.bin:$PATH
 
-pushd static
-bower install vue
-bower install markdown-it
-bower install moment
-bower install qwest
-bower install he
-popd
+bower install
 
 uglifyjs --compress --mangle --output static/app.min.js -- \
   static/bower_components/vue/dist/vue.js \
