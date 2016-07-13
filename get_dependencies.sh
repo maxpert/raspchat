@@ -9,5 +9,4 @@ env GOPATH=`pwd` go get gopkg.in/natefinch/lumberjack.v2
 env GOPATH=`pwd` go get github.com/googollee/go-gcm
 
 echo "Installing NPM packages"
-npm install bower
-npm install uglify-js
+npm install

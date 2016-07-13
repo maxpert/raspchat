@@ -172,12 +172,13 @@ window.core = (function(win, doc, raspconfig) {
         limit = limit || 50;
         var me = this;
         var encodedGroupName = encodeURIComponent(grp);
-        qwest.get("/chat/api/channel/"+encodedGroupName+"/message", {limit: limit, offset: offset}, {responseType: 'json'})
-             .then(function (xhr, response) {
+        atomic.setContentType('application/json');
+        atomic.get("/chat/api/channel/"+encodedGroupName+"/message?limit="+limit+"&offset="+offset)
+             .success(function (response, xhr) {
                me._on_group_history_recvd(grp, response);
              })
-             .catch(function (err, xhr, response) {
-               events.fire('history-error', response);
+             .error(function (response, xhr) {
+               events.fire('history-error', xhr);
              });
       },
 
@@ -403,11 +404,12 @@ window.core = (function(win, doc, raspconfig) {
   var giffer = {
     search: function (keywords, url_callback) {
       keywords = encodeURIComponent(keywords);
-      qwest.get("/gif", {"q": keywords}, {responseType: "json"})
-           .then(function (xhr, response) {
+      atomic.setContentType('application/json');
+      atomic.get("/gif?q="+keywords)
+           .success(function (response, xhr) {
              url_callback(response.url, response);
            })
-           .catch(function (e, xhr, response) {
+           .error(function (response, xhr) {
              url_callback(null, null);
            });
     }

@@ -23,13 +23,11 @@
   <meta name="msapplication-TileImage" content="/static/favicon/ms-icon-144x144.png" />
   <meta name="theme-color" content="#00897B" />
   <meta charset="utf-8" />
-  <meta name="robots" content="noindex"/>
+  <meta name="robots" content="noindex" />
 
   <link href='//fonts.googleapis.com/css?family=Roboto+Mono' rel='stylesheet' type='text/css' />
   <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" />
   <link href='./default.css' rel='stylesheet' type='text/css' />
-  <script type='text/javascript' src="./notification.min.js" async defer></script>
-  <script type='text/javascript' src="./emojify.min.js" async defer></script>
   <script type='text/javascript' src="/config/client.js"></script>
 
   <title>Raspchat</title>
@@ -189,6 +187,28 @@
     </table>
   </div>
   </template>
+
 </body>
-<script type="text/javascript" src="/static/app.min.js?rev=5"></script>
+<script type='text/javascript' src="/static/bower_components/emojify.js/dist/js/emojify.js"></script>
+<script type='text/javascript' src="/static/bower_components/notify/notification.js"></script>
+<script type='text/javascript' src="/static/bower_components/markdown-it/dist/markdown-it.js"></script>
+<script type='text/javascript' src="/static/bower_components/moment/moment.js"></script>
+<script type='text/javascript' src="/static/bower_components/vue/dist/vue.js"></script>
+<script type='text/javascript' src="/static/bower_components/he/he.js"></script>
+<script type='text/javascript' src="/static/bower_components/atomic/dist/atomic.js"></script>
+<script type='text/javascript' src="/static/core.js"></script>
+<script type='text/javascript' src="/static/rtc.js"></script>
+<script type='text/javascript' src="/static/peer_negotiator.js"></script>
+<script type='text/javascript' src="/static/file_transfer.js"></script>
+
+<script type='text/javascript' src="/static/components/filters.js"></script>
+<script type='text/javascript' src="/static/components/app-bar.js"></script>
+<script type='text/javascript' src="/static/components/chat-compose.js"></script>
+<script type='text/javascript' src="/static/components/chat-log.js"></script>
+<script type='text/javascript' src="/static/components/chat-message.js"></script>
+<script type='text/javascript' src="/static/components/chrome-bar.js"></script>
+<script type='text/javascript' src="/static/components/group-list.js"></script>
+<script type='text/javascript' src="/static/components/toggle-buttons.js"></script>
+<script type='text/javascript' src="/static/components/sign-in.js"></script>
+<script type='text/javascript' src="/static/chat.js"></script>
 </html>

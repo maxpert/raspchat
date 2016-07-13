@@ -1,36 +1,75 @@
 var gulp = require('gulp'),
-    merge = require('merge-stream'),
     bower = require('main-bower-files'),
-    combiner = require('stream-combiner2'),
+    pump = require('pump'),
+    linker = require('gulp-merge-link'),
     rename = require('gulp-rename'),
     uglify = require('gulp-uglify'),
     concat = require('gulp-concat'),
+    derequire = require('gulp-derequire'),
+    htmlmin = require('gulp-htmlmin'),
     vueify = require('gulp-vueify');
 
 var Settings = {
+    assets: {
+        source: [
+        'static/index.html',
+        'static/welcome.html',
+        'static/*.svg',
+        'static/*.png',
+        'static/*.jpg',
+        'static/*.gif',
+        'static/*.css',
+        'static/favicon/**/*',
+        'static/images/**/*'
+        ],
+        sourceBase: './static',
+        output: 'dist/static'
+    },
     js: {
         clientSourceFiles: [
-            'static/rtc.js', 
             'static/core.js', 
+            'static/rtc.js', 
             'static/peer_negotiator.js',
             'static/file_transfer.js',
-            'static/components/*.js'
+            'static/components/*.js',
+            'static/chat.js'
         ],
         clientFile: 'client.js',
         librariesFile: 'libraries.js',
         source: 'static',
         output: 'dist/static/js'
+    },
+    html: {
+        merge: {
+           '/static/js/client.min.js': [
+                '/static/core.js', 
+                '/static/rtc.js', 
+                '/static/peer_negotiator.js',
+                '/static/file_transfer.js',
+                '/static/components/*.js',
+                '/static/chat.js'
+           ],
+
+           '/static/js/libraries.min.js': [
+               '/static/bower_components/*/*.js',
+               '/static/bower_components/**/*.js'
+            ]
+        },
+        minify: {
+            collapseWhitespace: true,
+            conservativeCollapse: true,
+        },
+        output: 'dist/static'
     }
 };
 
-function combine(streams) {
-  var combined = combiner.obj(streams);
-
-  // any errors in the above streams will get caught
-  // by this listener, instead of being thrown:
-  combined.on('error', console.error.bind(console));
-  return combined;
-}
+gulp.task('process-htmls', function () {
+    return gulp.src(Settings.js.source + '/chat.html')
+               .pipe(linker(Settings.html.merge))
+               .pipe(htmlmin(Settings.html.minify))
+               .pipe(rename('chat.html'))
+               .pipe(gulp.dest(Settings.html.output));
+});
 
 gulp.task('bower-assemble', function() {
   return gulp.src(bower())
@@ -44,7 +83,12 @@ gulp.task('assemble', ['bower-assemble'], function () {
                .pipe(gulp.dest(Settings.js.output));
 });
 
-gulp.task('build', ['assemble', 'bower-assemble'], function () {
+gulp.task('copy-assets', function () {
+    return gulp.src(Settings.assets.source, {base: Settings.assets.sourceBase})
+               .pipe(gulp.dest(Settings.assets.output));
+});
+
+gulp.task('compile-assets', ['copy-assets', 'assemble', 'process-htmls'], function () {
     var librariesStream = gulp.src(Settings.js.output + '/' + Settings.js.librariesFile)
                               .pipe(uglify())
                               .pipe(rename({suffix: '.min'}))
@@ -55,5 +99,5 @@ gulp.task('build', ['assemble', 'bower-assemble'], function () {
                               .pipe(rename({suffix: '.min'}))
                               .pipe(gulp.dest(Settings.js.output));
 
-    return combine(librariesStream, clientStream);
+    return pump([librariesStream, clientStream]);
 });
