@@ -61,15 +61,21 @@
         </div>
       </slot>
     </template>
-    <login-form @login="onSignedIn" v-else/>
+    <template v-else>
+      <div class="rasp-login">
+        <div class="rasp-login-container">
+          <h1>Let's get you logged in.</h1>
+          <login-form @login="onSignedIn" v-else/>
+        </div>
+      </div>
+    </template>
   </div>
 
   <template id="login-form">
-    <center style="margin: 10em 0 0 0;" v-show="isReady">
+    <center style="" v-show="isReady">
       <div v-if="isSignedIn">
         <form class="login-form" @submit.stop.prevent="signin">
-          Nick:
-          <input type="text" placeholder="Nick" v-model="nick" />
+          <input type="text" placeholder="Set a nickname" v-model="nick" />
           <input type="submit" value="Connect" :disabled="!isValidNick" />
         </form>
       </div>

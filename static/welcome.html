@@ -1,33 +1,38 @@
 <html>
 <head>
-  <style>
-  body  { font-family:Verdana, Geneva, sans-serif; font-size:10pt; color:#828282; }
-  td    { font-family:Verdana, Geneva, sans-serif; font-size:10pt; color:#828282; }
-
-  input    { font-family:monospace; font-size:10pt; color:#000000; }
-  input[type=\"submit\"] { font-family:Verdana, Geneva, sans-serif; }
-  textarea { font-family:monospace; font-size:10pt; color:#000000; }
-
-  a:link    { color:#000000; text-decoration:underline; }
-  a:visited { color:#828282; text-decoration:underline; }
-  </style>
   <title>Welcome muggle</title>
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" sizes="57x57" href="/static/favicon/apple-icon-57x57.png" />
+  <link rel="apple-touch-icon" sizes="60x60" href="/static/favicon/apple-icon-60x60.png" />
+  <link rel="apple-touch-icon" sizes="72x72" href="/static/favicon/apple-icon-72x72.png" />
+  <link rel="apple-touch-icon" sizes="76x76" href="/static/favicon/apple-icon-76x76.png" />
+  <link rel="apple-touch-icon" sizes="114x114" href="/static/favicon/apple-icon-114x114.png" />
+  <link rel="apple-touch-icon" sizes="120x120" href="/static/favicon/apple-icon-120x120.png" />
+  <link rel="apple-touch-icon" sizes="144x144" href="/static/favicon/apple-icon-144x144.png" />
+  <link rel="apple-touch-icon" sizes="152x152" href="/static/favicon/apple-icon-152x152.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-icon-180x180.png" />
+  <link rel="icon" type="image/png" sizes="192x192"  href="/static/favicon/android-icon-192x192.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="/static/favicon/favicon-96x96.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon/favicon-16x16.png" />
+  <link rel="manifest" href="/static/favicon/manifest.json" />
+  <meta name="msapplication-TileColor" content="#00897B" />
+  <meta name="msapplication-TileImage" content="/static/favicon/ms-icon-144x144.png" />
+  <meta name="theme-color" content="#00897B" />
+  <meta charset="utf-8" />
+  <meta name="robots" content="noindex" />
+  <link href='./default.css' rel='stylesheet' type='text/css' />
 </head>
-<body>
-  <center><a href="/static/chat.html"><img src="/static/icon-badge-plain.svg" alt="" /></a></center>
-  <h1>Welcome to Raspberry Pi Model B+ chat server</h1>
-  <p>Here is technology stack:</p>
-
-  <ul>
-    <li>Raspberry Pi 1</li>
-    <li>Raspbian Jessie Lite 4.1</li>
-    <li>Backend compiled on Golang 1.5</li>
-    <li>Websockets!</li>
-    <li>WebRTC for file sharing(coming soon)</li>
-    <li>MarkdownIt for all markdown things (see https://daringfireball.net/projects/markdown/)</li>
-  </ul>
-
-  <h2><a href="/static/chat.html">Try running demo!</a></h2>
-  <h2><a href="https://github.com/maxpert/raspchat">Fork on GitHub and contribute</a></h2>
+<body class="welcome">
+  <div class="welcome-container">
+    <a class="logo" href="/static/chat.html"><img src="/static/icon-badge-plain.svg" alt="" /></a>
+    <h1>Hello, Raspchatter</h1>
+    <p>Welcome to Raspchat, a basic Websocket chat server in Go. Raspchat is a light-weight, and easy to setup chat server for the Raspberry Pi!</p>
+    <a class="open-app" href="/static/chat.html">Give it a try!</a>
+    <a class="open-app" href="https://github.com/maxpert/raspchat">Contribute</a>
+  </div>
 </body>
 </html>
