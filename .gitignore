@@ -23,6 +23,7 @@ _testmain.go
 *.test
 *.prof
 
+gpm
 bin/
 node_modules/
 dist/

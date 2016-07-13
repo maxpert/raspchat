@@ -1,12 +1,9 @@
 #!/bin/bash
 
 echo "Installing Go packages"
-env GOPATH=`pwd` go get github.com/speps/go-hashids
-env GOPATH=`pwd` go get github.com/gorilla/websocket
-env GOPATH=`pwd` go get github.com/julienschmidt/httprouter
-env GOPATH=`pwd` go get github.com/boltdb/bolt/...
-env GOPATH=`pwd` go get gopkg.in/natefinch/lumberjack.v2
-env GOPATH=`pwd` go get github.com/googollee/go-gcm
+curl -s https://raw.githubusercontent.com/pote/gpm/v1.4.0/bin/gpm > gpm
+chmod +x gpm
+./gpm get
 
 echo "Installing NPM packages"
 npm install

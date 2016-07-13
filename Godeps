@@ -1,0 +1,6 @@
+github.com/speps/go-hashids                             v1.0.0
+github.com/gorilla/websocket                            v1.0.0
+github.com/julienschmidt/httprouter                     v1.1
+github.com/boltdb/bolt/...                              v1.2.1
+gopkg.in/natefinch/lumberjack.v2
+github.com/googollee/go-gcm
