@@ -89,6 +89,7 @@ window.core = (function(win, doc, raspconfig) {
       "hostname": "{hostname}",
       "pathname": "{path}"
     };
+
     for (var property in replacableHrefProperties) {
       var placeHolder = replacableHrefProperties[property];
       if (resultString.indexOf(placeHolder) > -1) {
@@ -96,7 +97,7 @@ window.core = (function(win, doc, raspconfig) {
       }
     }
 
-    resultString.replace("{protocol}", isSecure ? "wss:" : "ws:");
+    resultString = resultString.replace("{protocol}", isSecure ? "wss:" : "ws:");
     return resultString;
   };
 
