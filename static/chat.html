@@ -25,15 +25,19 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex" />
 
-  <link href='//fonts.googleapis.com/css?family=Roboto+Mono' rel='stylesheet' type='text/css' />
   <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" />
   <link href='./default.css' rel='stylesheet' type='text/css' />
   <script type='text/javascript' src="/config/client.js"></script>
-
   <title>Raspchat</title>
 </head>
 <body>
-  <div id="root" style="width: 100%; height: 100%; margin: 0; padding: 0; position: relative;">
+  <div id="root" class="rasp-login">
+    <div class="rasp-login-container">
+      <h1>Let's get you logged in.</h1>
+      <login-form @login="onSignedIn" v-else/>
+    </div>
+  </div>
+  <div id="root">
     <template v-if="isConnected">
       <slot name="windowBox">
         <div class="chrome-body">
@@ -61,22 +65,18 @@
         </div>
       </slot>
     </template>
-    <login-form @login="onSignedIn" v-else/>
   </div>
 
-  <template id="login-form">
-    <center style="margin: 10em 0 0 0;" v-show="isReady">
+  <template id="login-form" v-show="isReady">
       <div v-if="isSignedIn">
         <form class="login-form" @submit.stop.prevent="signin">
-          Nick:
-          <input type="text" placeholder="Nick" v-model="nick" />
-          <input type="submit" value="Connect" :disabled="!isValidNick" />
+          <input onkeydown = "if (event.keyCode == 13)document.getElementById('raspchatsetnick').click()" type="text" spellcheck="false" placeholder="Set a nickname" v-model="nick" />
+          <input id="raspchatsetnick" type="submit" value="Connect" :disabled="!isValidNick" />
         </form>
       </div>
       <div v-else>
         <google-sign-in @success="googleSignInSuccess" />
       </div>
-    </center>
   </template>
 
   <template id="chat-compose">
@@ -86,7 +86,7 @@
                 @keydown.stop.prevent.enter="enterPressed"
                 @keydown.stop.prevent.tab="tabPressed"
                 placeholder="Type your message"></textarea>
-      <input class='btn' type="button" style="" @click.stop.prevent="enterPressed" value="send" />
+      <input class='btn' type="button" @click.stop.prevent="enterPressed" value="send" />
     </div>
   </template>
 
@@ -94,14 +94,14 @@
     <div class="app-bar color-background-500 code-font">
       <div class="app-bar-container">
 
-        <div style="margin: 5px;">Groups</div>
-        <hr style="margin: 5px 0;"/>
+        <div Groups</div>
+        <hr/>
         <div class="list-container">
           <groups-list />
         </div>
 
-        <div style="margin: 5px;">Settings</div>
-        <hr style="margin: 5px 0;"/>
+        <div >Settings</div>
+        <hr/>
         <div class="additional-buttons">
           <slot><toast-notification-button :ignore-for="userId"/></slot>
           <slot><sound-notification-button default-enabled="{{true}}" :ignore-for="userId" /></slot>
@@ -129,7 +129,7 @@
     <div class="code-font groups-list" v-for="g in groups">
       <a href="#" class="group-entry {{selected == g.name ? 'active-group' : ''}}" @click.stop.prevent="selectGroup(g.name)">
         <span>{{g.name}}</span><span v-if="g.unread"> - {{g.unread}}</span>
-        <i class="fa fa-times" style="float: right; font-size: 17px;" @click.stop.prevent="leaveGroup(g.name)" v-if="$index"></i>
+        <i class="fa fa-times" @click.stop.prevent="leaveGroup(g.name)" v-if="$index"></i>
       </a>
     </div>
   </template>
@@ -168,16 +168,16 @@
     <pre class="meta-message">{{{message.msg | escape_html}}}</pre>
   </div>
   <div class="incomingMessage code-font" v-else>
-    <table width="100%" border="0" style="max-width: 100%;">
+    <table width="100%" border="0">
       <tr>
-        <td valign="top" align="left" style="width: 12px;">
+        <td valign="top" align="left">
           <img :src="message.from | avatar_url" class="avatar" alt="{{message.from}}" />
           <div class="cf">&nbsp;</div>
         </td>
         <td valign="top" align="left">
           <div class="fromContainer">
             <span class="name">{{message.from}}</span>
-            <span style="font-size: 12px">{{message.delivery_time | better_date}}</span>
+            <span>{{message.delivery_time | better_date}}</span>
           </div>
           <div class="markdown-container">
           {{{message.msg | markdown | emojify}}}
