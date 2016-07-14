@@ -58,9 +58,10 @@ func getChatConfig(w http.ResponseWriter, r *http.Request, params httprouter.Par
 	}
 
 	config := make(map[string]interface{})
-	config["webSocketConnectionUri"] = appConfig.WebSocketUrl
-	config["webSocketSecureConnectionUri"] = appConfig.WebSocketSecureUrl
+	config["webSocketConnectionUri"] = appConfig.WebSocketURL
+	config["webSocketSecureConnectionUri"] = appConfig.WebSocketSecureURL
 	config["externalSignIn"] = appConfig.ExternalSignIn
+	config["hasAuthProviders"] = appConfig.HasAuthProviders
 
 	if isJs {
 		fmt.Fprint(w, "window.RaspConfig=")

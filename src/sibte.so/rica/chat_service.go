@@ -42,7 +42,7 @@ func NewChatService(appConfig *ApplicationConfig) *ChatService {
 	if len(allowedOrigins) > 0 {
 		wsUpgrader.CheckOrigin = func(r *http.Request) bool {
 			origin := r.Header.Get("Origin")
-			if origin == "" {
+			if origin == "" || allowedOrigins == nil || len(allowedOrigins) == 0 {
 				return true
 			}
 
@@ -52,7 +52,7 @@ func NewChatService(appConfig *ApplicationConfig) *ChatService {
 				}
 			}
 
-			log.Println("Unable to find origin " + origin)
+			log.Println("Denying connection due to missing origin " + origin)
 			return false
 		}
 	}

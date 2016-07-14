@@ -6,7 +6,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 (function (vue, win, doc, raspconfig) {
-  var signInConfig = raspconfig.externalSignIn || {useProviders: false};
+  var signInConfig = raspconfig.externalSignIn || {};
   var InvalidNickCharactersRegex = /[^a-zA-Z0-9]+/ig
 
   vue.component('google-sign-in', {
@@ -77,7 +77,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     ready: function () {
       this.$set('isReady', true);
       this.$watch('nick', this.onNickChanged);
-      if (!signInConfig.useProviders) {
+      if (!raspconfig.hasAuthProviders) {
         this.$set('isSignedIn', true);
       }
     },

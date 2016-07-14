@@ -15,8 +15,9 @@ type ApplicationConfig struct {
 	GCMToken           string            `json:"gcm_token"`
 	AllowedOrigins     []string          `json:"allowed_origins"`
 	ExternalSignIn     map[string]string `json:"external_sign_in"`
-	WebSocketUrl       string            `json:"websocket_url"`
-	WebSocketSecureUrl string            `json:"websocketsecure_url"`
+	WebSocketURL       string            `json:"websocket_url"`
+	WebSocketSecureURL string            `json:"websocketsecure_url"`
+	HasAuthProviders   bool              `json:"has_auth_providers"`
 }
 
 var CurrentAppConfig ApplicationConfig
@@ -30,8 +31,9 @@ func LoadApplicationConfig(filePath string) {
 		conf.LogFilePath = ""
 		conf.AllowedOrigins = make([]string, 0)
 		conf.ExternalSignIn = make(map[string]string)
-		conf.WebSocketUrl = ""
-		conf.WebSocketSecureUrl = ""
+		conf.HasAuthProviders = false
+		conf.WebSocketURL = ""
+		conf.WebSocketSecureURL = ""
 		return
 	}
 
@@ -44,6 +46,7 @@ func LoadApplicationConfig(filePath string) {
 		log.Panic(err)
 	}
 
+	conf.HasAuthProviders = len(conf.ExternalSignIn) != 0
 	log.Println("=== Loaded configuration")
 	log.Println(CurrentAppConfig)
 }
