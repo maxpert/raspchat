@@ -12,6 +12,8 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
+
+	"sibte.so/rasconfig"
 )
 
 type ChatService struct {
@@ -24,10 +26,9 @@ type ChatService struct {
 	httpMux      *http.ServeMux
 }
 
-func NewChatService(appConfig *ApplicationConfig) *ChatService {
+func NewChatService(appConfig *rasconfig.ApplicationConfig) *ChatService {
 	initChatHandlerTypes()
-	initGifCache()
-	store, e := NewChatLogStore(CurrentAppConfig.DBPath+"/chats.bolt.db", []byte("chats"))
+	store, e := NewChatLogStore(rasconfig.CurrentAppConfig.DBPath+"/chats.bolt.db", []byte("chats"))
 	allowedOrigins := appConfig.AllowedOrigins
 
 	if e != nil {
@@ -60,7 +61,7 @@ func NewChatService(appConfig *ApplicationConfig) *ChatService {
 	return &ChatService{
 		groupInfo:    NewInMemoryGroupInfo(),
 		nickRegistry: NewNickRegistry(),
-		gcmWorker:    NewGCMWorker(CurrentAppConfig.GCMToken),
+		gcmWorker:    NewGCMWorker(rasconfig.CurrentAppConfig.GCMToken),
 		chatStore:    store,
 		upgrader:     wsUpgrader,
 	}

@@ -8,79 +8,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 import (
-	"encoding/json"
 	"flag"
-	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/natefinch/lumberjack.v2"
 
+	"sibte.so/rasconfig"
+	"sibte.so/rasweb"
 	"sibte.so/rica"
 )
 
-var indexPageCache []byte
-
-func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	if indexPageCache == nil {
-		filedat, err := ioutil.ReadFile("static/index.html")
-
-		if err != nil {
-			log.Println("HIT /static/test.html")
-		}
-
-		indexPageCache = filedat
-	}
-
-	w.Write(indexPageCache)
-}
-
-func clearCache(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	indexPageCache = nil
-	fmt.Fprint(w, "Done")
-}
-
-func getChatConfig(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	appConfig := rica.CurrentAppConfig
-	isJs := false
-
-	if strings.HasSuffix(params.ByName("type"), ".js") {
-		isJs = true
-	}
-
-	if isJs {
-		w.Header().Add("Content-Type", "text/javascript")
-	} else {
-		w.Header().Add("Content-Type", "application/json")
-	}
-
-	config := make(map[string]interface{})
-	config["webSocketConnectionUri"] = appConfig.WebSocketURL
-	config["webSocketSecureConnectionUri"] = appConfig.WebSocketSecureURL
-	config["externalSignIn"] = appConfig.ExternalSignIn
-	config["hasAuthProviders"] = appConfig.HasAuthProviders
-
-	if isJs {
-		fmt.Fprint(w, "window.RaspConfig=")
-	}
-
-	json.NewEncoder(w).Encode(config)
-}
-
-var _groupInfoManager = rica.NewInMemoryGroupInfo()
-var _nickRegistry = rica.NewNickRegistry()
-
-func _installSocketMux(mux *http.ServeMux, appConfig *rica.ApplicationConfig) (err error) {
+func installSocketMux(mux *http.ServeMux, appConfig *rasconfig.ApplicationConfig) (err error) {
 	err = nil
-
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
 	s := rica.NewChatService(appConfig).WithRESTRoutes("/chat")
 
 	mux.Handle("/chat", s)
@@ -88,15 +29,23 @@ func _installSocketMux(mux *http.ServeMux, appConfig *rica.ApplicationConfig) (e
 	return
 }
 
-func _installHTTPRoutes(mux *http.ServeMux) (err error) {
+func installHTTPRoutes(mux *http.ServeMux) (err error) {
 	err = nil
-	router := httprouter.New()
-	router.GET("/", index)
-	router.GET("/config/:type", getChatConfig)
-	router.GET("/gif", rica.FindRightGif)
-	router.GET("/_clear", clearCache)
-	router.ServeFiles("/static/*filepath", http.Dir("./static"))
 
+	router := httprouter.New()
+	routeHandlers := []rasweb.RouteHandler{
+		rasweb.NewGifHandler(),
+		rasweb.NewConfigRouteHandler(),
+		rasweb.NewDirectPagesHandler(),
+	}
+
+	for _, h := range routeHandlers {
+		if err := h.Register(router); err != nil {
+			log.Panic("Unable to register route")
+		}
+	}
+
+	router.ServeFiles("/static/*filepath", http.Dir("./static"))
 	mux.Handle("/", router)
 	return
 }
@@ -108,8 +57,8 @@ func parseArgs() (filePath string) {
 }
 
 func main() {
-	rica.LoadApplicationConfig(parseArgs())
-	conf := rica.CurrentAppConfig
+	rasconfig.LoadApplicationConfig(parseArgs())
+	conf := rasconfig.CurrentAppConfig
 
 	if conf.LogFilePath != "" {
 		log.SetOutput(&lumberjack.Logger{
@@ -121,10 +70,8 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-
-	_installSocketMux(mux, &conf)
-	_installHTTPRoutes(mux)
-
+	installSocketMux(mux, &conf)
+	installHTTPRoutes(mux)
 	server := &http.Server{
 		Addr:    conf.BindAddress,
 		Handler: mux,
