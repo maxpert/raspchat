@@ -57,7 +57,7 @@ func (h *gifRouteHandler) findGifHandler(w http.ResponseWriter, r *http.Request,
 	io.Copy(w, buf)
 }
 
-func (h gifRouteHandler) initGifCache() error {
+func (h *gifRouteHandler) initGifCache() error {
 	db, err := bolt.Open(rasconfig.CurrentAppConfig.DBPath+"/gifstore.bolt", 0600, nil)
 
 	if err != nil {
