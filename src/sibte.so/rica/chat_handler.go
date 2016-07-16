@@ -356,7 +356,10 @@ selectLoop:
 }
 
 func (h *ChatHandler) Stop() {
+	joinedGroups := make([]string, 0, len(h.groups))
+
 	for g, _ := range h.groups {
+		joinedGroups = append(joinedGroups, g)
 		h.groupInfoManager.RemoveUser(g, h.id)
 	}
 
