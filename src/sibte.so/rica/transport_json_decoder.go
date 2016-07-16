@@ -41,5 +41,6 @@ func transportDecodeMessage(msg []byte) (ret IEventMessage, rErr error) {
 
 	ret = reflect.New(mType).Interface().(IEventMessage)
 	rErr = json.Unmarshal(msg, ret)
+	ret.Stamp()
 	return
 }

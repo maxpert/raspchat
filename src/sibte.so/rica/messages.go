@@ -1,13 +1,17 @@
 package rica
 
+import "time"
+
 type IEventMessage interface {
 	Identity() uint64
 	Event() string
+	Stamp()
 }
 
 type BaseMessage struct {
-	EventName string `json:"@"`
-	Id        uint64 `json:"!id,omitempty"`
+	EventName    string `json:"@"`
+	Id           uint64 `json:"!id,omitempty"`
+	UTCTimestamp int64  `json:"utc_timestamp"`
 }
 
 func (b *BaseMessage) Identity() uint64 {
@@ -16,6 +20,10 @@ func (b *BaseMessage) Identity() uint64 {
 
 func (b *BaseMessage) Event() string {
 	return b.EventName
+}
+
+func (b *BaseMessage) Stamp() {
+	b.UTCTimestamp = time.Now().Unix()
 }
 
 type PingMessage struct {

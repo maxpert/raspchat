@@ -101,6 +101,14 @@ window.core = (function(win, doc, raspconfig) {
     return resultString;
   };
 
+  var utcTimestampToLocalDate = function (timestamp) {
+    if (!timestamp) {
+      return new Date();
+    }
+
+    return new Date(timestamp * 1000);
+  };
+
   var EventEmitter = function () {
     this._channels = {};
   };
@@ -325,7 +333,7 @@ window.core = (function(win, doc, raspconfig) {
       },
 
       _on_message: function (msg) {
-        msg.delivery_time = msg.delivery_time || new Date();
+        msg.delivery_time = utcTimestampToLocalDate(msg.utc_timestamp);
         this.events.fire('message', msg);
       },
 
@@ -334,7 +342,7 @@ window.core = (function(win, doc, raspconfig) {
         events.fire('message', {
           from: SERVER_ALIAS,
           to: SERVER_ALIAS,
-          delivery_time: new Date(),
+          delivery_time: utcTimestampToLocalDate(msg.utc_timestamp),
           msg: msg.from + " joined " + msg.to
         });
 
@@ -343,7 +351,7 @@ window.core = (function(win, doc, raspconfig) {
       },
 
       _on_group_history_recvd: function (grp, hist) {
-        var historyMessages = hist.messages.map(this._prepareMetaMessage).reverse();
+        var historyMessages = hist.messages.map(this._prepareMetaMessage).map(this._parseTime).reverse();
         this.events.fire('history', $mix(hist, {messages: historyMessages}));
       },
 
@@ -363,6 +371,11 @@ window.core = (function(win, doc, raspconfig) {
         return ret;
       },
 
+      _parseTime: function (msg) {
+        msg.delivery_time = utcTimestampToLocalDate(msg.utc_timestamp);
+        return msg;
+      },
+
       _on_group_members_list: function (to, list) {
         this.events.fire('members-list', to, list);
       },
@@ -371,7 +384,7 @@ window.core = (function(win, doc, raspconfig) {
         this.events.fire('message', {
           from: SERVER_ALIAS,
           to: SERVER_ALIAS,
-          delivery_time: new Date(),
+          delivery_time: utcTimestampToLocalDate(recpInfo.utc_timestamp),
           msg: recpInfo.from + " left " + recpInfo.to
         });
         this.events.fire('leave', recpInfo);
@@ -387,7 +400,7 @@ window.core = (function(win, doc, raspconfig) {
           to: group,
           msg: nickInfo.oldNick + " changed nick to " + nickInfo.newNick,
           from: nickInfo.newNick,
-          delivery_time: new Date(),
+          delivery_time: utcTimestampToLocalDate(nickInfo.utc_timestamp),
         });
       },
   };

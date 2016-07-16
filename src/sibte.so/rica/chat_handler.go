@@ -291,6 +291,7 @@ func (h *ChatHandler) publish(groupName string, msg IEventMessage) {
 	timer := StartStopWatch("publish:" + groupName)
 	defer timer.LogDuration()
 
+	msg.Stamp()
 	h.transport.BeginBatch(msg.Identity(), msg)
 	h.chatStore.Save(groupName, msg.Identity(), msg)
 
