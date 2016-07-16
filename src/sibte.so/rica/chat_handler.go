@@ -358,7 +358,7 @@ selectLoop:
 func (h *ChatHandler) Stop() {
 	joinedGroups := make([]string, 0, len(h.groups))
 
-	for g, _ := range h.groups {
+	for g := range h.groups {
 		joinedGroups = append(joinedGroups, g)
 		h.groupInfoManager.RemoveUser(g, h.id)
 	}
@@ -366,4 +366,12 @@ func (h *ChatHandler) Stop() {
 	h.groups = make(map[string]interface{})
 	h.nickRegistry.Unregister(h.id)
 	close(h.incoming)
+
+	for _, groupName := range joinedGroups {
+		h.publish(groupName, &RecipientMessage{
+			BaseMessage: messageOf(ricaEvents.LEAVE_GROUP_REPLY),
+			To:          groupName,
+			From:        h.nick,
+		})
+	}
 }
