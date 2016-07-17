@@ -33,7 +33,7 @@
   <title>Raspchat</title>
 </head>
 <body>
-  <div id="root" style="width: 100%; height: 100%; margin: 0; padding: 0; position: relative;">
+  <div id="root" :class="osName" style="width: 100%; height: 100%; margin: 0; padding: 0; position: relative;">
     <template v-if="isConnected">
       <slot name="windowBox">
         <div class="chrome-body">

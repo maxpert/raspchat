@@ -8,7 +8,7 @@
   });
 
   vue.filter('better_date', function (value) {
-    return moment(value).fromNow();
+    return moment(value).calendar();
   });
 
   vue.filter('escape_html', function (value) {
