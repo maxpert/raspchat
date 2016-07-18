@@ -18,6 +18,7 @@ type ApplicationConfig struct {
 	WebSocketURL       string            `json:"websocket_url"`
 	WebSocketSecureURL string            `json:"websocketsecure_url"`
 	HasAuthProviders   bool              `json:"has_auth_providers"`
+	UploaderConfig     map[string]string `json:"uploader_config"`
 }
 
 var CurrentAppConfig ApplicationConfig
@@ -34,6 +35,7 @@ func LoadApplicationConfig(filePath string) {
 		conf.HasAuthProviders = false
 		conf.WebSocketURL = ""
 		conf.WebSocketSecureURL = ""
+		conf.UploaderConfig = make(map[string]string)
 		return
 	}
 

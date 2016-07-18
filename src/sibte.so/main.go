@@ -20,12 +20,6 @@ import (
 	"sibte.so/rica"
 )
 
-var routeHandlers = []rasweb.RouteHandler{
-	rasweb.NewGifHandler(),
-	rasweb.NewConfigRouteHandler(),
-	rasweb.NewDirectPagesHandler(),
-}
-
 func installSocketMux(mux *http.ServeMux, appConfig *rasconfig.ApplicationConfig) (err error) {
 	err = nil
 	s := rica.NewChatService(appConfig).WithRESTRoutes("/chat")
@@ -35,9 +29,18 @@ func installSocketMux(mux *http.ServeMux, appConfig *rasconfig.ApplicationConfig
 	return
 }
 
+var routeHandlers = []rasweb.RouteHandler{
+	rasweb.NewGifHandler(),
+	rasweb.NewFileUploadHandler(),
+	rasweb.NewConfigRouteHandler(),
+	rasweb.NewDirectPagesHandler(),
+}
+
 func installHTTPRoutes(mux *http.ServeMux) (err error) {
 	err = nil
 	router := httprouter.New()
+
+	// Register all routes
 	for _, h := range routeHandlers {
 		if err := h.Register(router); err != nil {
 			log.Panic("Unable to register route")
