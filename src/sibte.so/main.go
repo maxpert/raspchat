@@ -20,7 +20,7 @@ import (
 	"sibte.so/rica"
 )
 
-func installSocketMux(mux *http.ServeMux, appConfig *rasconfig.ApplicationConfig) (err error) {
+func installSocketMux(mux *http.ServeMux, appConfig rasconfig.ApplicationConfig) (err error) {
 	err = nil
 	s := rica.NewChatService(appConfig).WithRESTRoutes("/chat")
 
@@ -72,7 +72,7 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	installSocketMux(mux, &conf)
+	installSocketMux(mux, conf)
 	installHTTPRoutes(mux)
 	server := &http.Server{
 		Addr:    conf.BindAddress,

@@ -26,7 +26,7 @@ type ChatService struct {
 	httpMux      *http.ServeMux
 }
 
-func NewChatService(appConfig *rasconfig.ApplicationConfig) *ChatService {
+func NewChatService(appConfig rasconfig.ApplicationConfig) *ChatService {
 	initChatHandlerTypes()
 	store, e := NewChatLogStore(rasconfig.CurrentAppConfig.DBPath+"/chats.bolt.db", []byte("chats"))
 	allowedOrigins := appConfig.AllowedOrigins
