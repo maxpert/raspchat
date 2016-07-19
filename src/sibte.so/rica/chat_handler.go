@@ -8,6 +8,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -20,6 +21,7 @@ import (
 	"github.com/speps/go-hashids"
 )
 
+// ChatHandler to handle chat connection
 type ChatHandler struct {
 	sync.Mutex
 	id               string
@@ -27,36 +29,13 @@ type ChatHandler struct {
 	groupInfoManager GroupInfoManager
 	nickRegistry     *NickRegistry
 	transport        IMessageTransport
-	incoming         chan interface{}
+	outgoing         chan interface{}
 	groups           map[string]interface{}
 	chatStore        *ChatLogStore
 }
 
-var pHashId *hashids.HashID = hashids.New()
-var pSnowFlake *SnowFlake = DefaultSnowFlake()
-
-func NewChatHandler(nickReg *NickRegistry, groupInfoMan GroupInfoManager, trans IMessageTransport, store *ChatLogStore) *ChatHandler {
-	uid, _ := pHashId.Encode([]int{
-		int(rand.Int31n(1000)),
-		int(rand.Int31n(1000)),
-		int(rand.Int31n(1000)),
-	})
-
-	ret := &ChatHandler{
-		id:               uid,
-		nick:             uid,
-		nickRegistry:     nickReg,
-		groupInfoManager: groupInfoMan,
-		transport:        trans,
-		chatStore:        store,
-		incoming:         make(chan interface{}, 32),
-		groups:           make(map[string]interface{}, 0),
-	}
-
-	ret.groups[ricaEvents.FROM_SERVER] = struct{}{}
-	ret.groupInfoManager.AddUser(ricaEvents.FROM_SERVER, ret.id, ret.incoming)
-	return ret
-}
+var pHashID = hashids.New()
+var pSnowFlake = DefaultSnowFlake()
 
 func messageOf(event string) BaseMessage {
 	id, err := pSnowFlake.Next()
@@ -73,8 +52,36 @@ func messageOf(event string) BaseMessage {
 	}
 }
 
+// NewChatHandler creates new ChatHandler
+func NewChatHandler(nickReg *NickRegistry, groupInfoMan GroupInfoManager, trans IMessageTransport, store *ChatLogStore) *ChatHandler {
+	uid, _ := pHashID.Encode([]int{
+		int(rand.Int31n(1000)),
+		int(rand.Int31n(1000)),
+		int(rand.Int31n(1000)),
+	})
+
+	ret := &ChatHandler{
+		id:               uid,
+		nick:             uid,
+		nickRegistry:     nickReg,
+		groupInfoManager: groupInfoMan,
+		transport:        trans,
+		chatStore:        store,
+		outgoing:         make(chan interface{}, 32),
+		groups:           make(map[string]interface{}, 0),
+	}
+
+	return ret
+}
+
+func (h *ChatHandler) recoverFromErrors(tag string) {
+	if r := recover(); r != nil {
+		log.Println("!!!PANIC!!!", tag, r)
+	}
+}
+
 func (h *ChatHandler) socketReaderLoop(socketChannel chan interface{}, errorChannel chan error) {
-	defer h.recoverFromErrors()
+	defer h.recoverFromErrors("socketReaderLoop")
 
 	for {
 		msg, err := h.transport.ReadMessage()
@@ -94,9 +101,30 @@ func (h *ChatHandler) socketReaderLoop(socketChannel chan interface{}, errorChan
 	}
 }
 
-func (h *ChatHandler) recoverFromErrors() {
-	if r := recover(); r != nil {
-		log.Println("!!!PANIC!!!", r)
+func (h *ChatHandler) socketWriterLoop() {
+	defer h.recoverFromErrors("socketWriterLoop")
+	h.sendWelcome()
+
+	for {
+		select {
+		case m, ok := <-h.outgoing:
+			// channel read is not ok channel might be closed
+			// try writing ping message to ensure channel is stil open
+			// if channel is closed write will panic
+			if !ok {
+				h.outgoing <- &PingMessage{
+					BaseMessage: messageOf(ricaEvents.PING_COMMAND),
+					Type:        int(time.Now().Unix()),
+				}
+			}
+
+			h.handleOutgoingMessage(m)
+		case <-time.After(30 * time.Second):
+			h.outgoing <- &PingMessage{
+				BaseMessage: messageOf(ricaEvents.PING_COMMAND),
+				Type:        int(time.Now().Unix()),
+			}
+		}
 	}
 }
 
@@ -120,11 +148,11 @@ func (h *ChatHandler) sendWelcome() {
 	h.transport.WriteMessage(nickMsg.Id, nickMsg)
 }
 
-func (h *ChatHandler) handleInternalMessage(msg interface{}) {
+func (h *ChatHandler) handleOutgoingMessage(msg interface{}) {
 	baseMsg, ok := msg.(IEventMessage)
 
 	if !ok {
-		return
+		panic(fmt.Sprintf("Invalid outgoing message %v", msg))
 	}
 
 	timer := StartStopWatch("handleInternnalMessage:" + h.id)
@@ -134,7 +162,7 @@ func (h *ChatHandler) handleInternalMessage(msg interface{}) {
 	}
 }
 
-func (h *ChatHandler) handleMessage(msg interface{}) {
+func (h *ChatHandler) handleSocketMessage(msg interface{}) {
 	switch v := msg.(type) {
 	case *ChatMessage:
 		h.onChatMessage(v)
@@ -201,7 +229,7 @@ func (h *ChatHandler) onListMembers(msg *StringMessage) {
 		i++
 	}
 
-	h.incoming <- &RecipientContentMessage{
+	h.outgoing <- &RecipientContentMessage{
 		RecipientMessage: RecipientMessage{
 			BaseMessage: messageOf(ricaEvents.LIST_MEMBERS_REPLY),
 			To:          groupName,
@@ -218,7 +246,7 @@ func (h *ChatHandler) onJoinGroup(msg *StringMessage) {
 	h.Lock()
 	h.groups[msg.Message] = struct{}{}
 	h.Unlock()
-	h.groupInfoManager.AddUser(msg.Message, h.id, h.incoming)
+	h.groupInfoManager.AddUser(msg.Message, h.id, h.outgoing)
 
 	h.publish(msg.Message, &RecipientMessage{
 		BaseMessage: messageOf(ricaEvents.JOIN_GROUP_REPLY),
@@ -247,15 +275,15 @@ func (h *ChatHandler) onSetNick(msg *StringMessage) {
 	timer := StartStopWatch("onSetNick")
 	defer timer.LogDuration()
 
-	old_nick := h.nick
-	new_nick, err := h.nickRegistry.SetNick(h.id, msg.Message)
+	oldNick := h.nick
+	newNick, err := h.nickRegistry.SetNick(h.id, msg.Message)
 
 	if err == nil {
-		h.nick = new_nick
+		h.nick = newNick
 		nickMsg := &NickMessage{
 			BaseMessage: messageOf(ricaEvents.SET_NICK_REPLY),
-			OldNick:     old_nick,
-			NewNick:     new_nick,
+			OldNick:     oldNick,
+			NewNick:     newNick,
 		}
 		err = h.transport.WriteMessage(nickMsg.Id, nickMsg)
 
@@ -271,11 +299,15 @@ func (h *ChatHandler) onSetNick(msg *StringMessage) {
 func (h *ChatHandler) publishOnJoinedChannels(eventName string, msg interface{}) {
 	timer := StartStopWatch("publishOnJoinedChannels:" + h.id)
 	defer timer.LogDuration()
+	joinedGroups := make([]string, 0, len(h.groups))
 
 	h.Lock()
-	defer h.Unlock()
+	for g := range h.groups {
+		joinedGroups = append(joinedGroups, g)
+	}
+	h.Unlock()
 
-	for g, _ := range h.groups {
+	for _, g := range joinedGroups {
 		h.publish(g, &RecipientContentMessage{
 			RecipientMessage: RecipientMessage{
 				BaseMessage: messageOf(ricaEvents.MEMBER_NICK_SET_REPLY),
@@ -304,6 +336,7 @@ func (h *ChatHandler) publish(groupName string, msg IEventMessage) {
 }
 
 func (h *ChatHandler) sendTo(groupName, name string, msg interface{}) {
+	defer h.recoverFromErrors("sendTo")
 	tmp := h.groupInfoManager.GetUserInfoObject(groupName, name)
 	if tmp == nil {
 		return
@@ -313,7 +346,7 @@ func (h *ChatHandler) sendTo(groupName, name string, msg interface{}) {
 		select {
 		case ch <- msg:
 			log.Println("Published message to", name)
-		case <-time.After(5 * time.Millisecond):
+		case <-time.After(2 * time.Millisecond):
 			log.Println("Publishing on", name, "timed out")
 		}
 	} else {
@@ -321,53 +354,50 @@ func (h *ChatHandler) sendTo(groupName, name string, msg interface{}) {
 	}
 }
 
+// Loop over incoming and out going socket channels
 func (h *ChatHandler) Loop() {
+	defer h.recoverFromErrors("Loop")
 	h.nickRegistry.Register(h.id, h.nick)
-	h.sendWelcome()
-	errorChannel := make(chan error)
+	h.groups[ricaEvents.FROM_SERVER] = struct{}{}
+	h.groupInfoManager.AddUser(ricaEvents.FROM_SERVER, h.id, h.outgoing)
+
+	readErrorChannel := make(chan error)
 	sockChannel := make(chan interface{}, 32)
 
-	go h.socketReaderLoop(sockChannel, errorChannel)
-	defer h.recoverFromErrors()
+	go h.socketReaderLoop(sockChannel, readErrorChannel)
+	go h.socketWriterLoop()
 	defer func() {
-		close(errorChannel)
+		close(readErrorChannel)
 		close(sockChannel)
 	}()
 
 selectLoop:
 	for {
 		select {
-		case <-time.After(30 * time.Second):
-			h.incoming <- &PingMessage{
-				BaseMessage: messageOf(ricaEvents.PING_COMMAND),
-				Type:        int(time.Now().Unix()),
-			}
-		case m := <-h.incoming:
-			h.handleInternalMessage(m)
 		case m := <-sockChannel:
-			h.handleMessage(m)
-		case e := <-errorChannel:
+			h.handleSocketMessage(m)
+		case e := <-readErrorChannel:
 			log.Println("Error received", e)
 			break selectLoop
 		}
 	}
 
-	log.Println("Finishing client select loop")
 	h.Stop()
 }
 
+// Stop a client connection and perform cleanup
 func (h *ChatHandler) Stop() {
+	close(h.outgoing)
+	currentGroupsMap := h.groups
+	h.groups = make(map[string]interface{})
 	joinedGroups := make([]string, 0, len(h.groups))
 
-	for g := range h.groups {
+	for g := range currentGroupsMap {
 		joinedGroups = append(joinedGroups, g)
 		h.groupInfoManager.RemoveUser(g, h.id)
 	}
 
-	h.groups = make(map[string]interface{})
 	h.nickRegistry.Unregister(h.id)
-	close(h.incoming)
-
 	for _, groupName := range joinedGroups {
 		h.publish(groupName, &RecipientMessage{
 			BaseMessage: messageOf(ricaEvents.LEAVE_GROUP_REPLY),

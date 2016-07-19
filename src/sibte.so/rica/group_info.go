@@ -48,12 +48,11 @@ func (me *inMemGroupInfo) RemoveUser(group, user string) {
 func (me *inMemGroupInfo) GetUsers(group string) []string {
 	me.Lock()
 	defer me.Unlock()
-	ret := make([]string, 0)
 	if _, ok := me.infoMap[group]; !ok {
-		return ret
+		return make([]string, 0)
 	}
 
-	ret = make([]string, len(me.infoMap[group]))
+	ret := make([]string, len(me.infoMap[group]))
 	i := 0
 	for user, _ := range me.infoMap[group] {
 		ret[i] = user

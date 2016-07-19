@@ -2,7 +2,6 @@ package rica
 
 import (
 	"errors"
-	"log"
 	"sync"
 
 	"sibte.so/rica/consts"
@@ -37,13 +36,10 @@ func (h *WebsocketMessageTransport) ReadMessage() (IEventMessage, error) {
 		return nil, errors.New(ricaEvents.ERROR_INVALID_MSGTYPE_ERR)
 	}
 
-	var e error
 	if jsonMsg, e := transportDecodeMessage(msg); e == nil {
 		return jsonMsg, nil
 	}
 
-	log.Println("Invalid message", e)
-	log.Println("Message Type", msgType, "Message", string(msg), "Error", err)
 	return nil, err
 }
 
