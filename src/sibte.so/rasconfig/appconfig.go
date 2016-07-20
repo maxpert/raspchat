@@ -24,12 +24,17 @@ type ApplicationConfig struct {
 var CurrentAppConfig ApplicationConfig
 
 func LoadApplicationConfig(filePath string) {
+	dir, err := ioutil.TempDir("", "raspchat")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	conf := &CurrentAppConfig
 	if filePath == "" {
 		conf.AllowHotRestart = false
 		conf.BindAddress = ":8080"
-		conf.DBPath = "/tmp"
-		conf.LogFilePath = ""
+		conf.DBPath = dir
+		conf.LogFilePath = dir
 		conf.AllowedOrigins = make([]string, 0)
 		conf.ExternalSignIn = make(map[string]string)
 		conf.HasAuthProviders = false
