@@ -347,7 +347,11 @@ window.core = (function(win, doc, raspconfig) {
         });
 
         events.fire('joined', msg);
-        this.getHistory(msg.to);
+        
+        // Only get history if you are the one joining channel
+        if (msg.from == this.nick) {
+          this.getHistory(msg.to);
+        }
       },
 
       _on_group_history_recvd: function (grp, hist) {
