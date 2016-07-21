@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       this.$on("group_joined", this.groupJoined);
       this.$on("group_switched", this.groupSwitch);
       this.$on("group_left", this.groupLeft);
-      this.$on("message_new", this.newMessage)
+      this.$on("message_new", this.newMessage);
     },
     methods: {
       selectGroup: function (id) {
@@ -66,5 +66,5 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return true;
       }
     }
-  }))
+  }));
 })(Vue, window, window.document);

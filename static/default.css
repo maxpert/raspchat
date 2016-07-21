@@ -1,27 +1,33 @@
 * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  outline: 0;
-  box-shadow: none;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    box-shadow: none;
 }
 
-hr, input, button, textarea {
-  border: 1px solid black;
+hr,
+input,
+button,
+textarea {
+    border: 1px solid black;
 }
 
-input, button, textarea {
-  padding: 5px 2px;
+input,
+button,
+textarea {
+    padding: 5px 2px;
 }
 
 html {
-  height: 100%;
+    height: 100%;
 }
 
 body {
-  height: 100%;
-  display: block;
+    height: 100%;
+    display: block;
+    overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-weight: 400;
@@ -37,327 +43,695 @@ img{
     -ms-user-select: none;
 }
 
+@font-face {
+    font-family: raspicon;
+    src: url(raspicon.ttf);
+}
+
+.raspicon {
+    font-style: normal;
+}
+
+#root {
+    width: 100%;
+    height: 100%;
+}
+
+
+/*Icons*/
+
+.raspicon-ring:after {
+    content: "\EA8F";
+}
+
+.raspicon-ring-disabled:after {
+    content: "\E7ED";
+}
+
+.raspicon-speaker:after {
+    content: "\E15D";
+}
+
+.raspicon-speaker-disabled:after {
+    content: "\E74F";
+}
+
+.raspicon-close:after {
+    content: "\E106";
+}
+
+.raspicon-tick:after {
+    content: "\E003";
+}
+
+.raspicon-ticked:after {
+    content: "\E005";
+}
+
+
 /*Colors*/
-.color-background-50  { background: #E0F2F1; }
-.color-background-500 { background: #009688; }
-.color-background-600 { background: #00897B; }
-.color-background-700 { background: #00796B; }
-.color-background-800 { background: #00695C; }
-.color-background-900 { background: #004D40; }
 
-.cf {
-  display: block;
-  clear: both;
+.color-background-500 {
+    background: #009688;
 }
 
-.login-form {
-  display: block;
-  clear: both;
+.color-background-600 {
+    background: #00897B;
 }
 
-.chrome-bar {
-  position: absolute;
-  height: 48px;
-  width: 100%;
-  left: 0;
-  top: 0;
-  overflow: hidden;
-  color: white;
+.color-background-800 {
+    background: #00695C;
 }
 
-.chrome-body {
-  top: 48px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  position: absolute;
+.color-background-900 {
+    background: #004D40;
 }
 
-.chrome-body-container {
-  position: static;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: center;
-  align-items: stretch;
-  overflow: hidden;
+
+/* welcome.html */
+
+.welcome-container {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
-.app-bar {
-  position: relative;
-  flex-grow: 0;
+.welcome {
+    background-color: #04a985;
+    color: #fff;
+    text-align: center;
+    overflow: hidden;
 }
 
-.chat-box {
-  position: relative;
-  flex-grow: 1;
+.welcome .logo img {
+    width: 150px;
+    margin: 0 auto;
+    display: block;
+    padding-bottom: 15px;
 }
 
-.chat-log-container {
-  position: absolute;
-  top: 0;
-  bottom: 42px;
-  left: 0;
-  right: 0;
+.welcome h1 {
+    margin: 10px 0;
+    padding: 0px;
+    letter-spacing: 0.5px;
 }
 
-.chat-log {
-  position: relative;
-  overflow: auto;
-  height: 100%;
-  width: 100%;
-  padding: 10px;
-  color: black;
-  background: white;
+.welcome p {
+    font-size: 25px;
+    padding: 0px;
+    margin: 5px auto;
+    max-width: 800px;
 }
 
-.chat-messages {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  max-height: 100%;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+.welcome .open-app {
+    padding: 15px 20px;
+    text-decoration: none;
+    color: #fff;
+    background-color: #08c49b;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: inline-block;
+    margin: 15px 5px;
+    transition: all 0.3s ease;
 }
 
-.bottomBar {
-  position: absolute;
-  bottom: 0px;
-  left: 5px;
-  right: 5px;
-  height: 42px;
+.welcome .open-app:hover {
+    background-color: #06866a;
 }
 
-.app-bar-container {
-  position: absolute;
-  display: block;
-  width: 100%;
-  height: 100%;
-  color: #fff;
+
+/* chat.html */
+
+.rasp-login {
+    background-color: #04a985;
+    color: #fff;
+    text-align: center;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
 }
 
-.group-entry, .group-entry:active {
-  text-decoration: none;
-  display: block;
-  clear: both;
-  color: white;
-  margin: 7px 0;
-  padding: 12px 5px;
-  font-size: 16px;
+.rasp-login-container {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-block;
 }
 
-.group-entry .fa {
-  padding-top: 3px;
-  font-size: 17px;
-  float: right;
+.rasp-login-container h1 {
+    padding: 0 0 10px 0;
+    letter-spacing: 0.5px;
+    text-align: left;
 }
 
-.group-entry:hover {
-   background: #00695C;
+.rasp-login-container .abcRioButton {
+    width: 100% !important;
+    box-shadow: none;
+    background-color: #08c49b;
+    color: #fff;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
 }
 
-.active-group {
-  background: #fff;
-  color: #000;
+.rasp-login-container .abcRioButton:hover {
+    box-shadow: none;
+    color: #08c49b;
+    background-color: #fff;
 }
 
-.active-group:hover {
-  background: #fff;
+.rasp-login-container .abcRioButtonContentWrapper .abcRioButtonContents {
+    font-weight: 600;
 }
 
-.meta-message {
-  color: #999;
-  padding: 5px 10px;
+.rasp-login-container .login-form input {
+    border: 0px;
+    background-color: #08c49b;
+    width: 100%;
+    color: #fff;
+    margin: 0 0 10px 0;
+    height: 50px;
+    padding: 0 20px;
+    font-size: 20px;
+    line-height: 50px;
 }
 
-.incomingMessage {
-  margin: 10px;
-  box-sizing: border-box;
+.rasp-login-container .login-form input::-webkit-input-placeholder {
+    color: #fff;
+    opacity: 0.7;
 }
 
-.avatar {
-  width: 64px;
-  height: 64px;
-  float: left;
-  margin: 0 8px 0 0;
-  border-radius: 10px;
+.rasp-login-container .login-form input::-webkit-input-placeholder {
+    color: #fff;
+    opacity: 0.7;
 }
 
-.markdown-container * {
-  word-wrap: break-word;
+.rasp-login-container .login-form input:-moz-placeholder {
+    color: #fff;
+    opacity: 0.7;
 }
 
-.markdown-container img {
-  max-width: 100%;
+.rasp-login-container .login-form input::-moz-placeholder {
+    color: #fff;
+    opacity: 0.7;
 }
 
-.markdown-container a, .markdown-container a:active, .markdown-container a:visited {
-  color: inherit;
+.rasp-login-container .login-form input:-ms-input-placeholder {
+    color: #fff;
+    opacity: 0.7;
 }
 
-.markdown-container p {
-  margin: 4px 0;
+.rasp-login-container .login-form input[type="submit"] {
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    cursor: pointer;
 }
 
-.markdown-container li {
-  margin-left: 20px;
+.rasp-login-container .login-form input[type="submit"]:hover {
+    background-color: #06866a;
 }
 
-.fromContainer {
-  padding: 0 0 7px 0;
+
+/* Chat UI */
+
+.raspicon {
+    font-family: raspicon;
+    position: relative;
 }
 
-.fromContainer .name {
-  padding: 0px 10px 7px 0;
-  font-weight: 900;
-  font-style: normal;
-  color: #00695C;
+.raspchat-header {
+    background-color: #088267;
 }
 
-.list-container {
-  max-height: 60%;
-  height: 60%;
+.sidebar-header span {
+    color: #fff;
+    line-height: 52px;
+    font-size: 20px;
 }
 
-.additional-buttons {
-  padding: 10px 5px;
+.sidebar-header {
+    height: 50px;
+    background-color: #05755d;
+    display: inline-block;
 }
 
-.inline-button, .inline-button:active {
-  text-decoration: none;
-  height: 24px;
-  font-size: 20px;
-  line-height: 20px;
-  color: #fff;
+.app-bar-hidden .sidebar-header span{
+    display: none;
+
+}
+.sidebar-header .hamburger {
+    width: 35px;
+    height: 100%;
+    text-decoration: none;
+    color: #fff;
+    text-align: center;
+    font-size: 20px;
+    line-height: 50px;
+    display: block;
+    padding-left: 15px;
+    overflow: hidden;
+    float: left;
+    margin-right: 15px;
 }
 
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  background: rgba(0, 0, 0, 0.5);
-  color: #fff;
+
+.app-bar-hidden .sidebar-header .hamburger{
+    width: 100%;
+    padding: 0px !important;
+    margin: 0px !important;
+
 }
 
-.loading-overlay .container-text{
-  position: relative;
-  width: 100%;
-  padding: 20% 0 0 0;
-  margin: 0;
-  font-size: 32px;
-  text-align: center;
+.app-bar-hidden .raspchat-header-container .sidebar-header span{
+    display: none;
 }
 
-.chrome-bar-container {
-  display: block;
-  position: static;
-  width: 100%;
+.app-bar-hidden .raspchat-header-container .top-header{
+    position: absolute;
 }
 
-.hamburger {
-  padding: 0 11px;
-  font-size: 25px;
-  color: white;
-  text-decoration: none;
+.sidebar-header .hamburger:after {
+    content: "\E700";
 }
 
-.hamburger i {
-  padding: 11px 0;
+.sidebar-subhead {
+    display: block;
+    color: #fff;
+    text-transform: uppercase;
+    font-weight: 600;
+    background-color: #019a79;
+    padding: 15px;
+    margin-bottom: 15px;
 }
 
-.chrome-bar-container .title-container {
-  width: 100%;
-  text-align: center;
-  font-weight: bold;
+.sidebar-sub {
+    background-color: #04a985;
+    width: 100%;
+    height: 100%;
 }
 
-.hamburger-container {
-  width: 42px;
+.sidebar .groups-list .group-entry,
+.sidebar .groups-list .group-entry:active {
+    text-decoration: none;
+    display: block;
+    clear: both;
+    color: rgba(255, 255, 255, 0.8);
+    margin-left: 15px;
+    padding: 0px;
+    font-size: 16px;
+    font-weight: 600;
+    height: 25px;
+    overflow: hidden;
 }
 
-.emoji {
-  width: 1.2em;
-  height: 1.2em;
-  display: inline-block;
-  margin-bottom: 0.1em;
+.sidebar .groups-list .active-group {
+    color: #fff;
 }
 
-/* Mobile */
-@media(max-width: 600px) {
-  .msg {
-    width: 80%;
-    height: 42px;
+.sidebar .groups-list i {
+    float: right;
+    padding-right: 15px;
+    font-size: 11px;
+    line-height: 30px;
+    display: none;
+}
+
+.groups-list:hover i {
+    display: block !important;
+}
+
+.sidebar .settings {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 50px;
+    cursor: pointer;
+}
+
+.sidebar .without-bg {
+    background-color: transparent;
+}
+
+.raspchat-body {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: block;
+    overflow: hidden;
+}
+
+.raspchat-body .sidebar {
+    position: absolute;
+    left: 0;
+    top: 50px;
+    bottom: 0;
+}
+
+.raspchat-body .chat-box {
+    position: absolute;
+    right: 0;
+    top: 50px;
+    bottom: 0;
+}
+
+.full-stretched-relative {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+    position: relative;
+}
+
+@media only screen and (min-width: 600px) {
+    .app-bar-hidden .sidebar {
+        width: 0;
+        display: none;
+    }
+
+    .app-bar-visible .sidebar-header {
+        width: 50px;
+    }
+
+    .app-bar-hidden .chat-box {
+        left: 0;
+        display: block;
+    }
+
+    .app-bar-hidden .sidebar-header {
+        width: 50px;
+    }
+
+    .app-bar-visible .sidebar {
+        width: 200px;
+        display: block;
+    }
+
+    .app-bar-visible .chat-box {
+        left: 200px;
+        display: block;
+    }
+
+    .app-bar-visible .sidebar-header {
+        width: 200px;
+    }
+}
+
+
+@media only screen and (max-width: 599px) {
+
+    
+
+    .app-bar-hidden .sidebar {
+        width: 0;
+        display: none;
+    }
+
+    .app-bar-visible .raspchat-header-container .sidebar-header span{
+        display: none;
+    }
+
+    .app-bar-visible .raspchat-header-container .top-header{
+        position: absolute;
+    }
+
+    .app-bar-hidden .chat-box {
+        left: 0;
+        display: block;
+    }
+
+    .app-bar-hidden .sidebar-header {
+        width: 50px;
+    }
+
+    .app-bar-visible .sidebar {
+        width: 100%;
+        display: block;
+    }
+
+    .app-bar-visible .chat-box {
+        display: none;
+    }
+
+    .sidebar-header {
+        width: 50px;
+    }
+}
+
+.raspchat-body .chat-messages {
+    height: 100%;
+    width: 100%;
+    display: block;
+    overflow-y: auto;
+}
+
+.raspchat-header {
+    height: 50px;
+    overflow: hidden;
+    color: white;
     position: absolute;
     top: 0;
     left: 0;
-  }
-
-  .btn {
-    width: 17%;
-    height: 42px;
-    position: absolute;
-    top: 0;
     right: 0;
-  }
+}
 
-  .chat-box {
+.settings-open .raspchat-header,
+.settings-open .raspchat-body .chat-box {
+    z-index: -1;
+}
+
+.settings-container,
+.settings-contianer-sub {
+    -webkit-transition: opacity 1s ease-in-out;
+    -moz-transition: opacity 1s ease-in-out;
+    -o-transition: opacity 1s ease-in-out;
+    -ms-transition: opacity 1s ease-in-out;
+    transition: opacity 1s ease-in-out;
+    opacity: 0;
+}
+
+.settings-open .settings-container,
+.settings-open .settings-contianer-sub {
+    opacity: 1;
+}
+
+.settings-open .settings-container {
     width: 100%;
-  }
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.74);
+}
 
-  .app-bar {
-    display: none;
-  }
+.settings-open .settings-contianer-sub {
+    width: 40%;
+    height: 50%;
+    margin: 0 auto;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #04a985;
+}
 
-  .chrome-bar-container .avatar-name-container {
-    display: none;
-  }
+.settings-contianer-sub .modal-header {
+    background-color: #078c6f;
+    height: 50px;
+    line-height: 53px;
+    width: 100%;
+    padding-left: 15px;
+    display: block;
+    color: #fff;
+    font-size: 19px;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
 
-  .avatar {
-    width: 32px !important;
-    height: 32px !important;
-  }
+.settings-contianer-sub .modal-header i {
+    float: right;
+    padding-right: 15px;
+    font-size: 12px;
+}
 
-  .show-appbar .app-bar {
-    display: block !important;
-    position: absolute !important;
+.settings-container-options {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: hidden;
+    margin: 15px;
+}
+
+.settings-sub-head {
+    color: #fff;
+    text-transform: uppercase;
+    font-weight: 600;
+    width: 100%;
+    display: block;
+    margin-bottom: 15px;
+}
+
+.settings-container-options .settings-option {
+    color: #fff;
+    text-decoration: none;
+    width: 100%;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.settings-container-options .settings-option span {
+    font-size: 18px;
+}
+
+.settings-container-options .settings-option i {
+    padding-top: 2px;
+    display: block;
+    float: left;
+    padding-right: 5px;
+}
+
+.raspchat-header-container .top-header {
+    display: inline-block;
+    line-height: 50px;
+    font-size: 20px;
+    padding-left: 20px;
+}
+
+.raspchat-header-container .raspchat-avi {
+    height: 50px;
+    line-height: 50px;
+    float: right;
+}
+
+.raspchat-header-container .raspchat-avi img {
+    border-radius: 100%;
+    margin-right: 10px;
+    margin-top: 10px;
+}
+
+.loading-overlay {
+    position: absolute;
     top: 0;
     left: 0;
     bottom: 0;
     right: 0;
-    z-index: 999;
-  }
-
-  .show-appbar .chat-box {
-    visibility: hidden;
-  }
+    background: rgba(0, 0, 0, 0.74);
+    color: #fff;
+    width: 100%;
+    height: 100%;
 }
 
-/* Desktop */
-@media (min-width: 600px) {
-  .msg {
+.loading-overlay .container-text {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: center;
+    font-size: 30px;
+}
+
+.bottomBar {
+    position: absolute;
+    bottom: 0px;
+    left: 0;
+    right: 0;
+    height: 50px;
+}
+
+.bottomBar .msg {
+    position: relative;
+    line-height: normal;
+    font-size: 15px;
+    transition: none;
+    background: #e9eaed;
+    border: none;
+    padding: 10px;
+    padding-left: 20px;
+    height: 50px;
     width: 100%;
-    padding: 0;
-    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+}
+
+.chat-log-container {
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 50px;
+}
+
+.raspchat-body-container {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.chat-log {
+    height: 100%;
+}
+
+.chat-log .message-content {
+    width: 100%;
+    height: 100%;
     display: block;
-    height: 42px;
-  }
+    overflow: hidden;
+}
 
-  .btn {
-    display: none;
-  }
+.chat-log .message-content .avatar {
+    height: auto;
+    width: 35px;
+    border-radius: 100%;
+    float: left;
+    margin-right: 8px;
+}
 
-  .app-bar {
-    width: 26%;
-    max-width: 200px;
-  }
+.chat-log .message-content .message-content-container {
+    display: block;
+    overflow: hidden;
+}
 
-  .chat-box{
-    width: 73%;
-  }
+.chat-log .message-content .message-content-container .timestamp {
+    opacity: 0.5;
+    font-size: 12px;
+}
+
+.chat-log .chat-message {
+    padding: 0 20px 10px 20px;
+}
+
+.chat-log .meta-message {
+    font-family: inherit;
+    color: #000;
+    display: inline-block;
+    padding: 2px 0;
+    font-size: 13px;
+    opacity: 0.6;
+}
+
+.chat-log .message-content .message-content-container .name {
+    color: #04a985;
+    font-weight: 600;
+}
+
+.sidebar .g-unread {
+    background-color: #078c6f;
+    margin: 0 7px;
+    width: auto;
+    height: 18px;
+    padding: 0 6px;
+    text-align: center;
+    line-height: 18px;
+    display: inline-block;
+    font-size: 11px;
+}
+
+.sidebar .groups-list {
+    width: 100%;
+    display: block;
+    height: 100%;
+    overflow: hidden;
+    margin: 0 0 10px 0;
 }
 
 /* welcome.html */
@@ -503,4 +877,11 @@ img{
 
 .rasp-login-container .login-form input[type="submit"]:hover{
   background-color: #06866a;
+}
+
+.emoji {
+  width: 1.2em;
+  height: 1.2em;
+  display: inline-block;
+  margin-bottom: 0.1em;
 }

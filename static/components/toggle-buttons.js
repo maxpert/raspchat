@@ -46,7 +46,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       },
 
       onEnableChanged: function (oldValue) {
-        if (oldValue == false && Notification.permission !== 'granted') {
+        if (oldValue === false && Notification.permission !== 'granted') {
           Notification.requestPermission(this.onPermissionChanged);
         }
       },

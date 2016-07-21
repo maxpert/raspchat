@@ -6,30 +6,33 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 (function (vue, win, doc) {
-  vue.component('chrome-bar', vue.extend({
-    template: '#chrome-bar',
+  vue.component('settings-dialog', vue.extend({
+    template: '#settings-dialog',
     props: {
-      title: {
-        type: String,
-        required: true
-      },
-      userId: {
-        type: String,
-        required: true
-      },
-      hamburgerEnabled: {
-        type: Boolean,
-        required: true,
-        twoWay: true
-      }
+        visible: {
+            type: Boolean,
+            twoWay: true,
+        }
     },
-    data: function() {
+    data: function () {
       return {};
     },
+    ready: function () {
+        doc.addEventListener("keyup", this.closeIfEscaped, false);
+    },
     methods: {
-      hamburgerClicked: function () {
-        this.$set('hamburgerEnabled', !this.hamburgerEnabled);
-      }
+        closeDialog: function () {
+            this.$set('visible', false);
+        },
+
+        closeIfEscaped: function(e) {
+            if (this.visible && e.keyCode == 27) {
+                this.closeDialog();
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+        }
     }
   }));
 })(Vue, window, window.document);

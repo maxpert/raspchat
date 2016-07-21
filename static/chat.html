@@ -26,31 +26,33 @@
   <meta name="robots" content="noindex" />
 
   <link href='//fonts.googleapis.com/css?family=Roboto+Mono' rel='stylesheet' type='text/css' />
-  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" />
   <link href='./default.css' rel='stylesheet' type='text/css' />
   <script type='text/javascript' src="/config/client.js"></script>
 
   <title>Raspchat</title>
 </head>
 <body>
-  <div id="root" :class="osName" style="width: 100%; height: 100%; margin: 0; padding: 0; position: relative;">
+  <div id="root" :class="{'settings-open': settingsVisible, 'app-bar-visible': showAppBar, 'app-bar-hidden': !showAppBar}">
     <template v-if="isConnected">
       <slot name="windowBox">
-        <div class="chrome-body">
-          <div class="chrome-body-container" :class="{'show-appbar': showAppBar}">
-            <slot name="appBar"><app-bar :show="showAppBar" :user-id="nick"/></slot>
-
+        <div class="raspchat-body">
+            <slot name="appBar">
+              <app-bar :settings-enabled.sync="settingsVisible" :user-id="nick"/>
+            </slot>
             <slot name="chatBox">
               <div class="chat-box">
-                <slot><chat-log :messages="currentGroup.messages"/></slot>
-                <slot><chat-compose @send-message="sendMessage"/></slot>
+                <div class="full-stretched-relative">
+                  <slot><chat-log :messages="currentGroup.messages"/></slot>
+                  <slot><chat-compose @send-message="sendMessage"/></slot>
+                </div>
               </div>
             </slot>
-
-          </div>
         </div>
+        <slot name="chromeBar"><chrome-bar :user-id="nick" :hamburger-enabled.sync="showAppBar" :title="currentGroup.name" /></slot>
+      </slot>
 
-        <slot name="chromeBar"><chrome-bar :user-id="nick" :title="currentGroup.name" /></slot>
+      <slot name="settings-dialog-holder">
+        <settings-dialog :visible.sync="settingsVisible"/>
       </slot>
 
       <slot name="loadingBar">
@@ -60,6 +62,7 @@
           </div>
         </div>
       </slot>
+
     </template>
     <template v-else>
       <div class="rasp-login">
@@ -70,6 +73,24 @@
       </div>
     </template>
   </div>
+
+  <template id="settings-dialog">
+    <div class="raspchat-body-container" v-show="visible" v-el="body-container" @keyup.esc="closeDialog">
+      <div class="settings-container">
+        <div class="settings-contianer-sub">
+          <span class="modal-header">
+            Settings
+            <i class="raspicon raspicon-close" @click.stop.prevent="closeDialog"></i>
+          </span>
+          <div class="settings-container-options">
+            <span class="settings-sub-head">Push Notifcations</span>
+            <slot><toast-notification-button :ignore-for="userId"/></slot>
+            <slot><sound-notification-button default-enabled="{{true}}" :ignore-for="userId" /></slot>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
 
   <template id="login-form">
     <center style="" v-show="isReady">
@@ -97,63 +118,61 @@
   </template>
 
   <template id="app-bar">
-    <div class="app-bar color-background-500 code-font">
-      <div class="app-bar-container">
+      <div class="sidebar">
+        <div class="full-stretched-relative">
 
-        <div style="margin: 5px;">Groups</div>
-        <hr style="margin: 5px 0;"/>
-        <div class="list-container">
-          <groups-list />
+          <div class="sidebar-sub">
+            <span class="sidebar-subhead">Channels</span>
+            <div class="list-container">
+              <groups-list />
+            </div>
+
+            <div class="settings">
+              <span class="sidebar-subhead" @click.stop.prevent="toggleSettingsEnabled()">Settings</span>
+            </div>
+          </div>
+
         </div>
-
-        <div style="margin: 5px;">Settings</div>
-        <hr style="margin: 5px 0;"/>
-        <div class="additional-buttons">
-          <slot><toast-notification-button :ignore-for="userId"/></slot>
-          <slot><sound-notification-button default-enabled="{{true}}" :ignore-for="userId" /></slot>
-        </div>
-
       </div>
-    </div>
   </template>
 
   <template id="sound-notification-button">
-    <a href="#" class="inline-button code-font" @click.stop.prevent="toggle">
-      <i class="fa fa-bell" v-if="enabled"></i>
-      <i class="fa fa-bell-o" v-else></i>
+    <a href="#" class="settings-option" @click.stop.prevent="toggle">
+      <i title="Disable sound for push notifications" class="raspicon raspicon-tick" v-if="!enabled"></i>
+      <i title="Enable sound for push notifications" class="raspicon raspicon-ticked" v-else></i>
+      <span>Enable sound for push notifications</span>
     </a>
   </template>
 
   <template id="toast-notification-button">
-    <a href="#" class="inline-button code-font" @click.stop.prevent="toggle">
-      <i class="fa fa-comment" v-if="enabled"></i>
-      <i class="fa fa-comment-o" v-else></i>
+    <a href="#" class="settings-option" @click.stop.prevent="toggle">
+      <i title="Disable Push Notifications" class="raspicon raspicon-tick" v-if="!enabled"></i>
+      <i title="Enable Push Notifications" class="raspicon raspicon-ticked" v-else></i>
+      <span>Enable Push Notifications</span>
     </a>
   </template>
 
   <template id="groups-list">
     <div class="code-font groups-list" v-for="g in groups">
       <a href="#" class="group-entry {{selected == g.name ? 'active-group' : ''}}" @click.stop.prevent="selectGroup(g.name)">
-        <span>{{g.name}}</span><span v-if="g.unread"> - {{g.unread}}</span>
-        <i class="fa fa-times" style="float: right; font-size: 17px;" @click.stop.prevent="leaveGroup(g.name)" v-if="$index"></i>
+        <span>{{g.name}}</span><span class="g-unread" v-if="g.unread">{{g.unread}}</span>
+        <i class="raspicon raspicon-close" @click.stop.prevent="leaveGroup(g.name)" v-if="$index"></i>
       </a>
     </div>
   </template>
 
   <template id="chrome-bar">
-    <div class="chrome-bar color-background-500 code-font">
-      <table class="chrome-bar-container">
-        <tr>
-          <td class="hamburger-container"><a href="#" class="hamburger" @click.stop.prevent="hamburgerClicked()"><i class="fa fa-bars"></i></a></td>
-          <td class="title-container">{{title}}</td>
-          <td class="avatar-container">
-              <img :src="userId | avatar_url" width="32" height="32"/>
-          </td>
-          <td>
-            <span class="avatar-name-container">{{userId}}</span>
-          </td>
-        </tr>
-      </table>
+    <div class="raspchat-header">
+      <div class="raspchat-header-container">
+        <span class="sidebar-header" @click.stop.prevent="hamburgerClicked()">
+          <a href="#" class="hamburger raspicon"></a>
+          <span>Raspchat</span>
+        </span>
+        <span class="top-header">{{title}}</span>
+        <span class="raspchat-avi">
+          <img title="{{userId}}" :src="userId | avatar_url" width="32" height="32"/>
+        </span>
+      </div>
     </div>
   </template>
 
@@ -173,27 +192,19 @@
   <div v-if="message.isMeta">
     <pre class="meta-message">{{{message.msg | escape_html}}}</pre>
   </div>
-  <div class="incomingMessage code-font" v-else>
-    <table width="100%" border="0" style="max-width: 100%;">
-      <tr>
-        <td valign="top" align="left" style="width: 12px;">
-          <img :src="message.from | avatar_url" class="avatar" alt="{{message.from}}" />
-          <div class="cf">&nbsp;</div>
-        </td>
-        <td valign="top" align="left">
-          <div class="fromContainer">
-            <span class="name">{{message.from}}</span>
-            <span style="font-size: 12px">{{message.delivery_time | better_date}}</span>
-          </div>
-          <div class="markdown-container">
+  <div class="incomingMessage" v-else>
+    <div class="message-content">
+      <img :src="message.from | avatar_url" class="avatar" alt="{{message.from}}" />
+      <div class="message-content-container">
+        <span class="name">{{message.from}}</span>
+        <span class="timestamp">{{message.delivery_time | better_date}}</span>
+        <div class="markdown-container">
           {{{message.msg | markdown | emojify}}}
           </div>
-        </td>
-      </tr>
-    </table>
+      </div>
+    </div>
   </div>
   </template>
-
 </body>
 <script type='text/javascript' src="/static/bower_components/emojify.js/dist/js/emojify.js"></script>
 <script type='text/javascript' src="/static/bower_components/notify/notification.js"></script>
@@ -216,5 +227,6 @@
 <script type='text/javascript' src="/static/components/group-list.js"></script>
 <script type='text/javascript' src="/static/components/toggle-buttons.js"></script>
 <script type='text/javascript' src="/static/components/sign-in.js"></script>
+<script type='text/javascript' src="/static/components/settings-dialog.js"></script>
 <script type='text/javascript' src="/static/chat.js"></script>
 </html>

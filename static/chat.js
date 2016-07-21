@@ -5,8 +5,8 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-(function (vue, win, doc) {
-  var groupsLog = {};
+;(function (vue, win, doc) {
+  var groupsLog = {}
   var whatOS = function (){
     if (navigator.appVersion.indexOf("AppleWebKit") != -1) return "iOS";
     if (navigator.appVersion.indexOf("Android") != -1) return "Android";
@@ -20,21 +20,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   var vueApp = new vue({
     el: '#root',
     data: {
-      nick: "",
+      nick: '',
       currentGroup: {name: '', messages: []},
       isConnected: false,
       isConnecting: false,
       isReady: false,
+      settingsVisible: false,
       showAppBar: false,
       osName: whatOS()
     },
 
     ready: function () {
-      if (this.$el.offsetWidth > 600){
-        this.$set("showAppBar", true);
+      if (this.$el.offsetWidth > 600) {
+        this.$set('showAppBar', true);
       }
 
-      this.transport = core.GetTransport("chat");
+      this.transport = core.GetTransport('chat');
       this.transport.events.on('connected', this.onConnected);
       this.transport.events.on('disconnected', this.onDisconnected);
       this.transport.events.on('handshake', this.onHandshaked);
@@ -48,17 +49,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       this.transport.events.on('nick-changed', this.changeNick);
       this.transport.events.on('members-list', this.onMembersList);
 
-      this.$on("switch", this.onSwitch);
-      this.$on("leave", function (group) {
-        this.transport.send(group, "/leave "+group);
+      this.$on('switch', this.onSwitch);
+      this.$on('leave', function (group) {
+        this.transport.send(group, '/leave ' + group);
       });
 
-      this.$on("hamburger-clicked", function (v) {
-        this.$set("showAppBar", !this.showAppBar);
-      });
-
-      this.$watch("currentGroup.name", function (newVal, oldVal) {
-        this.$broadcast("group_switched", newVal);
+      this.$watch('currentGroup.name', function (newVal, oldVal) {
+        this.$broadcast('group_switched', newVal);
       });
     },
 
@@ -69,15 +66,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       },
 
       connect: function () {
-        this.$set("isConnecting", true);
-        this.$set("isConnected", true);
+        this.$set('isConnecting', true);
+        this.$set('isConnected', true);
         this.transport.connect(this.nick);
       },
 
       sendMessage: function (msg) {
         // Don't let user send message on default group
-        if (msg[0] == '/' && (!this.transport.isValidCmd(msg) || msg.toLowerCase().startsWith("/help")))
-        {
+        if (msg[0] == '/' && (!this.transport.isValidCmd(msg) || msg.toLowerCase().startsWith('/help'))) {
           this._appendMetaMessage(this.currentGroup.name, core.Transport.HelpMessage);
           return;
         }
@@ -86,13 +82,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       },
 
       onRawMessage: function (from, msg) {
-        if (msg.type != "Negotiate") {
+        if (msg.type != 'Negotiate') {
           return;
         }
 
-        this._appendMetaMessage(this.currentGroup.name, "DCC to "+from);
+        this._appendMetaMessage(this.currentGroup.name, 'DCC to ' + from)
         var p = new core.PeerConnectionNegotiator(this.transport);
-        p.events.on("close", function () {
+        p.events.on('close', function () {
           p.close();
         });
         p.connectTo(from);
@@ -106,14 +102,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         this._appendMessage({
           to: group,
           from: this.defaultGroup,
-          msg: "Channel members for **"+group+"**\n\n - " + list.join("\n - "),
+          msg: 'Channel members for **' + group + '**\n\n - ' + list.join('\n - '),
           delivery_time: new Date()
         });
       },
 
       onHandshaked: function (info_channel) {
         this.defaultGroup = info_channel;
-        this.transport.send(this.defaultGroup, "/join lounge");
+        this.transport.send(this.defaultGroup, '/join lounge');
       },
 
       onMessage: function (m) {
@@ -122,7 +118,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
       onConnected: function () {
         this.$set('isConnected', true);
-        this.$broadcast("connection_on");
+        this.$broadcast('connection_on');
       },
 
       changeNick: function (newNick) {
@@ -130,28 +126,28 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       },
 
       onDisconnected: function () {
-        this.$set("isConnecting", true);
-        this.$broadcast("connection_off");
+        this.$set('isConnecting', true);
+        this.$broadcast('connection_off');
       },
 
       onJoin: function (joinInfo) {
         this._getOrCreateGroupLog(joinInfo.to);
-        this._appendMetaMessage(joinInfo.to, joinInfo.from + " has joined");
+        this._appendMetaMessage(joinInfo.to, joinInfo.from + ' has joined');
         if (this.currentGroup.name == this.defaultGroup) {
           this.switchGroup(joinInfo.to);
         }
 
         if (this.isConnecting) {
-          this.$set("isConnecting", false);
+          this.$set('isConnecting', false);
         }
       },
 
       onLeave: function (info) {
         if (info.from == this.nick) {
           delete groupsLog[info.to];
-          this.$broadcast("group_left", info.to);
+          this.$broadcast('group_left', info.to);
         } else {
-          this._appendMetaMessage(info.to, info.from + " has left");
+          this._appendMetaMessage(info.to, info.from + ' has left');
         }
 
         if (this.currentGroup.name == info.to && this.nick == info.from) {
@@ -161,11 +157,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
       onSwitch: function (group) {
         if (this.$el.offsetWidth < 600) {
-          this.$set("showAppBar", false);
+          this.$set('showAppBar', false);
         }
 
         if (!this._getGroupLog(group)) {
-          alert('You have not joined group '+group);
+          alert('You have not joined group ' + group);
           return true;
         }
 
@@ -210,7 +206,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
         if (groupLog.length && groupLog[groupLog.length - 1].from == m.from) {
           var lastMsg = groupLog[groupLog.length - 1];
-          lastMsg.msg += "\n\n" + m.msg;
+          lastMsg.msg += '\n\n' + m.msg;
         } else {
           groupLog.push(m);
         }
@@ -223,6 +219,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
 
         this.$broadcast('message_new', m, {noNotification: m.to == this.defaultGroup});
+      },
+
+      onEscPressed: function(evt) {
+        this.$set('settingsVisible', false);
       },
 
       _appendMetaMessage: function (group, msg) {
@@ -249,7 +249,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       _getOrCreateGroupLog: function (g) {
         if (!groupsLog[g]) {
           groupsLog[g] = [];
-          this.$broadcast("group_joined", g);
+          this.$broadcast('group_joined', g);
         }
 
         return groupsLog[g];
@@ -263,6 +263,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       _getGroupLog: function (g) {
         return groupsLog[g] || null;
       }
-    },
+    }
   });
-})(Vue, window, window.document);
+})(Vue, window, window.document)

@@ -6,8 +6,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 (function (vue, win, doc, raspconfig) {
-  var signInConfig = raspconfig.externalSignIn || {};
-  var InvalidNickCharactersRegex = /[^a-zA-Z0-9]+/ig
+  var signInConfig = raspconfig.externalSignIn || {useProviders: false};
+  var InvalidNickCharactersRegex = /[^a-zA-Z0-9]+/ig;
 
   vue.component('google-sign-in', {
     template: '<div id="google-sign-in"></div>',
@@ -84,10 +84,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
     methods: {
       googleSignInSuccess: function (userInfo) {
-        localStorage["userInfo"] = JSON.stringify(userInfo);
+        localStorage.userInfo = JSON.stringify(userInfo);
         this.$set('isSignedIn', true);
-        if (localStorage["userNick"]) {
-          this.$set('nick', localStorage["userNick"]);
+        if (localStorage.userNick) {
+          this.$set('nick', localStorage.userNick);
         } else {
           this.$set('nick', userInfo.id);
         }
@@ -107,7 +107,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           return;
         }
 
-        localStorage["userNick"] = this.nick;
+        localStorage.userNick = this.nick;
         this.$dispatch('login', this.nick);
       }
     }

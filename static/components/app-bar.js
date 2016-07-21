@@ -8,13 +8,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 (function (vue, win, doc) {
   vue.component('app-bar', vue.extend({
     template: '#app-bar',
-    props: ['userId'],
+    props: {
+      userId: {
+        type: String,
+        required: true,
+      },
+
+      settingsEnabled: {
+        type: Boolean,
+        twoWay: true,
+      }
+    },
+
     data: function () {
       return {};
     },
+
     ready: function () {
     },
+    
     methods: {
+      toggleSettingsEnabled: function () {
+        this.$set('settingsEnabled', !this.settingsEnabled);
+      }
     }
-  }))
+  }));
 })(Vue, window, window.document);
