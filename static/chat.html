@@ -75,9 +75,9 @@
   </div>
 
   <template id="settings-dialog">
-    <div class="raspchat-body-container" v-show="visible" v-el="body-container" @click.stop.prevent="closeDialog">
+    <div class="raspchat-body-container" v-show="visible" @click.stop.prevent="closeDialog">
       <div class="settings-container">
-        <div class="settings-contianer-sub">
+        <div class="settings-contianer-sub" @click.stop.prevent="ignoreClose">
           <span class="modal-header">
             Settings
             <i class="raspicon raspicon-close" @click.stop.prevent="closeDialog"></i>

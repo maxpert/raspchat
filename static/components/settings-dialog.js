@@ -18,11 +18,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       return {};
     },
     ready: function () {
-        doc.addEventListener("keyup", this.closeIfEscaped, false);
+        this.$watch("visible", this.hookEscape);
     },
     methods: {
+        ignoreClose: function () {
+        },
+        
         closeDialog: function () {
             this.$set('visible', false);
+        },
+
+        hookEscape: function(newVal, oldVal) {
+            if (newVal === true) {
+                doc.addEventListener("keyup", this.closeIfEscaped, false);
+            } else {
+                doc.removeEventListener("keyup", this.closeIfEscaped);
+            }
         },
 
         closeIfEscaped: function(e) {
