@@ -405,80 +405,6 @@ img{
     position: relative;
 }
 
-@media only screen and (min-width: 600px) {
-    .app-bar-hidden .sidebar {
-        width: 0;
-        display: none;
-    }
-
-    .app-bar-visible .sidebar-header {
-        width: 50px;
-    }
-
-    .app-bar-hidden .chat-box {
-        left: 0;
-        display: block;
-    }
-
-    .app-bar-hidden .sidebar-header {
-        width: 50px;
-    }
-
-    .app-bar-visible .sidebar {
-        width: 200px;
-        display: block;
-    }
-
-    .app-bar-visible .chat-box {
-        left: 200px;
-        display: block;
-    }
-
-    .app-bar-visible .sidebar-header {
-        width: 200px;
-    }
-}
-
-
-@media only screen and (max-width: 599px) {
-
-    
-
-    .app-bar-hidden .sidebar {
-        width: 0;
-        display: none;
-    }
-
-    .app-bar-visible .raspchat-header-container .sidebar-header span{
-        display: none;
-    }
-
-    .app-bar-visible .raspchat-header-container .top-header{
-        position: absolute;
-    }
-
-    .app-bar-hidden .chat-box {
-        left: 0;
-        display: block;
-    }
-
-    .app-bar-hidden .sidebar-header {
-        width: 50px;
-    }
-
-    .app-bar-visible .sidebar {
-        width: 100%;
-        display: block;
-    }
-
-    .app-bar-visible .chat-box {
-        display: none;
-    }
-
-    .sidebar-header {
-        width: 50px;
-    }
-}
 
 .raspchat-body .chat-messages {
     height: 100%;
@@ -884,4 +810,86 @@ img{
   height: 1.2em;
   display: inline-block;
   margin-bottom: 0.1em;
+}
+
+/** 
+!!!!!!!!!!NOTE DO NOT MOVE MEDIA QUERIES ANYWHERE ON TOP!!!!!!!!!!!!!
+They are supposed to override default styles and puttin them on top might cause issues 
+**/
+
+@media only screen and (min-width: 600px) {
+    .app-bar-hidden .sidebar {
+        width: 0;
+        display: none;
+    }
+
+    .app-bar-visible .sidebar-header {
+        width: 50px;
+    }
+
+    .app-bar-hidden .chat-box {
+        left: 0;
+        display: block;
+    }
+
+    .app-bar-hidden .sidebar-header {
+        width: 50px;
+    }
+
+    .app-bar-visible .sidebar {
+        width: 200px;
+        display: block;
+    }
+
+    .app-bar-visible .chat-box {
+        left: 200px;
+        display: block;
+    }
+
+    .app-bar-visible .sidebar-header {
+        width: 200px;
+    }
+}
+
+
+@media only screen and (max-width: 599px) {
+    .settings-open .settings-contianer-sub {
+        width: 100%;
+        height:  80%;
+    }
+
+    .app-bar-hidden .sidebar {
+        width: 0;
+        display: none;
+    }
+
+    .app-bar-visible .raspchat-header-container .sidebar-header span{
+        display: none;
+    }
+
+    .app-bar-visible .raspchat-header-container .top-header{
+        position: absolute;
+    }
+
+    .app-bar-hidden .chat-box {
+        left: 0;
+        display: block;
+    }
+
+    .app-bar-hidden .sidebar-header {
+        width: 50px;
+    }
+
+    .app-bar-visible .sidebar {
+        width: 100%;
+        display: block;
+    }
+
+    .app-bar-visible .chat-box {
+        display: none;
+    }
+
+    .sidebar-header {
+        width: 50px;
+    }
 }

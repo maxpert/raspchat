@@ -32,7 +32,7 @@
   <title>Raspchat</title>
 </head>
 <body>
-  <div id="root" :class="{'settings-open': settingsVisible, 'app-bar-visible': showAppBar, 'app-bar-hidden': !showAppBar}">
+  <div id="root" :class="[osName, {'settings-open': settingsVisible, 'app-bar-visible': showAppBar, 'app-bar-hidden': !showAppBar}]">
     <template v-if="isConnected">
       <slot name="windowBox">
         <div class="raspchat-body">
@@ -75,7 +75,7 @@
   </div>
 
   <template id="settings-dialog">
-    <div class="raspchat-body-container" v-show="visible" v-el="body-container" @keyup.esc="closeDialog">
+    <div class="raspchat-body-container" v-show="visible" v-el="body-container" @click.stop.prevent="closeDialog">
       <div class="settings-container">
         <div class="settings-contianer-sub">
           <span class="modal-header">
@@ -138,17 +138,17 @@
 
   <template id="sound-notification-button">
     <a href="#" class="settings-option" @click.stop.prevent="toggle">
-      <i title="Disable sound for push notifications" class="raspicon raspicon-tick" v-if="!enabled"></i>
-      <i title="Enable sound for push notifications" class="raspicon raspicon-ticked" v-else></i>
-      <span>Enable sound for push notifications</span>
+      <i title="Enable sound notifications" class="raspicon raspicon-tick" v-if="!enabled"></i>
+      <i title="Disable sound notifications" class="raspicon raspicon-ticked" v-else></i>
+      <span>Sound notifications</span>
     </a>
   </template>
 
   <template id="toast-notification-button">
     <a href="#" class="settings-option" @click.stop.prevent="toggle">
-      <i title="Disable Push Notifications" class="raspicon raspicon-tick" v-if="!enabled"></i>
-      <i title="Enable Push Notifications" class="raspicon raspicon-ticked" v-else></i>
-      <span>Enable Push Notifications</span>
+      <i title="Enable desktop notifications" class="raspicon raspicon-tick" v-if="!enabled"></i>
+      <i title="Disable desktop notifications" class="raspicon raspicon-ticked" v-else></i>
+      <span>Desktop notifications</span>
     </a>
   </template>
 

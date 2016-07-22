@@ -6,15 +6,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 ;(function (vue, win, doc) {
-  var groupsLog = {}
+  var groupsLog = {};
   var whatOS = function (){
-    if (navigator.appVersion.indexOf("AppleWebKit") != -1) return "iOS";
-    if (navigator.appVersion.indexOf("Android") != -1) return "Android";
-    if (navigator.appVersion.indexOf("Linux")!=-1) return "Linux";
-    if (navigator.appVersion.indexOf("X11")!=-1) return "Linux";
     if (navigator.appVersion.indexOf("Mac")!=-1) return "MacOS";
     if (navigator.appVersion.indexOf("Win")!=-1) return "Windows";
+    if (navigator.appVersion.indexOf("Linux")!=-1) return "Linux";
+    if (navigator.appVersion.indexOf("X11")!=-1) return "Linux";
+
     if (navigator.appVersion.indexOf("IEMobile") != -1) return "Windows";
+    if (navigator.appVersion.indexOf("AppleWebKit") != -1) return "iOS";
+    if (navigator.appVersion.indexOf("Android") != -1) return "Android";
   };
 
   var vueApp = new vue({
