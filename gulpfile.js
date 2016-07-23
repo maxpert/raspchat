@@ -28,12 +28,12 @@ var Settings = {
     },
     js: {
         clientSourceFiles: [
-            'static/core.js', 
-            'static/rtc.js', 
-            'static/peer_negotiator.js',
-            'static/file_transfer.js',
-            'static/components/*.js',
-            'static/chat.js'
+            'static/js/core.js', 
+            'static/js/rtc.js', 
+            'static/js/peer_negotiator.js',
+            'static/js/file_transfer.js',
+            'static/js/components/*.js',
+            'static/js/chat.js'
         ],
         clientFile: 'client.js',
         librariesFile: 'libraries.js',
@@ -43,9 +43,9 @@ var Settings = {
     html: {
         merge: {
            '/static/js/client.min.js': [
-                '/static/core.js', 
-                '/static/components/*.js',
-                '/static/chat.js'
+                '/static/js/core.js', 
+                '/static/js/components/*.js',
+                '/static/js/chat.js'
            ],
 
            '/static/js/libraries.min.js': [
