@@ -19,6 +19,7 @@ var Settings = {
         'static/*.jpg',
         'static/*.gif',
         'static/*.css',
+        'static/*.ttf',
         'static/favicon/**/*',
         'static/images/**/*'
         ],
@@ -43,9 +44,6 @@ var Settings = {
         merge: {
            '/static/js/client.min.js': [
                 '/static/core.js', 
-                '/static/rtc.js', 
-                '/static/peer_negotiator.js',
-                '/static/file_transfer.js',
                 '/static/components/*.js',
                 '/static/chat.js'
            ],
