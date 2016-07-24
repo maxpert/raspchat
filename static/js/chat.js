@@ -5,7 +5,9 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-;(function (vue, win, doc) {
+;(function (vue, win) {
+  "use strict";
+
   var groupsLog = {};
   var whatOS = function (){
     if (navigator.appVersion.indexOf("Mac")!=-1) return "MacOS";
@@ -18,17 +20,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     if (navigator.appVersion.indexOf("Android") != -1) return "Android";
   };
 
-  var vueApp = new vue({
+  new vue({
     el: '#root',
-    data: {
-      nick: '',
-      currentGroup: {name: '', messages: []},
-      isConnected: false,
-      isConnecting: false,
-      isReady: false,
-      settingsVisible: false,
-      showAppBar: false,
-      osName: whatOS()
+    data: function () {
+      return {
+          nick: '',
+          currentGroup: {name: '', messages: []},
+          isConnected: false,
+          isConnecting: false,
+          isReady: false,
+          settingsVisible: false,
+          showAppBar: false,
+          osName: whatOS()
+        };
     },
 
     ready: function () {
@@ -36,7 +40,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         this.$set('showAppBar', true);
       }
 
-      this.transport = core.GetTransport('chat');
+      this.transport = win.core.GetTransport('chat');
       this.transport.events.on('connected', this.onConnected);
       this.transport.events.on('disconnected', this.onDisconnected);
       this.transport.events.on('handshake', this.onHandshaked);
@@ -55,7 +59,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         this.transport.send(group, '/leave ' + group);
       });
 
-      this.$watch('currentGroup.name', function (newVal, oldVal) {
+      /* jshint unused: false */
+      this.$watch('currentGroup.name', function (newVal, oldVal) 
+      { 
         this.$broadcast('group_switched', newVal);
       });
     },
@@ -75,7 +81,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       sendMessage: function (msg) {
         // Don't let user send message on default group
         if (msg[0] == '/' && (!this.transport.isValidCmd(msg) || msg.toLowerCase().startsWith('/help'))) {
-          this._appendMetaMessage(this.currentGroup.name, core.Transport.HelpMessage);
+          this._appendMetaMessage(this.currentGroup.name, win.core.Transport.HelpMessage);
           return;
         }
 
@@ -86,13 +92,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (msg.type != 'Negotiate') {
           return;
         }
-
-        this._appendMetaMessage(this.currentGroup.name, 'DCC to ' + from)
-        var p = new core.PeerConnectionNegotiator(this.transport);
-        p.events.on('close', function () {
-          p.close();
-        });
-        p.connectTo(from);
       },
 
       switchGroup: function (grp) {
@@ -162,7 +161,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
 
         if (!this._getGroupLog(group)) {
-          alert('You have not joined group ' + group);
+          win.alert('You have not joined group ' + group);
           return true;
         }
 
@@ -222,10 +221,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         this.$broadcast('message_new', m, {noNotification: m.to == this.defaultGroup || m.from == this.nick});
       },
 
-      onEscPressed: function(evt) {
-        this.$set('settingsVisible', false);
-      },
-
       _appendMetaMessage: function (group, msg) {
         var groupLog = this._getOrCreateGroupLog(group);
 
@@ -266,4 +261,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       }
     }
   });
-})(Vue, window, window.document)
+})(window.Vue, window);

@@ -1,5 +1,14 @@
-(function (vue, win, doc) {
-  var md = new markdownit("default", {
+/*
+Copyright (c) 2015 Zohaib
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
+(function (vue, win) {
+  "use strict";
+
+  var md = new win.markdownit("default", {
     linkify: true,
   });
 
@@ -8,11 +17,11 @@
   });
 
   vue.filter('better_date', function (value) {
-    return moment(value).fromNow();
+    return win.moment(value).fromNow();
   });
 
   vue.filter('escape_html', function (value) {
-    return he.encode(value);
+    return win.he.encode(value);
   });
 
   vue.filter('falsy_to_block_display', function (value) {
@@ -24,12 +33,12 @@
   var virtualDiv = document.createElement('div');
   fragmentNode.appendChild(virtualDiv);
   vue.filter('emojify', function (value) {
-    if (!emojify) {
+    if (!win.emojify) {
       return value;
     }
 
     virtualDiv.innerHTML = value;
-    emojify.run(virtualDiv);
+    win.emojify.run(virtualDiv);
     return virtualDiv.innerHTML;
   });
 
@@ -38,4 +47,4 @@
     // return '//api.adorable.io/avatars/256/zmg-' + value + '.png';
     return 'http://fileio.raspchat.com/img/?size=128&text=' + encodeURIComponent(value);
   });
-})(Vue, window, window.document);
+})(window.Vue, window, window.document);

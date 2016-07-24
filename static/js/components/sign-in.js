@@ -6,6 +6,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 (function (vue, win, doc, raspconfig) {
+  "use strict";
+
   var signInConfig = raspconfig.externalSignIn || {useProviders: false};
   var InvalidNickCharactersRegex = /[^a-zA-Z0-9]+/ig;
 
@@ -28,7 +30,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    methods: {
      loadScript: function () {
        var funcName = '__google_sign_in_'+(new Date().getTime());
-       var me = this;
        win[funcName] = this.scriptLoaded;
        var head = doc.querySelector('head');
        var script = doc.createElement('script');
@@ -38,7 +39,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
      },
 
      scriptLoaded: function () {
-       gapi.signin2.render('google-sign-in', {
+       win.gapi.signin2.render('google-sign-in', {
         'scope': 'profile email',
         'width': 240,
         'height': 50,
@@ -112,4 +113,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       }
     }
   });
-})(Vue, window, window.document, window.RaspConfig);
+})(window.Vue, window, window.document, window.RaspConfig);

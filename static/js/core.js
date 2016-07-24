@@ -5,6 +5,8 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+"use strict";
+
 if (!Function.prototype.bind){
   Function.prototype.bind = function (scope) {
     var fn = this;
@@ -118,13 +120,15 @@ window.core = (function(win, doc, raspconfig) {
       var subscribes = this._channels[channel] || [],
           l = subscribes.length,
           data = Array.prototype.slice.call(arguments, 1);
-      for (var i = 0; i < l; i++) {
-        (function (j) {
-          var cb = subscribes[j];
-          win.setTimeout(function () {
-            cb && cb.apply(this, data || [])
+
+      var invokeSubscriber = function (cb, scope) {
+        win.setTimeout(function () {
+            cb && cb.apply(scope, data || []); // jshint ignore: line
           }, 0);
-        })(i);
+      };
+
+      for (var i = 0; i < l; i++) {
+        invokeSubscriber(subscribes[i]);
       }
     },
 
@@ -146,7 +150,7 @@ window.core = (function(win, doc, raspconfig) {
   };
 
   var Transport = function (url) {
-    $glueFunctions(this);
+    win.$glueFunctions(this);
     this.events = new EventEmitter();
     this.sock = null;
     this.handshakeCompleted = false;
@@ -235,7 +239,7 @@ window.core = (function(win, doc, raspconfig) {
             this.sock.close();
           }
         }catch(e){
-          console && console.error(e);
+          console && console.error(e); // jshint ignore: line
         }
 
         this.sock = new WebSocket(this.url);
@@ -245,7 +249,7 @@ window.core = (function(win, doc, raspconfig) {
         this.events.fire('connecting');
       },
 
-      _on_connect: function (e) {
+      _on_connect: function () {
         this.events.fire('connected');
       },
 
@@ -261,7 +265,7 @@ window.core = (function(win, doc, raspconfig) {
         try {
           data = JSON.parse(e.data);
         }catch(er){
-          console && console.error("Error decoding", e.data, er);
+          console && console.error("Error decoding", e.data, er); // jshint ignore: line
         }
 
         if (data['@']) {
@@ -356,11 +360,11 @@ window.core = (function(win, doc, raspconfig) {
 
       _on_group_history_recvd: function (grp, hist) {
         var historyMessages = hist.messages.map(this._prepareMetaMessage).map(this._parseTime).reverse();
-        this.events.fire('history', $mix(hist, {messages: historyMessages}));
+        this.events.fire('history', win.$mix(hist, {messages: historyMessages}));
       },
 
       _prepareMetaMessage: function (msg) {
-        var ret = $mix(msg);
+        var ret = win.$mix(msg);
         switch (msg['@']) {
           case 'group-join':
             ret.meta = {action: 'joined'};
@@ -422,8 +426,9 @@ window.core = (function(win, doc, raspconfig) {
   var giffer = {
     search: function (keywords, url_callback) {
       keywords = encodeURIComponent(keywords);
-      atomic.setContentType('application/json');
-      atomic.get("/gif?q="+keywords)
+      win.atomic.setContentType('application/json');
+      /* jshint unused: false */
+      win.atomic.get("/gif?q="+keywords)
            .success(function (response, xhr) {
              url_callback(response.url, response);
            })

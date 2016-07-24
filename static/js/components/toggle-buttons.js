@@ -6,6 +6,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 (function (vue, win, doc) {
+  "use strict";
+
   var ToggleButtonMixin = {
     data: function () {
       return {enabled: false};
@@ -14,7 +16,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       toggle: function () {
         var oldValue = this.$get("enabled");
         this.$set("enabled", !oldValue);
-        this.onEnableChanged && this.onEnableChanged(oldValue);
+        this.onEnableChanged && this.onEnableChanged(oldValue); // jshint ignore: line 
       }
     }
   };
@@ -91,4 +93,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       }
     }
   }));
-})(Vue, window, window.document);
+})(window.Vue, window, window.document);

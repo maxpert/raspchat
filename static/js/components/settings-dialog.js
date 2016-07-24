@@ -6,6 +6,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 (function (vue, win, doc) {
+  "use strict";
   vue.component('settings-dialog', vue.extend({
     template: '#settings-dialog',
     props: {
@@ -28,7 +29,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             this.$set('visible', false);
         },
 
-        hookEscape: function(newVal, oldVal) {
+        /* jshint unused: false */
+        hookEscape: function(newVal, oldVal) 
+        {
             if (newVal === true) {
                 doc.addEventListener("keyup", this.closeIfEscaped, false);
             } else {
@@ -46,4 +49,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
     }
   }));
-})(Vue, window, window.document);
+})(window.Vue, window, window.document);
