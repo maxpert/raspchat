@@ -1,6 +1,6 @@
 #!/bin/bash
 
-gvm use 1.6.2
-nvm use 5
+gvm use 1.6.3
+nvm use 6
 export GOPATH=`pwd`
 export PATH=`pwd`/node_modules/.bin:$PATH
