@@ -2,6 +2,7 @@ package rasweb
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,6 +12,8 @@ import (
 	"sibte.so/rasconfig"
 	"sibte.so/rasfs"
 )
+
+const MaxFileSizeLimit = 10 << 20
 
 type fileUploadHandler struct {
 	fsUploader rasfs.RasFS
@@ -63,6 +66,10 @@ func (p *fileUploadHandler) upload(w http.ResponseWriter, r *http.Request, _ htt
 	fileSize, err := uploadedFile.Seek(0, os.SEEK_END)
 	if err != nil {
 		return
+	}
+
+	if fileSize > MaxFileSizeLimit {
+		err = errors.New("File size too long")
 	}
 
 	_, err = uploadedFile.Seek(0, os.SEEK_SET)
