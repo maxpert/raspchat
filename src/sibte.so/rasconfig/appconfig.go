@@ -34,7 +34,7 @@ func LoadApplicationConfig(filePath string) {
 		conf.AllowHotRestart = false
 		conf.BindAddress = ":8080"
 		conf.DBPath = dir
-		conf.LogFilePath = dir
+		conf.LogFilePath = ""
 		conf.AllowedOrigins = make([]string, 0)
 		conf.ExternalSignIn = make(map[string]string)
 		conf.HasAuthProviders = false

@@ -11,11 +11,15 @@ if (!Function.prototype.bind){
   Function.prototype.bind = function (scope) {
     var fn = this;
     return function () {
-        var args = Array.prototype.slice.call(arguments);
+        var args = window.$arrayify(arguments);
         return fn.apply(scope, args);
       };
   };
 }
+
+window.$arrayify = function(args) {
+  return Array.prototype.slice.call(args);
+};
 
 window.$glueFunctions = function (obj) {
   for (var i in obj) {

@@ -32,6 +32,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         var msg = this.$get('message');
         this.$set('message', msg+'  ');
       },
+
+      onFileUploaded: function(fileInfo, uploadInfo) {
+        var message = '['+ fileInfo.file.name +']('+uploadInfo.url+')';
+        this.$dispatch('send-message', message);
+        this.$el.querySelector(".msg").focus();
+      }
     },
   }));
 })(window.Vue, window, window.document);

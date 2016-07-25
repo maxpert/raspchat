@@ -108,12 +108,34 @@
 
   <template id="chat-compose">
     <div class="bottomBar">
-      <textarea class="msg code-font"
-                v-model="message"
-                @keydown.stop.prevent.enter="enterPressed"
-                @keydown.stop.prevent.tab="tabPressed"
-                placeholder="Type your message"></textarea>
-      <input class='btn' type="button" style="" @click.stop.prevent="enterPressed" value="send" />
+      <div class="full-stretched-relative">
+        <textarea class="msg code-font"
+                  v-model="message"
+                  @keydown.stop.prevent.enter="enterPressed"
+                  @keydown.stop.prevent.tab="tabPressed"
+                  placeholder="Type your message"></textarea>
+        <input class='btn' type="button" style="" @click.stop.prevent="enterPressed" value="send" />
+        <slot><files-upload @uploaded="onFileUploaded"/></slot>
+      </div>
+    </div>
+  </template>
+
+  <template id="files-upload">
+    <div :class="['file-upload-zone', {'file-upload-dragging': isDragActive}, {'file-upload-pending': pendingFiles.length != 0}]">
+      <div class="dropped-files-container full-stretched-relative">
+        <file-uploader 
+            v-for="f in pendingFiles" 
+            :file-info="f" 
+            @state-changed="onFileStateChanged"
+            @file-uploaded="onFileUploaded">
+        </file-uploader>
+      </div>
+    </div>
+  </template>
+
+  <template id="file-uploader">
+    <div class="dropped-file">
+      <div class="file-name"><i class="raspicon raspicon-file" aria-hidden="true"></i>{{fileInfo.file.name}}</div>
     </div>
   </template>
 
@@ -225,5 +247,7 @@
 <script type='text/javascript' src="/static/js/components/toggle-buttons.js"></script>
 <script type='text/javascript' src="/static/js/components/sign-in.js"></script>
 <script type='text/javascript' src="/static/js/components/settings-dialog.js"></script>
+<script type='text/javascript' src="/static/js/components/file-uploader.js"></script>
+<script type='text/javascript' src="/static/js/components/files-upload.js"></script>
 <script type='text/javascript' src="/static/js/chat.js"></script>
 </html>

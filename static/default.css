@@ -88,6 +88,10 @@ img{
     content: "\E005";
 }
 
+.raspicon-file:after {
+    content: "\E7C3";
+}
+
 
 /*Colors*/
 
@@ -810,6 +814,34 @@ img{
   height: 1.2em;
   display: inline-block;
   margin-bottom: 0.1em;
+}
+
+.bottomBar .file-upload-zone {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+}
+
+.bottomBar .file-upload-pending {
+    display: block;
+    background: #e9eaed;
+}
+
+.dropped-file {
+    display: inline-block;
+    min-height: 50px;
+    padding: 5px 10px;
+}
+
+.dropped-file .file-name {
+    max-width: 150px;
+    overflow: hidden;
+    height: 20px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 /** 
