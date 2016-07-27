@@ -54,17 +54,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     },
     data: function() {
       return {
-        totalBytes: Number.NaN, 
-        uploadedBytes: Number.NaN
+        totalBytes: 0, 
+        uploadedBytes: 0
       };
     },
     computed: {
       percentComplete: function () {
-        if (this.totalBytes === Number.NaN || this.uploadedBytes === Number.NaN) {
-          return Number.NaN;
+        if (this.totalBytes === 0 || this.uploadedBytes === 0) {
+          return 0;
         }
 
-        return Math.floor(this.uploadedBytes * 100.0 / this.totalBytes) + '%';  
+        return Math.floor(this.uploadedBytes * 100.0 / this.totalBytes) + '';  
       }
     },
     ready: function() {

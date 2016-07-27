@@ -135,7 +135,8 @@
 
   <template id="file-uploader">
     <div class="dropped-file">
-      <div class="file-name"><i class="raspicon raspicon-file" aria-hidden="true"></i>{{fileInfo.file.name}}</div>
+      <div class="file-name"><i class="raspicon raspicon-file" aria-hidden="true"></i> {{fileInfo.file.name}}</div>
+      <div class="progess-meter">{{percentComplete | friendly_progress}}</div>
     </div>
   </template>
 

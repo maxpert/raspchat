@@ -17,7 +17,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   });
 
   vue.filter('better_date', function (value) {
-    return win.moment(value).fromNow();
+    return win.moment(value).calendar();
   });
 
   vue.filter('escape_html', function (value) {
@@ -26,6 +26,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
   vue.filter('falsy_to_block_display', function (value) {
     return value ? 'block' : 'none';
+  });
+
+  vue.filter('friendly_progress', function (value) {
+    if (~~value >= 100) {
+      return 'almost done...';
+    }
+
+    return 'uploaded ' + value + '%';
   });
 
 
