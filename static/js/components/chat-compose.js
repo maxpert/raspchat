@@ -37,6 +37,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         var message = '['+ fileInfo.file.name +']('+uploadInfo.url+')';
         if (fileInfo.file.type.startsWith("image/")) {
           message = "!"+message+"\n\n **IMAGE** "+message;
+        } else {
+          message = "**FILE** "+message;
         }
 
         this.$dispatch('send-message', message);
