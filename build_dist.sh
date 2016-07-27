@@ -10,4 +10,8 @@ echo "Compiling server..."
 echo "Packaging client assets..."
 ./compile_assets.sh
 
+echo "Generating download package..."
+tar -zcvf /tmp/raspchat-current.tar.gz ./dist
+mv /tmp/raspchat-current.tar.gz ./dist/static
+
 echo "----- Fin."
