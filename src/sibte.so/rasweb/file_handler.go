@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -16,7 +17,8 @@ import (
 const MaxFileSizeLimit = 10 << 20
 
 type fileUploadHandler struct {
-	fsUploader rasfs.RasFS
+	fsUploader   rasfs.RasFS
+	fsDownloader rasfs.DownloadableRasFS
 }
 
 // NewFileUploadHandler handles file upload requests
@@ -25,21 +27,56 @@ func NewFileUploadHandler() RouteHandler {
 }
 
 func (p *fileUploadHandler) Register(r *httprouter.Router) error {
-	cfg, err := rasfs.LoadAzureStorageConfig(rasconfig.CurrentAppConfig.UploaderConfig)
-	if err != nil {
-		return err
+	configs := []rasfs.RasFS{
+		rasfs.NewAzureFS(),
+		rasfs.NewLocalFS(),
 	}
 
-	// Incase no configuration is found don't hook any endpoints
-	if cfg == nil {
+	for _, fs := range configs {
+		err := fs.Init(rasconfig.CurrentAppConfig.UploaderConfig)
+		if err == nil {
+			p.fsUploader = fs
+			break
+		}
+
+		log.Println("Error fs.Init", err)
+	}
+
+	if p.fsUploader == nil {
 		return nil
 	}
 
 	log.Println("Hooking files routes...")
-	p.fsUploader = rasfs.NewAzureFS(cfg)
 	r.POST("/file", p.upload)
 	r.PUT("/file", p.upload)
+
+	var ok bool
+	if p.fsDownloader, ok = p.fsUploader.(rasfs.DownloadableRasFS); ok {
+		log.Println("Downloadable file upload handler detected...", p.fsDownloader)
+		r.GET("/file/*downloadId", p.download)
+	}
+
 	return nil
+}
+
+func (p *fileUploadHandler) download(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	if p.fsDownloader == nil {
+		w.WriteHeader(422)
+		fmt.Fprintf(w, "Invalid uploader")
+		return
+	}
+
+	reader, err := p.fsDownloader.Download(params.ByName("downloadId"))
+	if err != nil {
+		w.WriteHeader(404)
+		fmt.Fprintf(w, "Unable to process request %v", err)
+		return
+	}
+	defer (func() {
+		reader.Close()
+	})()
+
+	io.Copy(w, reader)
 }
 
 func (p *fileUploadHandler) upload(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -58,6 +95,7 @@ func (p *fileUploadHandler) upload(w http.ResponseWriter, r *http.Request, _ htt
 	}
 
 	uploadedFile, handler, err := r.FormFile("file")
+	defer uploadedFile.Close()
 	if err != nil {
 		return
 	}
@@ -80,6 +118,11 @@ func (p *fileUploadHandler) upload(w http.ResponseWriter, r *http.Request, _ htt
 	url, err := p.fsUploader.Upload(handler.Filename, uint64(fileSize), uploadedFile)
 	if err != nil {
 		return
+	}
+
+	if p.fsDownloader != nil {
+		log.Println("Appending /file/ to", url)
+		url = "/file/" + url
 	}
 
 	response, err := json.Marshal(struct {

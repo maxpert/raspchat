@@ -1,20 +1,16 @@
 package rasfs
 
 import (
-	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
 	"path"
-	"time"
 
 	"github.com/Azure/azure-sdk-for-go/storage"
 )
 
-// AzureStorageConfig holds configurations for azure storage account
-type AzureStorageConfig struct {
+type azureStorageConfig struct {
 	AccountName string `json:"account_name,omitempty"`
 	AccountKey  string `json:"account_key,omitempty"`
 	Container   string `json:"container,omitempty"`
@@ -22,39 +18,22 @@ type AzureStorageConfig struct {
 }
 
 type azureFS struct {
-	config *AzureStorageConfig
-}
-
-// LoadAzureStorageConfig loads azure storage configuration from given dictionary
-func LoadAzureStorageConfig(cfg map[string]string) (*AzureStorageConfig, error) {
-	if len(cfg) == 0 {
-		return nil, nil
-	}
-
-	log.Println("Uploader config...", cfg)
-
-	if cfg["provider"] != "azure" {
-		return nil, nil
-	}
-
-	jsonBytes, err := json.Marshal(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	cObj := &AzureStorageConfig{}
-	if err = json.Unmarshal(jsonBytes, cObj); err != nil {
-		return nil, err
-	}
-
-	return cObj, nil
+	config *azureStorageConfig
 }
 
 // NewAzureFS creates instance of AzureFS implementation
-func NewAzureFS(cfg *AzureStorageConfig) RasFS {
-	return &azureFS{
-		config: cfg,
+func NewAzureFS() RasFS {
+	return &azureFS{}
+}
+
+func (a *azureFS) Init(cfg map[string]string) error {
+	acfg, err := loadAzureStorageConfig(cfg)
+	if err != nil {
+		return err
 	}
+
+	a.config = acfg
+	return nil
 }
 
 // Upload files
@@ -64,7 +43,7 @@ func (a *azureFS) Upload(name string, size uint64, reader io.Reader) (string, er
 		return "", err
 	}
 
-	uploadPath := a.generateUploadPath(name)
+	uploadPath := generateUploadPathFromName(name) + path.Base(name)
 	s := c.GetBlobService()
 	err = s.CreateBlockBlobFromReader(a.config.Container, uploadPath, size, reader, nil)
 	if err == nil {
@@ -74,9 +53,27 @@ func (a *azureFS) Upload(name string, size uint64, reader io.Reader) (string, er
 	return "", err
 }
 
-func (a *azureFS) generateUploadPath(name string) string {
-	now := time.Now()
-	hasher := md5.New()
-	io.WriteString(hasher, fmt.Sprintf("%d-%s-%d", rand.Int63(), name, now.Unix()))
-	return fmt.Sprintf("%x/%s", hasher.Sum(nil), path.Base(name))
+// LoadAzureStorageConfig loads azure storage configuration from given dictionary
+func loadAzureStorageConfig(cfg map[string]string) (*azureStorageConfig, error) {
+	if len(cfg) == 0 {
+		return nil, nil
+	}
+
+	log.Println("Loading azure config...", cfg)
+
+	if cfg["provider"] != "azure" {
+		return nil, InvalidConfigurationName
+	}
+
+	jsonBytes, err := json.Marshal(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	cObj := &azureStorageConfig{}
+	if err = json.Unmarshal(jsonBytes, cObj); err != nil {
+		return nil, err
+	}
+
+	return cObj, nil
 }

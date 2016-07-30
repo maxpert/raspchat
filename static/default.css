@@ -844,6 +844,11 @@ img{
     text-overflow: ellipsis;
 }
 
+
+.markdown-container img {
+    max-width: 100%;
+}
+
 /** 
 !!!!!!!!!!NOTE DO NOT MOVE MEDIA QUERIES ANYWHERE ON TOP!!!!!!!!!!!!!
 They are supposed to override default styles and puttin them on top might cause issues 

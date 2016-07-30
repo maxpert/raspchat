@@ -40,7 +40,10 @@ func LoadApplicationConfig(filePath string) {
 		conf.HasAuthProviders = false
 		conf.WebSocketURL = ""
 		conf.WebSocketSecureURL = ""
+
 		conf.UploaderConfig = make(map[string]string)
+		conf.UploaderConfig["provider"] = "local"
+		conf.UploaderConfig["disk_storage_path"] = dir
 		return
 	}
 
