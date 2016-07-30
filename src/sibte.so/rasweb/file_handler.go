@@ -14,7 +14,8 @@ import (
 	"sibte.so/rasfs"
 )
 
-const MaxFileSizeLimit = 10 << 20
+// MaxFileSizeLimit is 64 MB
+const MaxFileSizeLimit = 64 << 20
 
 type fileUploadHandler struct {
 	fsUploader   rasfs.RasFS
@@ -108,6 +109,7 @@ func (p *fileUploadHandler) upload(w http.ResponseWriter, r *http.Request, _ htt
 
 	if fileSize > MaxFileSizeLimit {
 		err = errors.New("File size too long")
+		return
 	}
 
 	_, err = uploadedFile.Seek(0, os.SEEK_SET)
