@@ -44,7 +44,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           bodyText = bodyText.substring(0, 64) + "...";
         }
 
-        new Notification(msg.from, {body: bodyText, icon: "/static/favicon/favicon.ico"});
+        var notif = new Notification(msg.from, {body: bodyText, icon: "/static/favicon/favicon.ico"});
+        notif.onclick = function () {
+            win.focus();
+            this.close();
+        };
       },
 
       onEnableChanged: function (oldValue) {
