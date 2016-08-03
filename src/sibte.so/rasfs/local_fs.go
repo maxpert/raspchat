@@ -88,6 +88,11 @@ func (f *localFS) Upload(name string, size uint64, reader io.Reader) (string, er
 }
 
 func (f *localFS) Download(filePath string) (io.ReadCloser, error) {
-	absPath := path.Join(f.config.DiskStoragePath, filePath)
+	decodedPath, err := url.QueryUnescape(filePath)
+    if err != nil {
+        return nil, err
+    }
+
+	absPath := path.Join(f.config.DiskStoragePath, decodedPath)
 	return os.Open(absPath)
 }
