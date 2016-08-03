@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"net/url"
 )
 
 type localStorageConfig struct {
@@ -44,17 +45,17 @@ func loadLocalStorageConfig(cfg map[string]string) (*localStorageConfig, error) 
 }
 
 func (f *localFS) Init(cfg map[string]string) error {
-	lcfg, err := loadLocalStorageConfig(cfg)
+	tConfig, err := loadLocalStorageConfig(cfg)
 	if err != nil {
 		return err
 	}
 
-	err = os.MkdirAll(lcfg.DiskStoragePath, os.ModePerm)
+	err = os.MkdirAll(tConfig.DiskStoragePath, os.ModePerm)
 	if err != nil {
 		return err
 	}
 
-	f.config = lcfg
+	f.config = tConfig
 	return nil
 }
 
@@ -83,7 +84,7 @@ func (f *localFS) Upload(name string, size uint64, reader io.Reader) (string, er
 		return "", err
 	}
 
-	return uploadRelPath + "/" + baseName, nil
+	return uploadRelPath + "/" + url.QueryEscape(baseName), nil
 }
 
 func (f *localFS) Download(filePath string) (io.ReadCloser, error) {
