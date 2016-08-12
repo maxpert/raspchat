@@ -11,7 +11,7 @@ Once you have installed both just cd to directory and run ```./get_dependencies.
 
 # Demo
 
-Basic demo is available [Here](http://beta.raspchat.com). Do note the server is running on Raspberry Pi 1 Model B.
+Basic demo is available [Here](http://beta.raspchat.com).
 
 ## Features:
 
@@ -26,7 +26,6 @@ Basic demo is available [Here](http://beta.raspchat.com). Do note the server is 
 
 ## Coming soon:
 
- * Frontend code refactoring (React + Redux)
  * Improve build and deploy script
  * Introduce admin panel with:
    * Reserved alias authorization
