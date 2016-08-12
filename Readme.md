@@ -11,7 +11,7 @@ Once you have installed both just cd to directory and run ```./get_dependencies.
 
 # Demo
 
-Basic demo is available [Here](http://raspchat.ngrok.io). Do note the server is running on Raspberry Pi 1 Model B.
+Basic demo is available [Here](http://beta.raspchat.com). Do note the server is running on Raspberry Pi 1 Model B.
 
 ## Features:
 
@@ -20,6 +20,7 @@ Basic demo is available [Here](http://raspchat.ngrok.io). Do note the server is 
  * Channel support
  * Markdown support
  * Message history support
+ * File upload support
  * GCM push notification support (incomplete)
 
 
@@ -31,5 +32,4 @@ Basic demo is available [Here](http://raspchat.ngrok.io). Do note the server is 
    * Reserved alias authorization
    * IP limiting/banning
    * Channel management and permissions
- * Loadable extension (LUA)
  * Scheduled chat log exports (TBD)
