@@ -608,6 +608,10 @@ img{
     overflow: hidden;
 }
 
+.chat-log .message-continuation {
+    padding-left: 44px;
+}
+
 .chat-log .message-content .avatar {
     height: auto;
     width: 35px;
@@ -627,7 +631,11 @@ img{
 }
 
 .chat-log .chat-message {
-    padding: 0 20px 10px 20px;
+    padding: 0 20px;
+}
+
+.chat-log .message-break {
+    padding-top: 10px;
 }
 
 .chat-log .meta-message {

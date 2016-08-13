@@ -212,18 +212,23 @@
   </template>
 
   <template id="chat-message">
-  <div v-if="message.isMeta">
+  <div :class="{'message-break': !message.continuation}" v-if="message.isMeta">
     <pre class="meta-message">{{{message.msg | escape_html}}}</pre>
   </div>
-  <div class="incomingMessage" v-else>
-    <div class="message-content">
+  <div :class="['incomingMessage', {'message-break': !message.continuation}]" v-else>
+    <div class="message-continuation" v-if="message.continuation">
+        <div class="markdown-container">
+            {{{message.msg | markdown | emojify}}}
+        </div>
+    </div>
+    <div class="message-content" v-else>
       <img :src="message.from | avatar_url" class="avatar" alt="{{message.from}}" />
       <div class="message-content-container">
         <span class="name">{{message.from}}</span>
         <span class="timestamp">{{message.delivery_time | better_date}}</span>
         <div class="markdown-container">
           {{{message.msg | markdown | emojify}}}
-          </div>
+        </div>
       </div>
     </div>
   </div>

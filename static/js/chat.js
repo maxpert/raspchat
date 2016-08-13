@@ -204,14 +204,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           this.$set('currentGroup.messages', groupLog);
         }
 
-        if (groupLog.length && groupLog[groupLog.length - 1].from == m.from) {
-          var lastMsg = groupLog[groupLog.length - 1];
-          lastMsg.msg += '\n\n' + m.msg;
-        } else {
-          groupLog.push(m);
-        }
+        var continuation = groupLog.length && groupLog[groupLog.length - 1].from == m.from;
+        var msg = win.$mix({continuation: continuation}, m);
+        groupLog.push(msg);
 
-        this._limitGroupHistory(m.to);
+        this._limitGroupHistory(msg.to);
 
         // no need
         if (silent) {
