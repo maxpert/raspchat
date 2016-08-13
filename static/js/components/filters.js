@@ -9,8 +9,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   "use strict";
 
   var md = new win.markdownit("default", {
-    linkify: true,
-  });
+    linkify: true
+  }).use(markdownitHTML5Embed);
 
   vue.filter('markdown', function (value) {
     return md.render(value);

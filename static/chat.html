@@ -115,7 +115,7 @@
                   @keydown.stop.prevent.tab="tabPressed"
                   placeholder="Type your message"></textarea>
         <input class='btn' type="button" style="" @click.stop.prevent="enterPressed" value="send" />
-        <slot><files-upload @uploaded="onFileUploaded"/></slot>
+        <slot><files-upload @uploaded="onFileUploaded" @failed="onFileUploadFailed"/></slot>
       </div>
     </div>
   </template>
@@ -232,6 +232,7 @@
 <script type='text/javascript' src="/static/bower_components/emojify.js/dist/js/emojify.js"></script>
 <script type='text/javascript' src="/static/bower_components/notify/notification.js"></script>
 <script type='text/javascript' src="/static/bower_components/markdown-it/dist/markdown-it.js"></script>
+<script type='text/javascript' src="/static/bower_components/markdown-it-html5-embed/dist/markdown-it-html5-embed.js"></script>
 <script type='text/javascript' src="/static/bower_components/moment/moment.js"></script>
 <script type='text/javascript' src="/static/bower_components/vue/dist/vue.js"></script>
 <script type='text/javascript' src="/static/bower_components/he/he.js"></script>

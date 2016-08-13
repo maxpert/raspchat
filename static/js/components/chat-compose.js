@@ -37,11 +37,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         var message = '['+ fileInfo.file.name +']('+uploadInfo.url+')';
         if (fileInfo.file.type.startsWith("image/")) {
           message = "!"+message+"\n\n **IMAGE** "+message;
+        } else if (fileInfo.file.type.startsWith("video/")) {
+          message = "!"+message+"\n\n **VIDEO** "+message;
         } else {
           message = "**FILE** "+message;
         }
 
         this.$dispatch('send-message', message);
+        this.$el.querySelector(".msg").focus();
+      },
+
+      onFileUploadFailed: function(fileInfo, uploadInfo) {
+        win.alert("Unable to upload file "+fileInfo.file.name);
         this.$el.querySelector(".msg").focus();
       }
     },

@@ -67,10 +67,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (response.failed === false && response.complete === true) {
           this._notifyUploaded(fileInfo, response);
         }
+        else if (response.failed === true && response.complete === true) {
+          this._notifyUploadFailed(fileInfo, response);
+        }
       },
 
       _notifyUploaded: function(fileInfo, uploadedInfo) {
         this.$dispatch('uploaded', fileInfo, uploadedInfo);
+      },
+
+      _notifyUploadFailed: function(fileInfo, uploadedInfo) {
+        this.$dispatch('failed', fileInfo, uploadedInfo);
       },
 
       _activateDrag: function() {
