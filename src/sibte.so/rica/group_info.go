@@ -1,78 +1,86 @@
 package rica
 
 import (
-	"sync"
+    "github.com/Workiva/go-datastructures/trie/ctrie"
 )
 
 type GroupInfoManager interface {
-	AddUser(string, string, interface{}) bool
-	RemoveUser(string, string)
-	GetUsers(string) []string
-	GetUserInfoObject(string, string) interface{}
+    AddUser(string, string, interface{}) bool
+    RemoveUser(string, string)
+    GetUsers(string) []string
+    GetUserInfoObject(string, string) interface{}
 }
 
 type inMemGroupInfo struct {
-	sync.Mutex
-	infoMap map[string]map[string]interface{}
+    channelsCtrie *ctrie.Ctrie
 }
 
 func NewInMemoryGroupInfo() GroupInfoManager {
-	return &inMemGroupInfo{
-		infoMap: make(map[string]map[string]interface{}),
-	}
+    return &inMemGroupInfo{
+        channelsCtrie: ctrie.New(nil),
+    }
 }
 
-func (me *inMemGroupInfo) AddUser(group, user string, inf interface{}) bool {
-	me.Lock()
-	defer me.Unlock()
+func (i *inMemGroupInfo) AddUser(group, user string, inf interface{}) bool {
+    usersCtrie, ok := i.createOrGetGroupMap(group)
+    if !ok {
+        return false
+    }
 
-	if _, ok := me.infoMap[group]; !ok {
-		me.infoMap[group] = make(map[string]interface{})
-	}
-
-	me.infoMap[group][user] = inf
-	return true
+    usersCtrie.Insert([]byte(user), inf)
+    return true
 }
 
-func (me *inMemGroupInfo) RemoveUser(group, user string) {
-	me.Lock()
-	defer me.Unlock()
+func (i *inMemGroupInfo) RemoveUser(group, user string) {
+    usersCtrie, ok := i.createOrGetGroupMap(group)
+    if !ok {
+        return
+    }
 
-	if _, ok := me.infoMap[group]; !ok {
-		return
-	}
-
-	delete(me.infoMap[group], user)
+    usersCtrie.Remove([]byte(user))
 }
 
-func (me *inMemGroupInfo) GetUsers(group string) []string {
-	me.Lock()
-	defer me.Unlock()
-	if _, ok := me.infoMap[group]; !ok {
-		return make([]string, 0)
-	}
+func (i *inMemGroupInfo) GetUsers(group string) []string {
+    usersCtrie, ok := i.createOrGetGroupMap(group)
+    if !ok {
+        return make([]string, 0)
+    }
 
-	ret := make([]string, len(me.infoMap[group]))
-	i := 0
-	for user, _ := range me.infoMap[group] {
-		ret[i] = user
-		i++
-	}
+    snapShotCtrie := usersCtrie.ReadOnlySnapshot()
+    ret := make([]string, snapShotCtrie.Size())
+    j := 0
+    for entry := range snapShotCtrie.Iterator(nil) {
+        ret[j] = string(entry.Key)
+        j++
+    }
 
-	return ret
+    return ret
 }
 
-func (me *inMemGroupInfo) GetUserInfoObject(group, user string) interface{} {
-	me.Lock()
-	defer me.Unlock()
+func (i *inMemGroupInfo) GetUserInfoObject(group, user string) interface{} {
+    if usersCtrie, ok := i.createOrGetGroupMap(group); ok {
+        if userObj, ok := usersCtrie.Lookup([]byte(user)); ok {
+            return userObj
+        }
+    }
 
-	if _, ok := me.infoMap[group]; !ok {
-		return nil
-	}
+    return nil
+}
 
-	if ret, ok := me.infoMap[group][user]; ok {
-		return ret
-	}
+func (i *inMemGroupInfo) createOrGetGroupMap(group string) (*ctrie.Ctrie, bool) {
+    // If found on first shot we are good to go, no race conditions
+    if groupObj, ok := i.channelsCtrie.Lookup([]byte(group)); ok {
+        usersCtrie, ok := groupObj.(*ctrie.Ctrie)
+        return usersCtrie, ok
+    }
 
-	return nil
+    // Insert new entry, there might be a race condition
+    // should be resolved when doing Lookup, there would be only one winner
+    i.channelsCtrie.Insert([]byte(group), ctrie.New(nil))
+    if groupObj, ok := i.channelsCtrie.Lookup([]byte(group)); ok {
+        usersCtrie, ok := groupObj.(*ctrie.Ctrie)
+        return usersCtrie, ok
+    }
+
+    return nil, false
 }

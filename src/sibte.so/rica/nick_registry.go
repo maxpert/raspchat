@@ -8,100 +8,96 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 import (
-	"errors"
-	"log"
-	"regexp"
-	"sync"
+    "errors"
+    "regexp"
+    "sync"
 )
 
 var invalidAliasRegex *regexp.Regexp = nil
 
 type NickRegistry struct {
-	sync.Mutex
-	registry       map[string]string
-	uniqueAliasMap map[string]string
+    sync.Mutex
+    registry       map[string]string
+    uniqueAliasMap map[string]string
 }
 
 func NewNickRegistry() *NickRegistry {
-	if invalidAliasRegex == nil {
-		invalidAliasRegex, _ = regexp.Compile("[^\\._A-Za-z0-9]")
-	}
+    if invalidAliasRegex == nil {
+        invalidAliasRegex, _ = regexp.Compile("[^\\._A-Za-z0-9]")
+    }
 
-	return &NickRegistry{
-		registry:       make(map[string]string),
-		uniqueAliasMap: make(map[string]string),
-	}
+    return &NickRegistry{
+        registry:       make(map[string]string),
+        uniqueAliasMap: make(map[string]string),
+    }
 }
 
 func (r *NickRegistry) SetNick(id, nick string) (string, error) {
-	log.Println("@@@@@@@ Setting Nick of", id, "to", nick)
-	failDefault, ok := r.NickOf(id)
+    failDefault, ok := r.NickOf(id)
 
-	if !ok {
-		r.Register(id, id)
-		failDefault = id
-	}
+    if !ok {
+        r.Register(id, id)
+        failDefault = id
+    }
 
-	if invalidAliasRegex.MatchString(nick) || len(nick) > 42 {
-		return failDefault, errors.New("A nick can only have alpha-numeric values")
-	}
+    if invalidAliasRegex.MatchString(nick) || len(nick) > 42 {
+        return failDefault, errors.New("A nick can only have alpha-numeric values")
+    }
 
-	i := 0
-	for i = 0; i < 3 && r.Register(id, nick) == false; i++ {
-		log.Println("Nick", nick, "already registered retry", i)
-		nick = nick + "_"
-	}
+    i := 0
+    for i = 0; i < 6 && r.Register(id, nick) == false; i++ {
+        nick = nick + "_"
+    }
 
-	if i >= 3 {
-		return failDefault, errors.New("Nick already registered please choose a different nick")
-	}
+    if i >= 6 {
+        return failDefault, errors.New("Nick already registered please choose a different nick")
+    }
 
-	return nick, nil
+    return nick, nil
 }
 
 func (r *NickRegistry) Register(id, nick string) bool {
-	r.Lock()
-	defer r.Unlock()
+    r.Lock()
+    defer r.Unlock()
 
-	oldId, ok := r.uniqueAliasMap[nick]
-	if ok && oldId != id {
-		return false
-	}
+    oldId, ok := r.uniqueAliasMap[nick]
+    if ok && oldId != id {
+        return false
+    }
 
-	if ok {
-		delete(r.uniqueAliasMap, nick)
-	}
+    if ok {
+        delete(r.uniqueAliasMap, nick)
+    }
 
-	r.registry[id] = nick
-	r.uniqueAliasMap[nick] = id
-	return true
+    r.registry[id] = nick
+    r.uniqueAliasMap[nick] = id
+    return true
 }
 
 func (r *NickRegistry) Unregister(id string) bool {
-	r.Lock()
-	defer r.Unlock()
+    r.Lock()
+    defer r.Unlock()
 
-	nick, ok := r.registry[id]
-	if !ok {
-		log.Println("Unable to remove nick name registry", id)
-		return false
-	}
+    nick, ok := r.registry[id]
+    if !ok {
+        return false
+    }
 
-	delete(r.registry, id)
-	delete(r.uniqueAliasMap, nick)
-	return true
+    delete(r.registry, id)
+    delete(r.uniqueAliasMap, nick)
+    return true
 }
 
 func (r *NickRegistry) NickOf(id string) (string, bool) {
-	r.Lock()
-	defer r.Unlock()
-	nick, ok := r.registry[id]
-	return nick, ok
+    r.Lock()
+    defer r.Unlock()
+    nick, ok := r.registry[id]
+    return nick, ok
 }
 
 func (r *NickRegistry) IdOf(nick string) (string, bool) {
-	r.Lock()
-	defer r.Unlock()
-	id, ok := r.uniqueAliasMap[nick]
-	return id, ok
+    r.Lock()
+    defer r.Unlock()
+    id, ok := r.uniqueAliasMap[nick]
+    return id, ok
 }

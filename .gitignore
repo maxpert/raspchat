@@ -28,6 +28,7 @@ bin/
 node_modules/
 dist/
 static/bower_components/
+.idea/
 static/*.min.js
 src/github.com/
 src/gopkg.in/

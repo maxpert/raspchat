@@ -8,77 +8,77 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 import (
-	"flag"
-	"log"
-	"net/http"
+    "flag"
+    "log"
+    "net/http"
 
-	"github.com/julienschmidt/httprouter"
-	"gopkg.in/natefinch/lumberjack.v2"
+    "github.com/julienschmidt/httprouter"
+    "gopkg.in/natefinch/lumberjack.v2"
 
-	"sibte.so/rasconfig"
-	"sibte.so/rasweb"
-	"sibte.so/rica"
+    "sibte.so/rasconfig"
+    "sibte.so/rasweb"
+    "sibte.so/rica"
 )
 
 func installSocketMux(mux *http.ServeMux, appConfig rasconfig.ApplicationConfig) (err error) {
-	err = nil
-	s := rica.NewChatService(appConfig).WithRESTRoutes("/chat")
+    err = nil
+    s := rica.NewChatService(appConfig).WithRESTRoutes("/chat")
 
-	mux.Handle("/chat", s)
-	mux.Handle("/chat/", s)
-	return
+    mux.Handle("/chat", s)
+    mux.Handle("/chat/", s)
+    return
 }
 
 var routeHandlers = []rasweb.RouteHandler{
-	rasweb.NewGifHandler(),
-	rasweb.NewFileUploadHandler(),
-	rasweb.NewConfigRouteHandler(),
-	rasweb.NewDirectPagesHandler(),
+    rasweb.NewGifHandler(),
+    rasweb.NewFileUploadHandler(),
+    rasweb.NewConfigRouteHandler(),
+    rasweb.NewDirectPagesHandler(),
 }
 
 func installHTTPRoutes(mux *http.ServeMux) (err error) {
-	err = nil
-	router := httprouter.New()
+    err = nil
+    router := httprouter.New()
 
-	// Register all routes
-	for _, h := range routeHandlers {
-		if err := h.Register(router); err != nil {
-			log.Panic("Unable to register route")
-		}
-	}
+    // Register all routes
+    for _, h := range routeHandlers {
+        if err := h.Register(router); err != nil {
+            log.Panic("Unable to register route")
+        }
+    }
 
-	router.ServeFiles("/static/*filepath", http.Dir("./static"))
-	mux.Handle("/", router)
-	return
+    router.ServeFiles("/static/*filepath", http.Dir("./static"))
+    mux.Handle("/", router)
+    return
 }
 
 func parseArgs() (filePath string) {
-	flag.StringVar(&filePath, "config", "", "Path to configuration file")
-	flag.Parse()
-	return
+    flag.StringVar(&filePath, "config", "", "Path to configuration file")
+    flag.Parse()
+    return
 }
 
 func main() {
-	rasconfig.LoadApplicationConfig(parseArgs())
-	conf := rasconfig.CurrentAppConfig
+    rasconfig.LoadApplicationConfig(parseArgs())
+    conf := rasconfig.CurrentAppConfig
 
-	if conf.LogFilePath != "" {
-		log.SetOutput(&lumberjack.Logger{
-			Filename:   conf.LogFilePath,
-			MaxBackups: 3,
-			MaxSize:    5,
-			MaxAge:     15,
-		})
-	}
+    if conf.LogFilePath != "" {
+        log.SetOutput(&lumberjack.Logger{
+            Filename:   conf.LogFilePath,
+            MaxBackups: 3,
+            MaxSize:    5,
+            MaxAge:     15,
+        })
+    }
 
-	mux := http.NewServeMux()
-	installSocketMux(mux, conf)
-	installHTTPRoutes(mux)
-	server := &http.Server{
-		Addr:    conf.BindAddress,
-		Handler: mux,
-	}
+    mux := http.NewServeMux()
+    installSocketMux(mux, conf)
+    installHTTPRoutes(mux)
+    server := &http.Server{
+        Addr:    conf.BindAddress,
+        Handler: mux,
+    }
 
-	log.Println("Starting server...", conf.BindAddress)
-	log.Panic(server.ListenAndServe())
+    log.Println("Starting server...", conf.BindAddress)
+    log.Panic(server.ListenAndServe())
 }
