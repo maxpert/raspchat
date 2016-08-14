@@ -276,7 +276,7 @@ func (h *ChatHandler) onSetNick(msg *StringMessage) {
     defer timer.LogDuration()
 
     oldNick := h.nick
-    newNick, err := h.nickRegistry.SetNick(h.id, msg.Message)
+    newNick, err := h.nickRegistry.SetBestPossibleNick(h.id, msg.Message)
 
     if err == nil {
         h.nick = newNick
