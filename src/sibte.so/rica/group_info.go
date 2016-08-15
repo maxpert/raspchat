@@ -1,6 +1,8 @@
 package rica
 
 import (
+    "fmt"
+
     "github.com/Workiva/go-datastructures/trie/ctrie"
 )
 
@@ -24,7 +26,7 @@ func NewInMemoryGroupInfo() GroupInfoManager {
 func (i *inMemGroupInfo) AddUser(group, user string, inf interface{}) bool {
     usersCtrie, ok := i.createOrGetGroupMap(group)
     if !ok {
-        return false
+        panic(fmt.Sprintln("Unable to add user", user, "from", group))
     }
 
     usersCtrie.Insert([]byte(user), inf)
@@ -34,10 +36,16 @@ func (i *inMemGroupInfo) AddUser(group, user string, inf interface{}) bool {
 func (i *inMemGroupInfo) RemoveUser(group, user string) {
     usersCtrie, ok := i.createOrGetGroupMap(group)
     if !ok {
-        return
+        panic(fmt.Sprintln("Unable to remove user", user, "from", group))
     }
 
-    usersCtrie.Remove([]byte(user))
+    userKey := []byte(user)
+    for {
+        usersCtrie.Remove(userKey)
+        if _, ok := usersCtrie.Lookup(userKey); !ok {
+            break
+        }
+    }
 }
 
 func (i *inMemGroupInfo) GetUsers(group string) []string {

@@ -109,7 +109,7 @@ func (h *ChatHandler) socketWriterLoop() {
         select {
         case m, ok := <-h.outgoing:
             // channel read is not ok channel might be closed
-            // try writing ping message to ensure channel is stil open
+            // try writing ping message to ensure channel is still open
             // if channel is closed write will panic
             if !ok {
                 h.outgoing <- &PingMessage{
@@ -119,7 +119,7 @@ func (h *ChatHandler) socketWriterLoop() {
             }
 
             h.handleOutgoingMessage(m)
-        case <-time.After(30 * time.Second):
+        case <-time.After(15 * time.Second):
             h.outgoing <- &PingMessage{
                 BaseMessage: messageOf(ricaEvents.PING_COMMAND),
                 Type:        int(time.Now().Unix()),
@@ -159,6 +159,7 @@ func (h *ChatHandler) handleOutgoingMessage(msg interface{}) {
     defer timer.LogDuration()
     if err := h.transport.WriteMessage(baseMsg.Identity(), baseMsg); err != nil {
         log.Println("Unable to write socket message", err)
+        h.Stop()
     }
 }
 
@@ -345,7 +346,7 @@ func (h *ChatHandler) sendTo(groupName, name string, msg interface{}) {
     if ch, ok := tmp.(chan interface{}); ok {
         select {
         case ch <- msg:
-            log.Println("Published message to", name)
+            break
         case <-time.After(2 * time.Millisecond):
             log.Println("Publishing on", name, "timed out")
         }
