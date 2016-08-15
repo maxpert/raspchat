@@ -34,6 +34,18 @@ func NewNickRegistry() *NickRegistry {
     }
 }
 
+func (r *NickRegistry) GetMappingSnapshot() map[string]string {
+    snapshot := r.registryCtrie.ReadOnlySnapshot()
+    ret := make(map[string]string)
+    for entry := range snapshot.Iterator(nil) {
+        if val, ok := entry.Value.(string); ok {
+            ret[string(entry.Key)] = val
+        }
+    }
+
+    return ret
+}
+
 func (r *NickRegistry) SetBestPossibleNick(id, nick string) (string, error) {
     failDefault, ok := r.NickOf(id)
 

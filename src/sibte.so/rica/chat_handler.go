@@ -21,6 +21,11 @@ import (
     "github.com/speps/go-hashids"
 )
 
+type userOutGoingInfo struct {
+    channel chan interface{}
+    ip      string
+}
+
 // ChatHandler to handle chat connection
 type ChatHandler struct {
     sync.Mutex
@@ -29,7 +34,7 @@ type ChatHandler struct {
     groupInfoManager GroupInfoManager
     nickRegistry     *NickRegistry
     transport        IMessageTransport
-    outgoing         chan interface{}
+    outgoingInfo     *userOutGoingInfo
     groups           map[string]interface{}
     chatStore        *ChatLogStore
 }
@@ -53,7 +58,7 @@ func messageOf(event string) BaseMessage {
 }
 
 // NewChatHandler creates new ChatHandler
-func NewChatHandler(nickReg *NickRegistry, groupInfoMan GroupInfoManager, trans IMessageTransport, store *ChatLogStore) *ChatHandler {
+func NewChatHandler(nickReg *NickRegistry, groupInfoMan GroupInfoManager, trans IMessageTransport, store *ChatLogStore, ip string) *ChatHandler {
     uid, _ := pHashID.Encode([]int{
         int(rand.Int31n(1000)),
         int(rand.Int31n(1000)),
@@ -67,7 +72,10 @@ func NewChatHandler(nickReg *NickRegistry, groupInfoMan GroupInfoManager, trans 
         groupInfoManager: groupInfoMan,
         transport:        trans,
         chatStore:        store,
-        outgoing:         make(chan interface{}, 32),
+        outgoingInfo:     &userOutGoingInfo{
+            channel:      make(chan interface{}, 32),
+            ip:           ip,
+        },
         groups:           make(map[string]interface{}, 0),
     }
 
@@ -107,12 +115,12 @@ func (h *ChatHandler) socketWriterLoop() {
 
     for {
         select {
-        case m, ok := <-h.outgoing:
+        case m, ok := <-h.outgoingInfo.channel:
             // channel read is not ok channel might be closed
             // try writing ping message to ensure channel is still open
             // if channel is closed write will panic
             if !ok {
-                h.outgoing <- &PingMessage{
+                h.outgoingInfo.channel <- &PingMessage{
                     BaseMessage: messageOf(ricaEvents.PING_COMMAND),
                     Type:        int(time.Now().Unix()),
                 }
@@ -120,7 +128,7 @@ func (h *ChatHandler) socketWriterLoop() {
 
             h.handleOutgoingMessage(m)
         case <-time.After(15 * time.Second):
-            h.outgoing <- &PingMessage{
+            h.outgoingInfo.channel <- &PingMessage{
                 BaseMessage: messageOf(ricaEvents.PING_COMMAND),
                 Type:        int(time.Now().Unix()),
             }
@@ -230,7 +238,7 @@ func (h *ChatHandler) onListMembers(msg *StringMessage) {
         i++
     }
 
-    h.outgoing <- &RecipientContentMessage{
+    h.outgoingInfo.channel <- &RecipientContentMessage{
         RecipientMessage: RecipientMessage{
             BaseMessage: messageOf(ricaEvents.LIST_MEMBERS_REPLY),
             To:          groupName,
@@ -247,7 +255,7 @@ func (h *ChatHandler) onJoinGroup(msg *StringMessage) {
     h.Lock()
     h.groups[msg.Message] = struct{}{}
     h.Unlock()
-    h.groupInfoManager.AddUser(msg.Message, h.id, h.outgoing)
+    h.groupInfoManager.AddUser(msg.Message, h.id, h.outgoingInfo)
 
     h.publish(msg.Message, &RecipientMessage{
         BaseMessage: messageOf(ricaEvents.JOIN_GROUP_REPLY),
@@ -343,11 +351,11 @@ func (h *ChatHandler) sendTo(groupName, name string, msg interface{}) {
         return
     }
 
-    if ch, ok := tmp.(chan interface{}); ok {
+    if inf, ok := tmp.(*userOutGoingInfo); ok {
         select {
-        case ch <- msg:
+        case inf.channel <- msg:
             break
-        case <-time.After(2 * time.Millisecond):
+        case <-time.After(200 * time.Millisecond):
             log.Println("Publishing on", name, "timed out")
         }
     } else {
@@ -360,7 +368,7 @@ func (h *ChatHandler) Loop() {
     defer h.recoverFromErrors("Loop")
     h.nickRegistry.Register(h.id, h.nick)
     h.groups[ricaEvents.FROM_SERVER] = struct{}{}
-    h.groupInfoManager.AddUser(ricaEvents.FROM_SERVER, h.id, h.outgoing)
+    h.groupInfoManager.AddUser(ricaEvents.FROM_SERVER, h.id, h.outgoingInfo)
 
     readErrorChannel := make(chan error)
     sockChannel := make(chan interface{}, 32)
@@ -388,7 +396,7 @@ selectLoop:
 
 // Stop a client connection and perform cleanup
 func (h *ChatHandler) Stop() {
-    close(h.outgoing)
+    close(h.outgoingInfo.channel)
     currentGroupsMap := h.groups
     h.groups = make(map[string]interface{})
     joinedGroups := make([]string, 0, len(h.groups))

@@ -11,6 +11,7 @@ type GroupInfoManager interface {
     RemoveUser(string, string)
     GetUsers(string) []string
     GetUserInfoObject(string, string) interface{}
+    GetAllInfoObjects(string) map[string]interface{}
 }
 
 type inMemGroupInfo struct {
@@ -70,6 +71,20 @@ func (i *inMemGroupInfo) GetUserInfoObject(group, user string) interface{} {
         if userObj, ok := usersCtrie.Lookup([]byte(user)); ok {
             return userObj
         }
+    }
+
+    return nil
+}
+
+func (i *inMemGroupInfo) GetAllInfoObjects(group string) map[string]interface{} {
+    if usersCtrie, ok := i.createOrGetGroupMap(group); ok {
+        snapshot := usersCtrie.Snapshot()
+        ret := make(map[string]interface{})
+        for u := range snapshot.Iterator(nil) {
+            ret[string(u.Key)] = u.Value
+        }
+
+        return ret
     }
 
     return nil

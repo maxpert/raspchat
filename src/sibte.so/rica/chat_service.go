@@ -58,13 +58,18 @@ func NewChatService(appConfig rasconfig.ApplicationConfig) *ChatService {
         }
     }
 
-    return &ChatService{
+    ret := &ChatService{
         groupInfo:    NewInMemoryGroupInfo(),
         nickRegistry: NewNickRegistry(),
-        gcmWorker:    NewGCMWorker(rasconfig.CurrentAppConfig.GCMToken),
         chatStore:    store,
         upgrader:     wsUpgrader,
     }
+
+    if len(rasconfig.CurrentAppConfig.GCMToken) > 1 {
+        ret.gcmWorker = NewGCMWorker(rasconfig.CurrentAppConfig.GCMToken)
+    }
+
+    return ret
 }
 
 func (c *ChatService) WithRESTRoutes(prefix string) http.Handler {
@@ -84,12 +89,16 @@ func (c *ChatService) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (c *ChatService) httpRoutes(prefix string, router *httprouter.Router) http.Handler {
-    router.POST(prefix+"/push", c.onPushPost)
-    router.POST(prefix+"/register", c.onPushSubscribe)
+    if c.gcmWorker != nil {
+        router.POST(prefix+"/push", c.onPushPost)
+        router.POST(prefix+"/register", c.onPushSubscribe)
+    }
 
     router.GET(prefix+"/channel/:id/message", c.onGetChatHistory)
     router.GET(prefix+"/channel/:id/message/:msg_id", c.onGetChatMessage)
     router.GET(prefix+"/channel", c.onGetChannels)
+    router.GET(prefix+"/channel/:id/info", c.onGetChannelInfo)
+
     return router
 }
 
@@ -97,7 +106,7 @@ func (c *ChatService) upgradeConnectionToWebSocket(w http.ResponseWriter, req *h
     conn, err := c.upgrader.Upgrade(w, req, nil)
     if err == nil {
         transporter := NewWebsocketMessageTransport(conn)
-        handler := NewChatHandler(c.nickRegistry, c.groupInfo, transporter, c.chatStore)
+        handler := NewChatHandler(c.nickRegistry, c.groupInfo, transporter, c.chatStore, req.RemoteAddr)
         go handler.Loop()
         return true
     }
@@ -114,7 +123,7 @@ func (c *ChatService) onPushSubscribe(w http.ResponseWriter, req *http.Request, 
     }
 
     transporter := NewGCMTransport(token, c.gcmWorker)
-    handler := NewChatHandler(c.nickRegistry, c.groupInfo, transporter, c.chatStore)
+    handler := NewChatHandler(c.nickRegistry, c.groupInfo, transporter, c.chatStore, req.RemoteAddr)
     go handler.Loop()
     fmt.Fprintf(w, "true")
 }
@@ -164,8 +173,27 @@ func (c *ChatService) onGetChatHistory(w http.ResponseWriter, req *http.Request,
     }
 }
 
+// TODO: this code should be moved in a separate handler
 func (c *ChatService) onGetChatMessage(w http.ResponseWriter, req *http.Request, p httprouter.Params) {
 }
 
+// TODO: this code should be moved in a separate handler
 func (c *ChatService) onGetChannels(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
+}
+
+// TODO: this code should be moved in a separate handler
+func (c *ChatService) onGetChannelInfo(w http.ResponseWriter, req *http.Request, p httprouter.Params) {
+    groupID := p.ByName("id")
+
+    for key, val := range c.nickRegistry.GetMappingSnapshot() {
+        fmt.Fprintf(w, "%v => %v \n", key, val)
+    }
+
+    for uid, info := range c.groupInfo.GetAllInfoObjects(groupID) {
+        if inf, ok := info.(*userOutGoingInfo); ok {
+            fmt.Fprintf(w, "IP %v => %v \n", uid, inf.ip)
+        } else {
+            fmt.Fprintf(w, "Invalid %v => %v \n", uid, info)
+        }
+    }
 }
