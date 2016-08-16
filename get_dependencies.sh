@@ -13,6 +13,7 @@ env GOPATH=`pwd` go get github.com/googollee/go-gcm
 env GOPATH=`pwd` go get github.com/Azure/azure-sdk-for-go/management
 env GOPATH=`pwd` go get github.com/urfave/negroni
 env GOPATH=`pwd` go get github.com/Workiva/go-datastructures/...
+env GOPATH=`pwd` go get github.com/syndtr/goleveldb/leveldb
 
 pushd src/github.com/speps/go-hashids
 git checkout -q master

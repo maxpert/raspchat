@@ -7,24 +7,31 @@ import (
     "errors"
     "fmt"
 
-    "github.com/boltdb/bolt"
+    "github.com/syndtr/goleveldb/leveldb"
+    "github.com/syndtr/goleveldb/leveldb/opt"
 )
 
 type ChatLogStore struct {
-    store  *bolt.DB
-    bucket []byte
+    store       *leveldb.DB
+    cMaxIDBytes []byte
 }
 
-func NewChatLogStore(path string, bucket []byte) (*ChatLogStore, error) {
-    db, err := bolt.Open(path, 0600, nil)
+func NewChatLogStore(path string) (*ChatLogStore, error) {
+    db, err := leveldb.OpenFile(path, nil)
     if err != nil {
         return nil, err
     }
 
     return &ChatLogStore{
-        store:  db,
-        bucket: bucket,
+        store:       db,
+        cMaxIDBytes: idToBytes(^uint64(0)),
     }, nil
+}
+
+func idToBytes(id uint64) []byte {
+    b := make([]byte, 8)
+    binary.BigEndian.PutUint64(b, id)
+    return b
 }
 
 func (c *ChatLogStore) Save(group string, id uint64, msg IEventMessage) error {
@@ -34,58 +41,40 @@ func (c *ChatLogStore) Save(group string, id uint64, msg IEventMessage) error {
         return errors.New("Unable to serialize msg")
     }
 
-    tx, err := c.store.Begin(true)
-    if err != nil {
-        return err
-    }
-    defer tx.Rollback()
-
-    b, err := tx.CreateBucketIfNotExists(c.bucket)
-    if err != nil {
-        return err
-    }
-
-    bytesId := c.idToBytes(id)
-    maxIdBytes := c.idToBytes(^uint64(0))
+    bytesId := idToBytes(id)
+    maxIdBytes := c.cMaxIDBytes
 
     // <group-name><id> -> <msg>
     // <id> -> <group-name>
     // <group-name><MAXID> -> byte[0]
+    b := &leveldb.Batch{}
     b.Put(append([]byte(group), bytesId...), bytesMsg)
     b.Put(bytesId, []byte(group))
     b.Put(append([]byte(group), maxIdBytes...), make([]byte, 0))
-    tx.Commit()
-
-    return nil
+    return c.store.Write(b, &opt.WriteOptions{
+        Sync: false,
+    })
 }
 
 func (c *ChatLogStore) GetMessagesFor(group string, start_id string, offset uint, limit uint) ([]IEventMessage, error) {
-    tx, err := c.store.Begin(false)
-    if err != nil {
-        return nil, err
-    }
-    defer tx.Rollback()
-
     var ret []IEventMessage
-    bkt := tx.Bucket(c.bucket)
 
-    if bkt == nil {
-        return ret, nil
-    }
-
-    csr := bkt.Cursor()
+    csr := c.store.NewIterator(nil, nil)
     if csr == nil {
         return ret, nil
     }
 
-    maxIDBytes := c.idToBytes(^uint64(0))
+    maxIDBytes := idToBytes(^uint64(0))
     endBytesID := append([]byte(group), maxIDBytes...)
     if start_id != "" {
         endBytesID = []byte(start_id)
     }
 
     i := uint(0)
-    for k, v := csr.Seek(endBytesID); true; k, v = csr.Prev() {
+    for csr.Seek(endBytesID); true; csr.Prev() {
+        // Make sure we don't modify k & v
+        k := csr.Key()
+        v := csr.Value()
         i++
 
         if k == nil || bytes.HasPrefix(k, []byte(group)) == false {
@@ -112,24 +101,23 @@ func (c *ChatLogStore) GetMessagesFor(group string, start_id string, offset uint
 }
 
 func (c *ChatLogStore) GetMessage(id uint64) (IEventMessage, error) {
-    tx, err := c.store.Begin(false)
+    group, err := c.store.Get(idToBytes(id), nil)
     if err != nil {
         return nil, err
     }
-    defer tx.Rollback()
-
-    b := tx.Bucket(c.bucket)
-    if b == nil {
-        return nil, nil
-    }
-
-    group := b.Get(c.idToBytes(id))
 
     if group == nil {
         return nil, nil
     }
 
-    bytesMsg := b.Get(append(group, c.idToBytes(id)...))
+    // Create copy of array since we should not modify the values returned
+    group = append([]byte(nil), group...)
+
+    bytesMsg, err := c.store.Get(append(group, idToBytes(id)...), nil)
+    if err != nil {
+        return nil, err
+    }
+
     if bytesMsg == nil {
         return nil, errors.New("Unable to locate message value")
     }
@@ -160,6 +148,11 @@ func (c *ChatLogStore) deserialize(b []byte) IEventMessage {
     buffer := bytes.NewBuffer(b)
     dec := gob.NewDecoder(buffer)
 
+    stM := &StringMessage{}
+    if dec.Decode(stM) == nil {
+        return stM
+    }
+
     chM := &ChatMessage{}
     if dec.Decode(chM) == nil {
         return chM
@@ -181,10 +174,4 @@ func (c *ChatLogStore) deserialize(b []byte) IEventMessage {
     }
 
     return nil
-}
-
-func (c *ChatLogStore) idToBytes(id uint64) []byte {
-    b := make([]byte, 8)
-    binary.BigEndian.PutUint64(b, id)
-    return b
 }
