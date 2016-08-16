@@ -51,8 +51,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   });
 
   vue.filter('avatar_url', function (value) {
-    // return '//api.adorable.io/avatars/face/eyes6/nose7/face1/AA0000';
-    return '//api.adorable.io/avatars/128/' + value + '-image.png';
-    // return 'http://fileio.raspchat.com/img/?size=128&text=' + encodeURIComponent(value);
+    return '//sigil.cupcake.io/'+value+'.png';
   });
 })(window.Vue, window, window.document);
