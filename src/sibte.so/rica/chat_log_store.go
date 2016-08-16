@@ -148,11 +148,6 @@ func (c *ChatLogStore) deserialize(b []byte) IEventMessage {
     buffer := bytes.NewBuffer(b)
     dec := gob.NewDecoder(buffer)
 
-    stM := &StringMessage{}
-    if dec.Decode(stM) == nil {
-        return stM
-    }
-
     chM := &ChatMessage{}
     if dec.Decode(chM) == nil {
         return chM
