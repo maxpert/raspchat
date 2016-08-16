@@ -36,6 +36,7 @@ type ChatHandler struct {
     transport        IMessageTransport
     outgoingInfo     *userOutGoingInfo
     groups           map[string]interface{}
+    blackList        map[string]interface{}
     chatStore        *ChatLogStore
 }
 
@@ -58,7 +59,13 @@ func messageOf(event string) BaseMessage {
 }
 
 // NewChatHandler creates new ChatHandler
-func NewChatHandler(nickReg *NickRegistry, groupInfoMan GroupInfoManager, trans IMessageTransport, store *ChatLogStore, ip string) *ChatHandler {
+func NewChatHandler(
+        nickReg *NickRegistry,
+        groupInfoMan GroupInfoManager,
+        trans IMessageTransport,
+        store *ChatLogStore,
+        ip string,
+        blackList map[string]interface{}) *ChatHandler {
     uid, _ := pHashID.Encode([]int{
         int(rand.Int31n(1000)),
         int(rand.Int31n(1000)),
@@ -72,6 +79,7 @@ func NewChatHandler(nickReg *NickRegistry, groupInfoMan GroupInfoManager, trans 
         groupInfoManager: groupInfoMan,
         transport:        trans,
         chatStore:        store,
+        blackList:        blackList,
         outgoingInfo:     &userOutGoingInfo{
             channel:      make(chan interface{}, 32),
             ip:           ip,
@@ -93,6 +101,20 @@ func (h *ChatHandler) socketReaderLoop(socketChannel chan interface{}, errorChan
 
     for {
         msg, err := h.transport.ReadMessage()
+
+        // If id blacklisted kill the channel
+        if _, ok := h.blackList[h.id]; ok {
+            h.blackList[h.outgoingInfo.ip] = struct {}{}
+            delete(h.blackList, h.id)
+            h.Stop()
+            return
+        }
+
+        // If ip is blacklisted just stop and return
+        if _, ok := h.blackList[h.outgoingInfo.ip]; ok {
+            h.Stop()
+            return
+        }
 
         // If message type was invalid
         if err != nil && err.Error() == ricaEvents.ERROR_INVALID_MSGTYPE_ERR {

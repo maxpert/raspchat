@@ -24,6 +24,7 @@ type ChatService struct {
     upgrader     *websocket.Upgrader
     gcmWorker    *GCMWorker
     httpMux      *http.ServeMux
+    blackList    map[string]interface{}
 }
 
 func NewChatService(appConfig rasconfig.ApplicationConfig) *ChatService {
@@ -63,6 +64,7 @@ func NewChatService(appConfig rasconfig.ApplicationConfig) *ChatService {
         nickRegistry: NewNickRegistry(),
         chatStore:    store,
         upgrader:     wsUpgrader,
+        blackList:    make(map[string]interface{}),
     }
 
     if len(rasconfig.CurrentAppConfig.GCMToken) > 1 {
@@ -98,6 +100,7 @@ func (c *ChatService) httpRoutes(prefix string, router *httprouter.Router) http.
     router.GET(prefix+"/channel/:id/message/:msg_id", c.onGetChatMessage)
     router.GET(prefix+"/channel", c.onGetChannels)
     router.GET(prefix+"/channel/:id/info", c.onGetChannelInfo)
+    router.GET(prefix+"/blacklist/:uid/:action", c.onBlackListUser)
 
     return router
 }
@@ -106,7 +109,7 @@ func (c *ChatService) upgradeConnectionToWebSocket(w http.ResponseWriter, req *h
     conn, err := c.upgrader.Upgrade(w, req, nil)
     if err == nil {
         transporter := NewWebsocketMessageTransport(conn)
-        handler := NewChatHandler(c.nickRegistry, c.groupInfo, transporter, c.chatStore, req.RemoteAddr)
+        handler := NewChatHandler(c.nickRegistry, c.groupInfo, transporter, c.chatStore, req.RemoteAddr, c.blackList)
         go handler.Loop()
         return true
     }
@@ -123,7 +126,7 @@ func (c *ChatService) onPushSubscribe(w http.ResponseWriter, req *http.Request, 
     }
 
     transporter := NewGCMTransport(token, c.gcmWorker)
-    handler := NewChatHandler(c.nickRegistry, c.groupInfo, transporter, c.chatStore, req.RemoteAddr)
+    handler := NewChatHandler(c.nickRegistry, c.groupInfo, transporter, c.chatStore, req.RemoteAddr, c.blackList)
     go handler.Loop()
     fmt.Fprintf(w, "true")
 }
@@ -195,5 +198,15 @@ func (c *ChatService) onGetChannelInfo(w http.ResponseWriter, req *http.Request,
         } else {
             fmt.Fprintf(w, "Invalid %v => %v \n", uid, info)
         }
+    }
+}
+
+func (c *ChatService) onBlackListUser(w http.ResponseWriter, req *http.Request, p httprouter.Params) {
+    userId := p.ByName("uid")
+    action := p.ByName("action")
+    if action == "off" {
+        delete(c.blackList, userId)
+    } else {
+        c.blackList[userId] = struct{}{}
     }
 }

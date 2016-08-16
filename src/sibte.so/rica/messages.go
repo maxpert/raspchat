@@ -1,6 +1,8 @@
 package rica
 
-import "time"
+import (
+    "time"
+)
 
 type IEventMessage interface {
     Identity() uint64
