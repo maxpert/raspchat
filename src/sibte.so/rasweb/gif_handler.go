@@ -9,12 +9,12 @@ import (
 
     "sibte.so/rasconfig"
 
-    "github.com/boltdb/bolt"
     "github.com/julienschmidt/httprouter"
+    "github.com/syndtr/goleveldb/leveldb"
 )
 
 type atomicStore struct {
-    store *bolt.DB
+    store *leveldb.DB
 }
 
 type gifRouteHandler struct {
@@ -58,20 +58,12 @@ func (h *gifRouteHandler) findGifHandler(w http.ResponseWriter, r *http.Request,
 }
 
 func (h *gifRouteHandler) initGifCache() error {
-    db, err := bolt.Open(rasconfig.CurrentAppConfig.DBPath+"/gifstore.bolt", 0600, nil)
+    db, err := leveldb.OpenFile(rasconfig.CurrentAppConfig.DBPath+"/gifstore.leveldb", nil)
 
     if err != nil {
         return err
     }
 
-    tx, err := db.Begin(true)
-    if err != nil {
-        return err
-    }
-
-    defer tx.Rollback()
-    tx.CreateBucket([]byte("rightgif"))
-    tx.Commit()
     h.kvStore = &atomicStore{
         store: db,
     }
@@ -80,16 +72,8 @@ func (h *gifRouteHandler) initGifCache() error {
 }
 
 func (s *atomicStore) get(key string) (string, bool) {
-    tx, err := s.store.Begin(false)
-    if err != nil {
-        return "", false
-    }
-    defer tx.Rollback()
-
-    bucket := tx.Bucket([]byte("rightgif"))
-
-    ret := bucket.Get([]byte(key))
-    if ret == nil {
+    ret, err := s.store.Get([]byte(key), nil)
+    if err != nil || ret == nil {
         return "", false
     }
 
@@ -97,12 +81,5 @@ func (s *atomicStore) get(key string) (string, bool) {
 }
 
 func (s *atomicStore) set(key, value string) bool {
-    tx, err := s.store.Begin(true)
-    if err != nil {
-        return false
-    }
-    defer tx.Rollback()
-
-    bucket := tx.Bucket([]byte("rightgif"))
-    return bucket.Put([]byte(key), []byte(value)) == nil && tx.Commit() == nil
+    return s.store.Put([]byte(key), []byte(value), nil) == nil
 }
