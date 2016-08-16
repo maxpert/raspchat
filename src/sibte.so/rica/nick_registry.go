@@ -81,6 +81,16 @@ func (r *NickRegistry) Register(id, nick string) bool {
         return false
     }
 
+    // Ensure the old nick entry is remove on nick change
+    if oldNickInf, hadOldNick := r.registryCtrie.Lookup(idKey); hadOldNick {
+        if oldNickString, ok := oldNickInf.(string); ok {
+            oldNickKey := []byte("nick:"+oldNickString)
+            defer func() {
+                r.registryCtrie.Remove(oldNickKey)
+            }()
+        }
+    }
+
     // Try setting ID for given nickKey.
     // There might be a race condition
     // Last writer will be a winner
