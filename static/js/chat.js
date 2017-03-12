@@ -178,25 +178,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
       onHistoryRecv: function (historyObj) {
         var msgs = historyObj.messages;
-
         this._clearGroupLogs();
-        for (var i in msgs) {
-          var m = msgs[i];
-          if (!m.meta) {
-            this._appendMessage(m, true);
-          } else {
-            switch (m.meta.action) {
-              case 'joined':
-                this.onJoin(m);
-                break;
-            case 'leave':
-                this.onLeave(m);
-                break;
-            }
-          }
-        }
+        var me = this;
+        win.setTimeout(function() {
+            for (var i in msgs) {
+              var m = msgs[i];
+              var groupLog = me._getOrCreateGroupLog(m.to);
 
-        this.$broadcast('history-added', historyObj.id);
+              if (!m.meta) {
+                groupLog.push(m);
+              } else {
+                switch (m.meta.action) {
+                  case 'joined':
+                    groupLog.push({isMeta: true, msg: m.from + ' has joined'});
+                    break;
+                case 'leave':
+                    groupLog.push({isMeta: true, msg: m.from + ' has left'});
+                    break;
+                }
+              }
+            }
+
+            me.$broadcast('history-added', historyObj.id);
+        }, 100);
       },
 
       _appendMessage: function (m, silent) {

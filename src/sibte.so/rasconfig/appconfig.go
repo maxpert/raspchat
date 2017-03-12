@@ -19,6 +19,7 @@ type ApplicationConfig struct {
     WebSocketSecureURL string            `json:"websocketsecure_url"`
     HasAuthProviders   bool              `json:"has_auth_providers"`
     UploaderConfig     map[string]string `json:"uploader_config"`
+    AppSecretKey       string            `json:"secret"`
 }
 
 var CurrentAppConfig ApplicationConfig
