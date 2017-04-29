@@ -1,6 +1,7 @@
 #!/bin/bash
 
 echo "Installing Go packages"
+env GOPATH=`pwd` go get github.com/dgrijalva/jwt-go
 env GOPATH=`pwd` go get github.com/Azure/go-autorest/autorest
 env GOPATH=`pwd` go get golang.org/x/net/context
 env GOPATH=`pwd` go get golang.org/x/text
