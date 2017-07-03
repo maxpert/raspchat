@@ -99,7 +99,7 @@ func (s *atomicStore) set(key, value string) bool {
 
 func createPathIfMissing(path string) error {
     if exists, err := pathExists(path); exists == false {
-        return os.MkdirAll(path, 0777)
+        return os.MkdirAll(path, os.ModePerm)
     } else {
         return err
     }

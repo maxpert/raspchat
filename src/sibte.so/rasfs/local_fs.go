@@ -22,7 +22,7 @@ func NewLocalFS() RasFS {
 }
 
 func loadLocalStorageConfig(cfg map[string]string) (*localStorageConfig, error) {
-    if len(cfg) == 0 {
+    if cfg == nil || len(cfg) == 0 {
         return nil, nil
     }
 
