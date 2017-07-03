@@ -10,11 +10,13 @@ import (
     "sibte.so/rasconfig"
 
     "github.com/julienschmidt/httprouter"
-    "github.com/syndtr/goleveldb/leveldb"
+    "github.com/dgraph-io/badger"
+    "path"
+    "os"
 )
 
 type atomicStore struct {
-    store *leveldb.DB
+    store *badger.KV
 }
 
 type gifRouteHandler struct {
@@ -58,28 +60,54 @@ func (h *gifRouteHandler) findGifHandler(w http.ResponseWriter, r *http.Request,
 }
 
 func (h *gifRouteHandler) initGifCache() error {
-    db, err := leveldb.OpenFile(rasconfig.CurrentAppConfig.DBPath+"/gifstore.leveldb", nil)
+    opts := badger.DefaultOptions
+    opts.Dir = path.Join(rasconfig.CurrentAppConfig.DBPath, "gifstore", "keys")
+    opts.ValueDir = path.Join(rasconfig.CurrentAppConfig.DBPath, "gifstore", "values")
 
-    if err != nil {
+    if err := createPathIfMissing(opts.Dir); err != nil {
         return err
     }
 
-    h.kvStore = &atomicStore{
-        store: db,
+    if err := createPathIfMissing(opts.ValueDir); err != nil {
+        return err
+    }
+
+    if db, err := badger.NewKV(&opts); err != nil {
+        return err
+    } else {
+        h.kvStore = &atomicStore{
+            store: db,
+        }
     }
 
     return nil
 }
 
 func (s *atomicStore) get(key string) (string, bool) {
-    ret, err := s.store.Get([]byte(key), nil)
-    if err != nil || ret == nil {
+    pair := badger.KVItem{}
+    err := s.store.Get([]byte(key), &pair)
+    if err != nil || pair.Value() == nil {
         return "", false
     }
 
-    return string(ret), true
+    return string(pair.Value()), true
 }
 
 func (s *atomicStore) set(key, value string) bool {
-    return s.store.Put([]byte(key), []byte(value), nil) == nil
+    return s.store.Set([]byte(key), []byte(value)) == nil
+}
+
+func createPathIfMissing(path string) error {
+    if exists, err := pathExists(path); exists == false {
+        return os.MkdirAll(path, 0777)
+    } else {
+        return err
+    }
+}
+
+func pathExists(path string) (bool, error) {
+    _, err := os.Stat(path)
+    if err == nil { return true, nil }
+    if os.IsNotExist(err) { return false, nil }
+    return true, err
 }

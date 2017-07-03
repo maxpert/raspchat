@@ -29,7 +29,7 @@ type ChatService struct {
 
 func NewChatService(appConfig rasconfig.ApplicationConfig) *ChatService {
     initChatHandlerTypes()
-    store, e := NewChatLogStore(rasconfig.CurrentAppConfig.DBPath+"/chats.leveldb")
+    store, e := NewChatLogStore(rasconfig.CurrentAppConfig.DBPath+"/chats.db")
     allowedOrigins := appConfig.AllowedOrigins
 
     if e != nil {

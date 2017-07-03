@@ -17,5 +17,5 @@ echo "Installing Go packages under `pwd`"
 popd
 
 ########### NPM
-# echo "Installing NPM packages"
-# npm install
+echo "Installing NPM packages"
+npm install

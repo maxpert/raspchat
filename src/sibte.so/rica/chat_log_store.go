@@ -7,17 +7,30 @@ import (
     "errors"
     "fmt"
 
-    "github.com/syndtr/goleveldb/leveldb"
-    "github.com/syndtr/goleveldb/leveldb/opt"
+    "github.com/dgraph-io/badger"
+    "path"
+    "os"
 )
 
 type ChatLogStore struct {
-    store       *leveldb.DB
+    store     *badger.KV
     cMaxIDBytes []byte
 }
 
-func NewChatLogStore(path string) (*ChatLogStore, error) {
-    db, err := leveldb.OpenFile(path, nil)
+func NewChatLogStore(dataPath string) (*ChatLogStore, error) {
+    opts := badger.DefaultOptions
+    opts.Dir = path.Join(dataPath, "keys")
+    opts.ValueDir = path.Join(dataPath, "values")
+
+    if err := createPathIfMissing(opts.Dir); err != nil {
+        return nil, err
+    }
+
+    if err := createPathIfMissing(opts.ValueDir); err != nil {
+        return nil, err
+    }
+
+    db, err := badger.NewKV(&opts)
     if err != nil {
         return nil, err
     }
@@ -26,6 +39,21 @@ func NewChatLogStore(path string) (*ChatLogStore, error) {
         store:       db,
         cMaxIDBytes: idToBytes(^uint64(0)),
     }, nil
+}
+
+func createPathIfMissing(path string) error {
+    if exists, err := pathExists(path); exists == false {
+        return os.MkdirAll(path, 0777)
+    } else {
+        return err
+    }
+}
+
+func pathExists(path string) (bool, error) {
+    _, err := os.Stat(path)
+    if err == nil { return true, nil }
+    if os.IsNotExist(err) { return false, nil }
+    return true, err
 }
 
 func idToBytes(id uint64) []byte {
@@ -46,23 +74,38 @@ func (c *ChatLogStore) Save(group string, id uint64, msg IEventMessage) error {
 
     // <group-name><id> -> <msg>
     // <id> -> <group-name>
-    // <group-name><MAXID> -> byte[0]
-    b := &leveldb.Batch{}
-    b.Put(append([]byte(group), bytesId...), bytesMsg)
-    b.Put(bytesId, []byte(group))
-    b.Put(append([]byte(group), maxIdBytes...), make([]byte, 0))
-    return c.store.Write(b, &opt.WriteOptions{
-        Sync: false,
-    })
+    // <group-name><MAX_ID> -> byte[0]
+    entries := make([]*badger.Entry, 3)
+    entries[0] = &badger.Entry{
+        Key: append([]byte(group), bytesId...),
+        Value: bytesMsg,
+    }
+
+    entries[1] = &badger.Entry {
+        Key: bytesId,
+        Value: []byte(group),
+    }
+
+    entries[2] = &badger.Entry{
+        Key: append([]byte(group), maxIdBytes...),
+        Value: make([]byte, 0),
+    }
+
+    return c.store.BatchSet(entries)
 }
 
 func (c *ChatLogStore) GetMessagesFor(group string, start_id string, offset uint, limit uint) ([]IEventMessage, error) {
     var ret []IEventMessage
 
-    csr := c.store.NewIterator(nil, nil)
+    opts := badger.DefaultIteratorOptions
+    opts.FetchValues = true
+    opts.Reverse = true
+    csr := c.store.NewIterator(opts)
     if csr == nil {
         return ret, nil
     }
+
+    defer csr.Close()
 
     maxIDBytes := idToBytes(^uint64(0))
     endBytesID := append([]byte(group), maxIDBytes...)
@@ -71,10 +114,10 @@ func (c *ChatLogStore) GetMessagesFor(group string, start_id string, offset uint
     }
 
     i := uint(0)
-    for csr.Seek(endBytesID); true; csr.Prev() {
-        // Make sure we don't modify k & v
-        k := csr.Key()
-        v := csr.Value()
+    for csr.Seek(endBytesID); csr.Valid(); csr.Next() {
+        tuple := csr.Item()
+        k := tuple.Key()
+        v := tuple.Value()
         i++
 
         if k == nil || bytes.HasPrefix(k, []byte(group)) == false {
@@ -101,30 +144,34 @@ func (c *ChatLogStore) GetMessagesFor(group string, start_id string, offset uint
 }
 
 func (c *ChatLogStore) GetMessage(id uint64) (IEventMessage, error) {
-    group, err := c.store.Get(idToBytes(id), nil)
+    // <group-name><id> -> <msg>
+    // <id> -> <group-name>
+    // <group-name><MAX_ID> -> byte[0]
+    kvItem := badger.KVItem{}
+    err := c.store.Get(idToBytes(id), &kvItem)
     if err != nil {
         return nil, err
     }
 
-    if group == nil {
+    if kvItem.Value() == nil {
         return nil, nil
     }
 
     // Create copy of array since we should not modify the values returned
-    group = append([]byte(nil), group...)
-
-    bytesMsg, err := c.store.Get(append(group, idToBytes(id)...), nil)
+    groupName := append([]byte(nil), kvItem.Value()...)
+    kvItem = badger.KVItem{}
+    err = c.store.Get(append(groupName, idToBytes(id)...), &kvItem)
     if err != nil {
         return nil, err
     }
 
-    if bytesMsg == nil {
+    if kvItem.Value() == nil {
         return nil, errors.New("Unable to locate message value")
     }
 
-    m := c.deserialize(bytesMsg)
+    m := c.deserialize(kvItem.Value())
     if m == nil {
-        return nil, errors.New(fmt.Sprintf("Unable to deserialize message %v %v", group, id))
+        return nil, errors.New(fmt.Sprintf("Unable to deserialize message %v %v", kvItem, id))
     }
 
     return m, nil
