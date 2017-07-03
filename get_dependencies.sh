@@ -1,5 +1,10 @@
 #!/bin/bash
-export GOPATH=`pwd`
+pushd `dirname $0` > /dev/null
+SCRIPTPATH=`pwd`
+popd > /dev/null
+GOPATH=$SCRIPTPATH
+
+echo "Current GOPATH is $GOPATH..."
 
 ########### Go vend
 echo "Installing govend"
