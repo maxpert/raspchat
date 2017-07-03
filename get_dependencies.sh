@@ -11,8 +11,8 @@ echo "Installing govend"
 
 go get github.com/govend/govend
 ########### Packages
-echo "Installing Go packages"
-pushd src
+pushd ${SCRIPTPATH}/src
+echo "Installing Go packages under `pwd`"
 ../bin/govend -v
 popd
 
