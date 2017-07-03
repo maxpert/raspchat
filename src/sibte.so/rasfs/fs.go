@@ -11,7 +11,7 @@ import (
 
 var InvalidConfigurationName = errors.New("Invalid configuration name")
 
-// RasFS interface defnining all methods related to FS
+// RasFS interface defining all methods related to FS
 type RasFS interface {
     Init(map[string]string) error
     Upload(string, uint64, io.Reader) (string, error)

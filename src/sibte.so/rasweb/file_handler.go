@@ -29,7 +29,6 @@ func NewFileUploadHandler() RouteHandler {
 
 func (p *fileUploadHandler) Register(r *httprouter.Router) error {
     configs := []rasfs.RasFS{
-        rasfs.NewAzureFS(),
         rasfs.NewLocalFS(),
     }
 

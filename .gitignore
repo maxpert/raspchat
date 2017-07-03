@@ -23,16 +23,14 @@ _testmain.go
 *.test
 *.prof
 
-gpm
-bin/
-node_modules/
-dist/
-static/bower_components/
-.idea/
-static/*.min.js
-src/github.com/
-src/gopkg.in/
-src/golang.org/
-src/sourcegraph.com/
-src/honnef.co/
-rica.config.*.json
+/bin/
+/node_modules/
+/dist/
+/static/bower_components/
+/.idea/
+/static/*.min.js
+/rica.config.*.json
+/pkg/
+/src/vendor/
+/src/github.com/
+!/src/sibte.so/

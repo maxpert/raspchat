@@ -40,7 +40,7 @@ type ChatHandler struct {
     chatStore        *ChatLogStore
 }
 
-var pHashID = hashids.New()
+var pHashID *hashids.HashID
 var pSnowFlake = DefaultSnowFlake()
 
 func messageOf(event string) BaseMessage {
@@ -66,6 +66,10 @@ func NewChatHandler(
         store *ChatLogStore,
         ip string,
         blackList map[string]interface{}) *ChatHandler {
+    if pHashID == nil {
+        pHashID, _ = hashids.New()
+    }
+
     uid, _ := pHashID.Encode([]int{
         int(rand.Int31n(1000)),
         int(rand.Int31n(1000)),
