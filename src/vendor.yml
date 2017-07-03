@@ -10,27 +10,19 @@ vendors:
 - path: github.com/davecgh/go-spew
   rev: 782f4967f2dc4564575ca782fe2d04090b5faca8
 - path: github.com/dgraph-io/badger
-  rev: 1c84ab8cd8f3528ff9a68059db2e4fc4d0b4f947
+  rev: 62c2e6278707e2e39299e0eca0cff60b0ae03ddc
 - path: github.com/gorilla/websocket
   rev: ea4d1f681babbce9545c9c5f3d5194a789c89f5b
-- path: github.com/govend/govend
-  rev: e600875ef1a607d94980144f6cfb33acceb0eac8
-- path: github.com/inconshreveable/mousetrap
-  rev: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - path: github.com/julienschmidt/httprouter
   rev: 975b5c4c7c21c0e3d2764200bf2aa8e34657ae6e
-- path: github.com/kr/fs
-  rev: 2788f0dbd16903de03cb8186e5c7d97b69ad387b
+- path: github.com/maxpert/badger
+  rev: b192d6191ae7b67fc9cfaa1a55d600b3fd875b9f
 - path: github.com/pkg/errors
   rev: c605e284fe17294bda444b34710735b29d1a9d90
 - path: github.com/pmezard/go-difflib
   rev: 792786c7400a136282c1664665ae0a8db921c6c2
 - path: github.com/speps/go-hashids
   rev: 2aa1a76a4e7c76dbe7d39f40661ab0261d70153a
-- path: github.com/spf13/cobra
-  rev: 8c6fa02d2225de0f9bdcb7ca912556f68d172d8c
-- path: github.com/spf13/pflag
-  rev: e57e3eeb33f795204c1ca35f56c44f83227c6e66
 - path: github.com/stretchr/testify
   rev: f6abca593680b2315d2075e0f5e2a9751e3f431a
 - path: golang.org/x/net

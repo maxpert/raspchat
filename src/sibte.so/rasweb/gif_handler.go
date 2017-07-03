@@ -10,7 +10,7 @@ import (
     "sibte.so/rasconfig"
 
     "github.com/julienschmidt/httprouter"
-    "github.com/dgraph-io/badger"
+    "github.com/maxpert/badger"
     "path"
     "os"
 )

@@ -7,7 +7,7 @@ import (
     "errors"
     "fmt"
 
-    "github.com/dgraph-io/badger"
+    "github.com/maxpert/badger"
     "path"
     "os"
 )
