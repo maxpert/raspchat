@@ -1,4 +1,4 @@
-package rica
+package rascore
 
 /*
 Copyright (c) 2015 Zohaib
@@ -16,7 +16,7 @@ import (
     "sync"
     "time"
 
-    "sibte.so/rica/consts"
+    "sibte.so/rascore/consts"
 
     "github.com/speps/go-hashids"
 )
@@ -121,7 +121,7 @@ func (h *ChatHandler) socketReaderLoop(socketChannel chan interface{}, errorChan
         }
 
         // If message type was invalid
-        if err != nil && err.Error() == ricaEvents.ERROR_INVALID_MSGTYPE_ERR {
+        if err != nil && err.Error() == rasconsts.ERROR_INVALID_MSGTYPE_ERR {
             log.Println("Skipping message....")
             continue
         }
@@ -147,7 +147,7 @@ func (h *ChatHandler) socketWriterLoop() {
             // if channel is closed write will panic
             if !ok {
                 h.outgoingInfo.channel <- &PingMessage{
-                    BaseMessage: messageOf(ricaEvents.PING_COMMAND),
+                    BaseMessage: messageOf(rasconsts.PING_COMMAND),
                     Type:        int(time.Now().Unix()),
                 }
             }
@@ -155,7 +155,7 @@ func (h *ChatHandler) socketWriterLoop() {
             h.handleOutgoingMessage(m)
         case <-time.After(15 * time.Second):
             h.outgoingInfo.channel <- &PingMessage{
-                BaseMessage: messageOf(ricaEvents.PING_COMMAND),
+                BaseMessage: messageOf(rasconsts.PING_COMMAND),
                 Type:        int(time.Now().Unix()),
             }
         }
@@ -168,13 +168,13 @@ func (h *ChatHandler) sendWelcome() {
         msg = msg + "\n" + string(f)
     }
     welcomeMsg := &StringMessage{
-        BaseMessage: messageOf(ricaEvents.FROM_SERVER),
+        BaseMessage: messageOf(rasconsts.FROM_SERVER),
         Message:     msg,
     }
     h.transport.WriteMessage(welcomeMsg.Id, welcomeMsg)
 
     nickMsg := &NickMessage{
-        BaseMessage: messageOf(ricaEvents.SET_NICK_REPLY),
+        BaseMessage: messageOf(rasconsts.SET_NICK_REPLY),
         OldNick:     h.id,
         NewNick:     h.id,
     }
@@ -210,21 +210,21 @@ func (h *ChatHandler) handleSocketMessage(msg interface{}) {
 
 func (h *ChatHandler) handleStringMessage(msg *StringMessage) {
     switch msg.EventName {
-    case ricaEvents.JOIN_GROUP_COMMAND:
+    case rasconsts.JOIN_GROUP_COMMAND:
         h.onJoinGroup(msg)
-    case ricaEvents.LEAVE_GROUP_COMMAND:
+    case rasconsts.LEAVE_GROUP_COMMAND:
         h.onLeaveGroup(msg)
-    case ricaEvents.SET_NICK_COMMAND:
+    case rasconsts.SET_NICK_COMMAND:
         h.onSetNick(msg)
-    case ricaEvents.LIST_MEMBERS_COMMAND:
+    case rasconsts.LIST_MEMBERS_COMMAND:
         h.onListMembers(msg)
     }
 }
 
 func (h *ChatHandler) onRecipientContentMessage(msg *RecipientContentMessage) {
     switch msg.EventName {
-    case ricaEvents.SEND_RAW_MSG_COMMAND:
-        h.sendTo(ricaEvents.FROM_SERVER, msg.To, msg.Message)
+    case rasconsts.SEND_RAW_MSG_COMMAND:
+        h.sendTo(rasconsts.FROM_SERVER, msg.To, msg.Message)
     }
 }
 
@@ -237,7 +237,7 @@ func (h *ChatHandler) onChatMessage(msg *ChatMessage) {
     if _, ok := h.groups[msg.To]; ok {
         h.publish(msg.To, &ChatMessage{
             RecipientMessage: RecipientMessage{
-                BaseMessage: messageOf(ricaEvents.GROUP_MSG_REPLY),
+                BaseMessage: messageOf(rasconsts.GROUP_MSG_REPLY),
                 To:          msg.To,
                 From:        h.nick,
             },
@@ -249,7 +249,7 @@ func (h *ChatHandler) onChatMessage(msg *ChatMessage) {
 func (h *ChatHandler) onListMembers(msg *StringMessage) {
     groupName := msg.Message
     if groupName == "" {
-        groupName = ricaEvents.FROM_SERVER
+        groupName = rasconsts.FROM_SERVER
     }
 
     membersIds := h.groupInfoManager.GetUsers(groupName)
@@ -266,9 +266,9 @@ func (h *ChatHandler) onListMembers(msg *StringMessage) {
 
     h.outgoingInfo.channel <- &RecipientContentMessage{
         RecipientMessage: RecipientMessage{
-            BaseMessage: messageOf(ricaEvents.LIST_MEMBERS_REPLY),
+            BaseMessage: messageOf(rasconsts.LIST_MEMBERS_REPLY),
             To:          groupName,
-            From:        ricaEvents.FROM_SERVER,
+            From:        rasconsts.FROM_SERVER,
         },
         Message: members,
     }
@@ -284,7 +284,7 @@ func (h *ChatHandler) onJoinGroup(msg *StringMessage) {
     h.groupInfoManager.AddUser(msg.Message, h.id, h.outgoingInfo)
 
     h.publish(msg.Message, &RecipientMessage{
-        BaseMessage: messageOf(ricaEvents.JOIN_GROUP_REPLY),
+        BaseMessage: messageOf(rasconsts.JOIN_GROUP_REPLY),
         To:          msg.Message,
         From:        h.nick,
     })
@@ -295,7 +295,7 @@ func (h *ChatHandler) onLeaveGroup(msg *StringMessage) {
     defer timer.LogDuration()
 
     h.publish(msg.Message, &RecipientMessage{
-        BaseMessage: messageOf(ricaEvents.LEAVE_GROUP_REPLY),
+        BaseMessage: messageOf(rasconsts.LEAVE_GROUP_REPLY),
         To:          msg.Message,
         From:        h.nick,
     })
@@ -316,7 +316,7 @@ func (h *ChatHandler) onSetNick(msg *StringMessage) {
     if err == nil {
         h.nick = newNick
         nickMsg := &NickMessage{
-            BaseMessage: messageOf(ricaEvents.SET_NICK_REPLY),
+            BaseMessage: messageOf(rasconsts.SET_NICK_REPLY),
             OldNick:     oldNick,
             NewNick:     newNick,
         }
@@ -345,7 +345,7 @@ func (h *ChatHandler) publishOnJoinedChannels(eventName string, msg interface{})
     for _, g := range joinedGroups {
         h.publish(g, &RecipientContentMessage{
             RecipientMessage: RecipientMessage{
-                BaseMessage: messageOf(ricaEvents.MEMBER_NICK_SET_REPLY),
+                BaseMessage: messageOf(rasconsts.MEMBER_NICK_SET_REPLY),
                 To:          g,
                 From:        h.id,
             },
@@ -393,8 +393,8 @@ func (h *ChatHandler) sendTo(groupName, name string, msg interface{}) {
 func (h *ChatHandler) Loop() {
     defer h.recoverFromErrors("Loop")
     h.nickRegistry.Register(h.id, h.nick)
-    h.groups[ricaEvents.FROM_SERVER] = struct{}{}
-    h.groupInfoManager.AddUser(ricaEvents.FROM_SERVER, h.id, h.outgoingInfo)
+    h.groups[rasconsts.FROM_SERVER] = struct{}{}
+    h.groupInfoManager.AddUser(rasconsts.FROM_SERVER, h.id, h.outgoingInfo)
 
     readErrorChannel := make(chan error)
     sockChannel := make(chan interface{}, 32)
@@ -435,7 +435,7 @@ func (h *ChatHandler) Stop() {
     h.nickRegistry.Unregister(h.id)
     for _, groupName := range joinedGroups {
         h.publish(groupName, &RecipientMessage{
-            BaseMessage: messageOf(ricaEvents.LEAVE_GROUP_REPLY),
+            BaseMessage: messageOf(rasconsts.LEAVE_GROUP_REPLY),
             To:          groupName,
             From:        h.nick,
         })

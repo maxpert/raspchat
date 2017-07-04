@@ -1,4 +1,4 @@
-package rica
+package rascore
 
 /*
 Copyright (c) 2015 Zohaib

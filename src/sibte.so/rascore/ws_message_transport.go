@@ -1,10 +1,10 @@
-package rica
+package rascore
 
 import (
     "errors"
     "sync"
 
-    "sibte.so/rica/consts"
+    "sibte.so/rascore/consts"
 
     "github.com/gorilla/websocket"
 )
@@ -33,7 +33,7 @@ func (h *WebsocketMessageTransport) ReadMessage() (IEventMessage, error) {
     }
 
     if msgType != websocket.TextMessage {
-        return nil, errors.New(ricaEvents.ERROR_INVALID_MSGTYPE_ERR)
+        return nil, errors.New(rasconsts.ERROR_INVALID_MSGTYPE_ERR)
     }
 
     if jsonMsg, e := transportDecodeMessage(msg); e == nil {

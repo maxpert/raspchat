@@ -6,13 +6,12 @@ import (
     "log"
     "net/http"
     "strings"
-
-    "sibte.so/rasconfig"
-
     "github.com/julienschmidt/httprouter"
     "github.com/maxpert/badger"
     "path"
-    "os"
+
+    "sibte.so/rascore/utils"
+    "sibte.so/rasconfig"
 )
 
 type atomicStore struct {
@@ -64,17 +63,17 @@ func (h *gifRouteHandler) initGifCache() error {
     opts.Dir = path.Join(rasconfig.CurrentAppConfig.DBPath, "gifstore", "keys")
     opts.ValueDir = path.Join(rasconfig.CurrentAppConfig.DBPath, "gifstore", "values")
 
-    if err := createPathIfMissing(opts.Dir); err != nil {
+    if err := rasutils.CreatePathIfMissing(opts.Dir); err != nil {
         return err
     }
 
-    if err := createPathIfMissing(opts.ValueDir); err != nil {
+    if err := rasutils.CreatePathIfMissing(opts.ValueDir); err != nil {
         return err
     }
 
     if db, err := badger.NewKV(&opts); err != nil {
         return err
-    } else {
+    } else if db != nil {
         h.kvStore = &atomicStore{
             store: db,
         }
@@ -95,19 +94,4 @@ func (s *atomicStore) get(key string) (string, bool) {
 
 func (s *atomicStore) set(key, value string) bool {
     return s.store.Set([]byte(key), []byte(value)) == nil
-}
-
-func createPathIfMissing(path string) error {
-    if exists, err := pathExists(path); exists == false {
-        return os.MkdirAll(path, os.ModePerm)
-    } else {
-        return err
-    }
-}
-
-func pathExists(path string) (bool, error) {
-    _, err := os.Stat(path)
-    if err == nil { return true, nil }
-    if os.IsNotExist(err) { return false, nil }
-    return true, err
 }

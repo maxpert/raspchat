@@ -17,12 +17,12 @@ import (
 
     "sibte.so/rasconfig"
     "sibte.so/rasweb"
-    "sibte.so/rica"
+    "sibte.so/rascore"
 )
 
 func installSocketMux(mux *http.ServeMux, appConfig rasconfig.ApplicationConfig) (err error) {
     err = nil
-    s := rica.NewChatService(appConfig).WithRESTRoutes("/chat")
+    s := rascore.NewChatService(appConfig).WithRESTRoutes("/chat")
 
     mux.Handle("/chat", s)
     mux.Handle("/chat/", s)

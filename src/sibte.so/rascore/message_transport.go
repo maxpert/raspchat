@@ -1,4 +1,4 @@
-package rica
+package rascore
 
 type IMessageTransport interface {
     WriteMessage(id uint64, message IEventMessage) error

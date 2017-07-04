@@ -1,4 +1,4 @@
-package rica
+package rascore
 
 import (
     "time"

@@ -1,4 +1,4 @@
-package rica
+package rascore
 
 // Credits to https://github.com/sdming/gosnow for implementing snowflake
 

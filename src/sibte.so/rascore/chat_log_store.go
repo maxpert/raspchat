@@ -1,4 +1,4 @@
-package rica
+package rascore
 
 import (
     "bytes"
@@ -6,27 +6,31 @@ import (
     "encoding/gob"
     "errors"
     "fmt"
+    "path"
 
     "github.com/maxpert/badger"
-    "path"
-    "os"
+
+    "sibte.so/rascore/utils"
 )
 
+// ChatLogStore represents abstraction for chat log store
 type ChatLogStore struct {
-    store     *badger.KV
+    store       *badger.KV
     cMaxIDBytes []byte
 }
 
+// NewChatLogStore creates a chat log store for passed dataPath
 func NewChatLogStore(dataPath string) (*ChatLogStore, error) {
     opts := badger.DefaultOptions
     opts.Dir = path.Join(dataPath, "keys")
     opts.ValueDir = path.Join(dataPath, "values")
+    opts.SyncWrites = true // Messages are something we don't want to loose
 
-    if err := createPathIfMissing(opts.Dir); err != nil {
+    if err := rasutils.CreatePathIfMissing(opts.Dir); err != nil {
         return nil, err
     }
 
-    if err := createPathIfMissing(opts.ValueDir); err != nil {
+    if err := rasutils.CreatePathIfMissing(opts.ValueDir); err != nil {
         return nil, err
     }
 
@@ -41,27 +45,13 @@ func NewChatLogStore(dataPath string) (*ChatLogStore, error) {
     }, nil
 }
 
-func createPathIfMissing(path string) error {
-    if exists, err := pathExists(path); exists == false {
-        return os.MkdirAll(path, os.ModePerm)
-    } else {
-        return err
-    }
-}
-
-func pathExists(path string) (bool, error) {
-    _, err := os.Stat(path)
-    if err == nil { return true, nil }
-    if os.IsNotExist(err) { return false, nil }
-    return true, err
-}
-
 func idToBytes(id uint64) []byte {
     b := make([]byte, 8)
     binary.BigEndian.PutUint64(b, id)
     return b
 }
 
+// Save saves a given message to given group with given id
 func (c *ChatLogStore) Save(group string, id uint64, msg IEventMessage) error {
     bytesMsg := c.serialize(msg)
 
@@ -69,32 +59,34 @@ func (c *ChatLogStore) Save(group string, id uint64, msg IEventMessage) error {
         return errors.New("Unable to serialize msg")
     }
 
-    bytesId := idToBytes(id)
-    maxIdBytes := c.cMaxIDBytes
+    bytesID := idToBytes(id)
+    maxIDBytes := c.cMaxIDBytes
 
     // <group-name><id> -> <msg>
     // <id> -> <group-name>
     // <group-name><MAX_ID> -> byte[0]
     entries := make([]*badger.Entry, 3)
     entries[0] = &badger.Entry{
-        Key: append([]byte(group), bytesId...),
+        Key:   append([]byte(group), bytesID...),
         Value: bytesMsg,
     }
 
-    entries[1] = &badger.Entry {
-        Key: bytesId,
+    entries[1] = &badger.Entry{
+        Key:   bytesID,
         Value: []byte(group),
     }
 
     entries[2] = &badger.Entry{
-        Key: append([]byte(group), maxIdBytes...),
+        Key:   append([]byte(group), maxIDBytes...),
         Value: make([]byte, 0),
     }
 
     return c.store.BatchSet(entries)
 }
 
-func (c *ChatLogStore) GetMessagesFor(group string, start_id string, offset uint, limit uint) ([]IEventMessage, error) {
+// GetMessagesFor returns messages for given group starting at start_id
+// Resultset is governed by offset and limit passed
+func (c *ChatLogStore) GetMessagesFor(group, startID string, offset, limit uint) ([]IEventMessage, error) {
     var ret []IEventMessage
 
     opts := badger.DefaultIteratorOptions
@@ -109,8 +101,8 @@ func (c *ChatLogStore) GetMessagesFor(group string, start_id string, offset uint
 
     maxIDBytes := idToBytes(^uint64(0))
     endBytesID := append([]byte(group), maxIDBytes...)
-    if start_id != "" {
-        endBytesID = []byte(start_id)
+    if startID != "" {
+        endBytesID = []byte(startID)
     }
 
     i := uint(0)
@@ -143,6 +135,7 @@ func (c *ChatLogStore) GetMessagesFor(group string, start_id string, offset uint
     return ret, nil
 }
 
+// GetMessage returns message for given id
 func (c *ChatLogStore) GetMessage(id uint64) (IEventMessage, error) {
     // <group-name><id> -> <msg>
     // <id> -> <group-name>
@@ -171,13 +164,10 @@ func (c *ChatLogStore) GetMessage(id uint64) (IEventMessage, error) {
 
     m := c.deserialize(kvItem.Value())
     if m == nil {
-        return nil, errors.New(fmt.Sprintf("Unable to deserialize message %v %v", kvItem, id))
+        return nil, fmt.Errorf("Unable to deserialize message %v", id)
     }
 
     return m, nil
-}
-
-func (c *ChatLogStore) Cleanup(group string) {
 }
 
 func (c *ChatLogStore) serialize(v IEventMessage) []byte {

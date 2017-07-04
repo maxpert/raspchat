@@ -1,4 +1,4 @@
-package ricaEvents
+package rasconsts
 
 const (
     FROM_SERVER = "SERVER"

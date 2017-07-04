@@ -1,11 +1,11 @@
-package rica
+package rascore
 
 import (
     "encoding/json"
     "errors"
     "reflect"
 
-    "sibte.so/rica/consts"
+    "sibte.so/rascore/consts"
 )
 
 var pEventToStructMap map[string]reflect.Type
@@ -13,13 +13,13 @@ var pEventToStructMap map[string]reflect.Type
 func initChatHandlerTypes() {
     if pEventToStructMap == nil {
         pEventToStructMap = make(map[string]reflect.Type)
-        pEventToStructMap[ricaEvents.SEND_MSG_COMMAND] = reflect.TypeOf(ChatMessage{})
-        pEventToStructMap[ricaEvents.JOIN_GROUP_COMMAND] = reflect.TypeOf(StringMessage{})
-        pEventToStructMap[ricaEvents.LEAVE_GROUP_COMMAND] = reflect.TypeOf(StringMessage{})
-        pEventToStructMap[ricaEvents.SET_NICK_COMMAND] = reflect.TypeOf(StringMessage{})
-        pEventToStructMap[ricaEvents.LIST_MEMBERS_COMMAND] = reflect.TypeOf(StringMessage{})
-        pEventToStructMap[ricaEvents.NEW_RAW_MSG_REPLY] = reflect.TypeOf(RecipientContentMessage{})
-        pEventToStructMap[ricaEvents.PING_REPLY] = reflect.TypeOf(BaseMessage{})
+        pEventToStructMap[rasconsts.SEND_MSG_COMMAND] = reflect.TypeOf(ChatMessage{})
+        pEventToStructMap[rasconsts.JOIN_GROUP_COMMAND] = reflect.TypeOf(StringMessage{})
+        pEventToStructMap[rasconsts.LEAVE_GROUP_COMMAND] = reflect.TypeOf(StringMessage{})
+        pEventToStructMap[rasconsts.SET_NICK_COMMAND] = reflect.TypeOf(StringMessage{})
+        pEventToStructMap[rasconsts.LIST_MEMBERS_COMMAND] = reflect.TypeOf(StringMessage{})
+        pEventToStructMap[rasconsts.NEW_RAW_MSG_REPLY] = reflect.TypeOf(RecipientContentMessage{})
+        pEventToStructMap[rasconsts.PING_REPLY] = reflect.TypeOf(BaseMessage{})
     }
 }
 
