@@ -7,7 +7,7 @@ import (
     "net/http"
     "strings"
     "github.com/julienschmidt/httprouter"
-    "github.com/maxpert/badger"
+    "github.com/dgraph-io/badger"
     "path"
 
     "sibte.so/rascore/utils"

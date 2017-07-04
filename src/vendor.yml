@@ -10,13 +10,15 @@ vendors:
 - path: github.com/davecgh/go-spew
   rev: 782f4967f2dc4564575ca782fe2d04090b5faca8
 - path: github.com/dgraph-io/badger
-  rev: 62c2e6278707e2e39299e0eca0cff60b0ae03ddc
+  rev: a674f399da6a43bf9c34da28b0cedeeb1d0273af
+- path: github.com/golang/protobuf
+  rev: 6a1fa9404c0aebf36c879bc50152edcc953910d2
 - path: github.com/gorilla/websocket
   rev: ea4d1f681babbce9545c9c5f3d5194a789c89f5b
 - path: github.com/julienschmidt/httprouter
   rev: 975b5c4c7c21c0e3d2764200bf2aa8e34657ae6e
-- path: github.com/maxpert/badger
-  rev: b192d6191ae7b67fc9cfaa1a55d600b3fd875b9f
+- path: github.com/philhofer/fwd
+  rev: 1612a298117663d7bc9a760ae20d383413859798
 - path: github.com/pkg/errors
   rev: c605e284fe17294bda444b34710735b29d1a9d90
 - path: github.com/pmezard/go-difflib
@@ -25,10 +27,22 @@ vendors:
   rev: 2aa1a76a4e7c76dbe7d39f40661ab0261d70153a
 - path: github.com/stretchr/testify
   rev: f6abca593680b2315d2075e0f5e2a9751e3f431a
+- path: github.com/tinylib/msgp
+  rev: b2b6a672cf1e5b90748f79b8b81fc8c5cf0571a1
+- path: golang.org/x/crypto
+  rev: 69be088f860613049aa58c65154d1b1d32bbdf90
 - path: golang.org/x/net
   rev: 1f9224279e98554b6a6432d4dd998a739f8b2b7c
+- path: golang.org/x/sync
+  rev: f52d1811a62927559de87708c8913c1650ce4f26
 - path: golang.org/x/sys
-  rev: 0e0164865330d5cf1c00247be08330bf96e2f87c
+  rev: 94b76065f2d2081d0fef24a6e67c571f51a6408a
+- path: golang.org/x/text
+  rev: 2bf8f2a19ec09c670e931282edfe6567f6be21c9
+- path: golang.org/x/tools
+  rev: 1b3bb8de7d39fe135abc674c1e6d642cce854d4a
+- path: google.golang.org/appengine
+  rev: d11fc8a8dccf41ab5bd3c51a3ea52051240e325c
 - path: gopkg.in/check.v1
   rev: 20d25e2804050c1cd24a7eea1e7a6447dd0e74ec
 - path: gopkg.in/natefinch/lumberjack.v2

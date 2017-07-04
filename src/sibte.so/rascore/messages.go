@@ -1,10 +1,20 @@
+//go:generate msgp
 package rascore
 
 import (
     "time"
+
+    "github.com/tinylib/msgp/msgp"
 )
 
+type IMarshalableMessage interface {
+    msgp.Marshaler
+    msgp.Unmarshaler
+    msgp.Sizer
+}
+
 type IEventMessage interface {
+    IMarshalableMessage
     Identity() uint64
     Event() string
     Stamp()

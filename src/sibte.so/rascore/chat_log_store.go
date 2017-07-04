@@ -3,12 +3,11 @@ package rascore
 import (
     "bytes"
     "encoding/binary"
-    "encoding/gob"
     "errors"
     "fmt"
     "path"
 
-    "github.com/maxpert/badger"
+    "github.com/dgraph-io/badger"
 
     "sibte.so/rascore/utils"
 )
@@ -52,8 +51,8 @@ func idToBytes(id uint64) []byte {
 }
 
 // Save saves a given message to given group with given id
-func (c *ChatLogStore) Save(group string, id uint64, msg IEventMessage) error {
-    bytesMsg := c.serialize(msg)
+func (c *ChatLogStore) Save(group string, id uint64, msg IMarshalableMessage) error {
+    bytesMsg := serialize(msg)
 
     if bytesMsg == nil {
         return errors.New("Unable to serialize msg")
@@ -124,7 +123,7 @@ func (c *ChatLogStore) GetMessagesFor(group, startID string, offset, limit uint)
             break
         }
 
-        msg := c.deserialize(v)
+        msg := deserialize(v)
         if msg == nil {
             continue
         }
@@ -162,7 +161,7 @@ func (c *ChatLogStore) GetMessage(id uint64) (IEventMessage, error) {
         return nil, errors.New("Unable to locate message value")
     }
 
-    m := c.deserialize(kvItem.Value())
+    m := deserialize(kvItem.Value())
     if m == nil {
         return nil, fmt.Errorf("Unable to deserialize message %v", id)
     }
@@ -170,39 +169,39 @@ func (c *ChatLogStore) GetMessage(id uint64) (IEventMessage, error) {
     return m, nil
 }
 
-func (c *ChatLogStore) serialize(v IEventMessage) []byte {
-    var buffer bytes.Buffer
-    enc := gob.NewEncoder(&buffer)
-
-    if enc.Encode(v) != nil {
-        return nil
-    }
-
-    return buffer.Bytes()
+// Close and flush store values
+func (c *ChatLogStore) Close() error {
+    return c.store.Close()
 }
 
-func (c *ChatLogStore) deserialize(b []byte) IEventMessage {
-    buffer := bytes.NewBuffer(b)
-    dec := gob.NewDecoder(buffer)
-
-    chM := &ChatMessage{}
-    if dec.Decode(chM) == nil {
-        return chM
+func serialize(v IMarshalableMessage) []byte {
+    buffer := make([]byte, v.Msgsize(), v.Msgsize())
+    if ret, err := v.MarshalMsg(buffer); err != nil {
+        return ret
     }
 
-    rpCM := &RecipientContentMessage{}
-    if dec.Decode(rpCM) == nil {
-        return rpCM
+    return nil
+}
+
+func deserialize(b []byte) IEventMessage {
+    chM := ChatMessage{}
+    if _, err := chM.UnmarshalMsg(b); err != nil {
+        return &chM
     }
 
-    rpM := &RecipientMessage{}
-    if dec.Decode(rpM) == nil {
-        return rpM
+    rpCM := RecipientContentMessage{}
+    if _, err := rpCM.UnmarshalMsg(b); err != nil {
+        return &rpCM
     }
 
-    var intr IEventMessage
-    if err := dec.Decode(intr); err == nil {
-        return intr
+    rpM := RecipientMessage{}
+    if _, err := rpM.UnmarshalMsg(b); err != nil {
+        return &rpM
+    }
+
+    bMsg := BaseMessage{}
+    if _, err := bMsg.UnmarshalMsg(b); err != nil {
+        return &bMsg
     }
 
     return nil
