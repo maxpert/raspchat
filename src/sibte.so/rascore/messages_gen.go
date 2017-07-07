@@ -1932,3 +1932,750 @@ func (z *StringMessage) Msgsize() (s int) {
 	s = 1 + 12 + 1 + 10 + msgp.StringPrefixSize + len(z.BaseMessage.EventName) + 3 + msgp.Uint64Size + 13 + msgp.Int64Size + 8 + msgp.StringPrefixSize + len(z.Message)
 	return
 }
+
+// DecodeMsg implements msgp.Decodable
+func (z *compositeMessage) DecodeMsg(dc *msgp.Reader) (err error) {
+	var field []byte
+	_ = field
+	var zrbe uint32
+	zrbe, err = dc.ReadMapHeader()
+	if err != nil {
+		return
+	}
+	for zrbe > 0 {
+		zrbe--
+		field, err = dc.ReadMapKeyPtr()
+		if err != nil {
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "Base":
+			if dc.IsNil() {
+				err = dc.ReadNil()
+				if err != nil {
+					return
+				}
+				z.Base = nil
+			} else {
+				if z.Base == nil {
+					z.Base = new(BaseMessage)
+				}
+				var zmfd uint32
+				zmfd, err = dc.ReadMapHeader()
+				if err != nil {
+					return
+				}
+				for zmfd > 0 {
+					zmfd--
+					field, err = dc.ReadMapKeyPtr()
+					if err != nil {
+						return
+					}
+					switch msgp.UnsafeString(field) {
+					case "EventName":
+						z.Base.EventName, err = dc.ReadString()
+						if err != nil {
+							return
+						}
+					case "Id":
+						z.Base.Id, err = dc.ReadUint64()
+						if err != nil {
+							return
+						}
+					case "UTCTimestamp":
+						z.Base.UTCTimestamp, err = dc.ReadInt64()
+						if err != nil {
+							return
+						}
+					default:
+						err = dc.Skip()
+						if err != nil {
+							return
+						}
+					}
+				}
+			}
+		case "Ping":
+			if dc.IsNil() {
+				err = dc.ReadNil()
+				if err != nil {
+					return
+				}
+				z.Ping = nil
+			} else {
+				if z.Ping == nil {
+					z.Ping = new(PingMessage)
+				}
+				err = z.Ping.DecodeMsg(dc)
+				if err != nil {
+					return
+				}
+			}
+		case "Handshake":
+			if dc.IsNil() {
+				err = dc.ReadNil()
+				if err != nil {
+					return
+				}
+				z.Handshake = nil
+			} else {
+				if z.Handshake == nil {
+					z.Handshake = new(HandshakeMessage)
+				}
+				err = z.Handshake.DecodeMsg(dc)
+				if err != nil {
+					return
+				}
+			}
+		case "Recipient":
+			if dc.IsNil() {
+				err = dc.ReadNil()
+				if err != nil {
+					return
+				}
+				z.Recipient = nil
+			} else {
+				if z.Recipient == nil {
+					z.Recipient = new(RecipientMessage)
+				}
+				err = z.Recipient.DecodeMsg(dc)
+				if err != nil {
+					return
+				}
+			}
+		case "RecipientContent":
+			if dc.IsNil() {
+				err = dc.ReadNil()
+				if err != nil {
+					return
+				}
+				z.RecipientContent = nil
+			} else {
+				if z.RecipientContent == nil {
+					z.RecipientContent = new(RecipientContentMessage)
+				}
+				var zzdc uint32
+				zzdc, err = dc.ReadMapHeader()
+				if err != nil {
+					return
+				}
+				for zzdc > 0 {
+					zzdc--
+					field, err = dc.ReadMapKeyPtr()
+					if err != nil {
+						return
+					}
+					switch msgp.UnsafeString(field) {
+					case "RecipientMessage":
+						err = z.RecipientContent.RecipientMessage.DecodeMsg(dc)
+						if err != nil {
+							return
+						}
+					case "Message":
+						z.RecipientContent.Message, err = dc.ReadIntf()
+						if err != nil {
+							return
+						}
+					default:
+						err = dc.Skip()
+						if err != nil {
+							return
+						}
+					}
+				}
+			}
+		case "Nick":
+			if dc.IsNil() {
+				err = dc.ReadNil()
+				if err != nil {
+					return
+				}
+				z.Nick = nil
+			} else {
+				if z.Nick == nil {
+					z.Nick = new(NickMessage)
+				}
+				err = z.Nick.DecodeMsg(dc)
+				if err != nil {
+					return
+				}
+			}
+		case "String":
+			if dc.IsNil() {
+				err = dc.ReadNil()
+				if err != nil {
+					return
+				}
+				z.String = nil
+			} else {
+				if z.String == nil {
+					z.String = new(StringMessage)
+				}
+				err = z.String.DecodeMsg(dc)
+				if err != nil {
+					return
+				}
+			}
+		case "Error":
+			if dc.IsNil() {
+				err = dc.ReadNil()
+				if err != nil {
+					return
+				}
+				z.Error = nil
+			} else {
+				if z.Error == nil {
+					z.Error = new(ErrorMessage)
+				}
+				err = z.Error.DecodeMsg(dc)
+				if err != nil {
+					return
+				}
+			}
+		default:
+			err = dc.Skip()
+			if err != nil {
+				return
+			}
+		}
+	}
+	return
+}
+
+// EncodeMsg implements msgp.Encodable
+func (z *compositeMessage) EncodeMsg(en *msgp.Writer) (err error) {
+	// map header, size 8
+	// write "Base"
+	err = en.Append(0x88, 0xa4, 0x42, 0x61, 0x73, 0x65)
+	if err != nil {
+		return err
+	}
+	if z.Base == nil {
+		err = en.WriteNil()
+		if err != nil {
+			return
+		}
+	} else {
+		// map header, size 3
+		// write "EventName"
+		err = en.Append(0x83, 0xa9, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x4e, 0x61, 0x6d, 0x65)
+		if err != nil {
+			return err
+		}
+		err = en.WriteString(z.Base.EventName)
+		if err != nil {
+			return
+		}
+		// write "Id"
+		err = en.Append(0xa2, 0x49, 0x64)
+		if err != nil {
+			return err
+		}
+		err = en.WriteUint64(z.Base.Id)
+		if err != nil {
+			return
+		}
+		// write "UTCTimestamp"
+		err = en.Append(0xac, 0x55, 0x54, 0x43, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70)
+		if err != nil {
+			return err
+		}
+		err = en.WriteInt64(z.Base.UTCTimestamp)
+		if err != nil {
+			return
+		}
+	}
+	// write "Ping"
+	err = en.Append(0xa4, 0x50, 0x69, 0x6e, 0x67)
+	if err != nil {
+		return err
+	}
+	if z.Ping == nil {
+		err = en.WriteNil()
+		if err != nil {
+			return
+		}
+	} else {
+		err = z.Ping.EncodeMsg(en)
+		if err != nil {
+			return
+		}
+	}
+	// write "Handshake"
+	err = en.Append(0xa9, 0x48, 0x61, 0x6e, 0x64, 0x73, 0x68, 0x61, 0x6b, 0x65)
+	if err != nil {
+		return err
+	}
+	if z.Handshake == nil {
+		err = en.WriteNil()
+		if err != nil {
+			return
+		}
+	} else {
+		err = z.Handshake.EncodeMsg(en)
+		if err != nil {
+			return
+		}
+	}
+	// write "Recipient"
+	err = en.Append(0xa9, 0x52, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74)
+	if err != nil {
+		return err
+	}
+	if z.Recipient == nil {
+		err = en.WriteNil()
+		if err != nil {
+			return
+		}
+	} else {
+		err = z.Recipient.EncodeMsg(en)
+		if err != nil {
+			return
+		}
+	}
+	// write "RecipientContent"
+	err = en.Append(0xb0, 0x52, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74)
+	if err != nil {
+		return err
+	}
+	if z.RecipientContent == nil {
+		err = en.WriteNil()
+		if err != nil {
+			return
+		}
+	} else {
+		// map header, size 2
+		// write "RecipientMessage"
+		err = en.Append(0x82, 0xb0, 0x52, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65)
+		if err != nil {
+			return err
+		}
+		err = z.RecipientContent.RecipientMessage.EncodeMsg(en)
+		if err != nil {
+			return
+		}
+		// write "Message"
+		err = en.Append(0xa7, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65)
+		if err != nil {
+			return err
+		}
+		err = en.WriteIntf(z.RecipientContent.Message)
+		if err != nil {
+			return
+		}
+	}
+	// write "Nick"
+	err = en.Append(0xa4, 0x4e, 0x69, 0x63, 0x6b)
+	if err != nil {
+		return err
+	}
+	if z.Nick == nil {
+		err = en.WriteNil()
+		if err != nil {
+			return
+		}
+	} else {
+		err = z.Nick.EncodeMsg(en)
+		if err != nil {
+			return
+		}
+	}
+	// write "String"
+	err = en.Append(0xa6, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67)
+	if err != nil {
+		return err
+	}
+	if z.String == nil {
+		err = en.WriteNil()
+		if err != nil {
+			return
+		}
+	} else {
+		err = z.String.EncodeMsg(en)
+		if err != nil {
+			return
+		}
+	}
+	// write "Error"
+	err = en.Append(0xa5, 0x45, 0x72, 0x72, 0x6f, 0x72)
+	if err != nil {
+		return err
+	}
+	if z.Error == nil {
+		err = en.WriteNil()
+		if err != nil {
+			return
+		}
+	} else {
+		err = z.Error.EncodeMsg(en)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
+func (z *compositeMessage) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 8
+	// string "Base"
+	o = append(o, 0x88, 0xa4, 0x42, 0x61, 0x73, 0x65)
+	if z.Base == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		// map header, size 3
+		// string "EventName"
+		o = append(o, 0x83, 0xa9, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x4e, 0x61, 0x6d, 0x65)
+		o = msgp.AppendString(o, z.Base.EventName)
+		// string "Id"
+		o = append(o, 0xa2, 0x49, 0x64)
+		o = msgp.AppendUint64(o, z.Base.Id)
+		// string "UTCTimestamp"
+		o = append(o, 0xac, 0x55, 0x54, 0x43, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70)
+		o = msgp.AppendInt64(o, z.Base.UTCTimestamp)
+	}
+	// string "Ping"
+	o = append(o, 0xa4, 0x50, 0x69, 0x6e, 0x67)
+	if z.Ping == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.Ping.MarshalMsg(o)
+		if err != nil {
+			return
+		}
+	}
+	// string "Handshake"
+	o = append(o, 0xa9, 0x48, 0x61, 0x6e, 0x64, 0x73, 0x68, 0x61, 0x6b, 0x65)
+	if z.Handshake == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.Handshake.MarshalMsg(o)
+		if err != nil {
+			return
+		}
+	}
+	// string "Recipient"
+	o = append(o, 0xa9, 0x52, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74)
+	if z.Recipient == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.Recipient.MarshalMsg(o)
+		if err != nil {
+			return
+		}
+	}
+	// string "RecipientContent"
+	o = append(o, 0xb0, 0x52, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74)
+	if z.RecipientContent == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		// map header, size 2
+		// string "RecipientMessage"
+		o = append(o, 0x82, 0xb0, 0x52, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65)
+		o, err = z.RecipientContent.RecipientMessage.MarshalMsg(o)
+		if err != nil {
+			return
+		}
+		// string "Message"
+		o = append(o, 0xa7, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65)
+		o, err = msgp.AppendIntf(o, z.RecipientContent.Message)
+		if err != nil {
+			return
+		}
+	}
+	// string "Nick"
+	o = append(o, 0xa4, 0x4e, 0x69, 0x63, 0x6b)
+	if z.Nick == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.Nick.MarshalMsg(o)
+		if err != nil {
+			return
+		}
+	}
+	// string "String"
+	o = append(o, 0xa6, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67)
+	if z.String == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.String.MarshalMsg(o)
+		if err != nil {
+			return
+		}
+	}
+	// string "Error"
+	o = append(o, 0xa5, 0x45, 0x72, 0x72, 0x6f, 0x72)
+	if z.Error == nil {
+		o = msgp.AppendNil(o)
+	} else {
+		o, err = z.Error.MarshalMsg(o)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *compositeMessage) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zelx uint32
+	zelx, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		return
+	}
+	for zelx > 0 {
+		zelx--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "Base":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Base = nil
+			} else {
+				if z.Base == nil {
+					z.Base = new(BaseMessage)
+				}
+				var zbal uint32
+				zbal, bts, err = msgp.ReadMapHeaderBytes(bts)
+				if err != nil {
+					return
+				}
+				for zbal > 0 {
+					zbal--
+					field, bts, err = msgp.ReadMapKeyZC(bts)
+					if err != nil {
+						return
+					}
+					switch msgp.UnsafeString(field) {
+					case "EventName":
+						z.Base.EventName, bts, err = msgp.ReadStringBytes(bts)
+						if err != nil {
+							return
+						}
+					case "Id":
+						z.Base.Id, bts, err = msgp.ReadUint64Bytes(bts)
+						if err != nil {
+							return
+						}
+					case "UTCTimestamp":
+						z.Base.UTCTimestamp, bts, err = msgp.ReadInt64Bytes(bts)
+						if err != nil {
+							return
+						}
+					default:
+						bts, err = msgp.Skip(bts)
+						if err != nil {
+							return
+						}
+					}
+				}
+			}
+		case "Ping":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Ping = nil
+			} else {
+				if z.Ping == nil {
+					z.Ping = new(PingMessage)
+				}
+				bts, err = z.Ping.UnmarshalMsg(bts)
+				if err != nil {
+					return
+				}
+			}
+		case "Handshake":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Handshake = nil
+			} else {
+				if z.Handshake == nil {
+					z.Handshake = new(HandshakeMessage)
+				}
+				bts, err = z.Handshake.UnmarshalMsg(bts)
+				if err != nil {
+					return
+				}
+			}
+		case "Recipient":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Recipient = nil
+			} else {
+				if z.Recipient == nil {
+					z.Recipient = new(RecipientMessage)
+				}
+				bts, err = z.Recipient.UnmarshalMsg(bts)
+				if err != nil {
+					return
+				}
+			}
+		case "RecipientContent":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.RecipientContent = nil
+			} else {
+				if z.RecipientContent == nil {
+					z.RecipientContent = new(RecipientContentMessage)
+				}
+				var zjqz uint32
+				zjqz, bts, err = msgp.ReadMapHeaderBytes(bts)
+				if err != nil {
+					return
+				}
+				for zjqz > 0 {
+					zjqz--
+					field, bts, err = msgp.ReadMapKeyZC(bts)
+					if err != nil {
+						return
+					}
+					switch msgp.UnsafeString(field) {
+					case "RecipientMessage":
+						bts, err = z.RecipientContent.RecipientMessage.UnmarshalMsg(bts)
+						if err != nil {
+							return
+						}
+					case "Message":
+						z.RecipientContent.Message, bts, err = msgp.ReadIntfBytes(bts)
+						if err != nil {
+							return
+						}
+					default:
+						bts, err = msgp.Skip(bts)
+						if err != nil {
+							return
+						}
+					}
+				}
+			}
+		case "Nick":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Nick = nil
+			} else {
+				if z.Nick == nil {
+					z.Nick = new(NickMessage)
+				}
+				bts, err = z.Nick.UnmarshalMsg(bts)
+				if err != nil {
+					return
+				}
+			}
+		case "String":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.String = nil
+			} else {
+				if z.String == nil {
+					z.String = new(StringMessage)
+				}
+				bts, err = z.String.UnmarshalMsg(bts)
+				if err != nil {
+					return
+				}
+			}
+		case "Error":
+			if msgp.IsNil(bts) {
+				bts, err = msgp.ReadNilBytes(bts)
+				if err != nil {
+					return
+				}
+				z.Error = nil
+			} else {
+				if z.Error == nil {
+					z.Error = new(ErrorMessage)
+				}
+				bts, err = z.Error.UnmarshalMsg(bts)
+				if err != nil {
+					return
+				}
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *compositeMessage) Msgsize() (s int) {
+	s = 1 + 5
+	if z.Base == nil {
+		s += msgp.NilSize
+	} else {
+		s += 1 + 10 + msgp.StringPrefixSize + len(z.Base.EventName) + 3 + msgp.Uint64Size + 13 + msgp.Int64Size
+	}
+	s += 5
+	if z.Ping == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.Ping.Msgsize()
+	}
+	s += 10
+	if z.Handshake == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.Handshake.Msgsize()
+	}
+	s += 10
+	if z.Recipient == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.Recipient.Msgsize()
+	}
+	s += 17
+	if z.RecipientContent == nil {
+		s += msgp.NilSize
+	} else {
+		s += 1 + 17 + z.RecipientContent.RecipientMessage.Msgsize() + 8 + msgp.GuessSize(z.RecipientContent.Message)
+	}
+	s += 5
+	if z.Nick == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.Nick.Msgsize()
+	}
+	s += 7
+	if z.String == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.String.Msgsize()
+	}
+	s += 6
+	if z.Error == nil {
+		s += msgp.NilSize
+	} else {
+		s += z.Error.Msgsize()
+	}
+	return
+}

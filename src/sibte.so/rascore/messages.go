@@ -1,4 +1,5 @@
-//go:generate msgp
+//go:generate msgp -unexported
+
 package rascore
 
 import (
@@ -18,6 +19,12 @@ type IEventMessage interface {
     Identity() uint64
     Event() string
     Stamp()
+}
+
+type ICompositeMessage interface {
+    IEventMessage
+    Message() IEventMessage
+    Set(IEventMessage)
 }
 
 type BaseMessage struct {
@@ -81,4 +88,105 @@ type ErrorMessage struct {
     Type  string      `json:"error_type"`
     Error string      `json:"error"`
     Body  interface{} `json:"body"`
+}
+
+type compositeMessage struct {
+    Base             *BaseMessage                `json:"base,omitempty"`
+    Ping             *PingMessage                `json:"ping,omitempty"`
+    Handshake        *HandshakeMessage           `json:"handshake,omitempty"`
+    Recipient        *RecipientMessage           `json:"recipient,omitempty"`
+    RecipientContent *RecipientContentMessage    `json:"recipientcontent,omitempty"`
+    Nick             *NickMessage                `json:"nick,omitempty"`
+    String           *StringMessage              `json:"str,omitempty"`
+    Error            *ErrorMessage               `json:"error,omitempty"`
+}
+
+// NewCompositeMessage returns a wrapper serializable message that
+// exclusively holds one of child messages in a corresponding wrapped field
+func NewCompositeMessage(m IEventMessage) ICompositeMessage {
+    r := compositeMessage{}
+    r.Set(m)
+    return &r
+}
+
+func (r *compositeMessage) Identity() uint64 {
+    return r.Message().Identity()
+}
+
+func (r *compositeMessage) Event() string {
+    return r.Message().Event()
+}
+
+func (r *compositeMessage) Stamp() {
+    r.Message().Stamp()
+}
+
+func (r *compositeMessage) Set(m IEventMessage)  {
+    r.Base = nil
+    r.Ping = nil
+    r.Handshake = nil
+    r.Recipient = nil
+    r.RecipientContent = nil
+    r.Nick = nil
+    r.String = nil
+    r.Error = nil
+
+    if m == nil {
+        return
+    }
+
+    switch v := m.(type) {
+    case *BaseMessage:
+        r.Base = v
+    case *PingMessage:
+        r.Ping = v
+    case *HandshakeMessage:
+        r.Handshake = v
+    case *RecipientMessage:
+        r.Recipient = v
+    case *RecipientContentMessage:
+        r.RecipientContent = v
+    case *NickMessage:
+        r.Nick = v
+    case *StringMessage:
+        r.String = v
+    case *ErrorMessage:
+        r.Error = v
+    }
+}
+
+func (r *compositeMessage) Message() IEventMessage {
+    if r.Base != nil {
+        return r.Base
+    }
+
+    if r.Ping != nil {
+        return r.Ping
+    }
+
+    if r.Handshake != nil {
+        return r.Handshake
+    }
+
+    if r.Recipient != nil {
+        return r.Recipient
+    }
+
+    if r.RecipientContent != nil {
+        return r.RecipientContent
+    }
+
+    if r.Nick != nil {
+        return r.Nick
+    }
+
+    if r.String != nil {
+        return r.String
+    }
+
+    if r.Error != nil {
+        return r.Error
+    }
+
+    return nil
 }

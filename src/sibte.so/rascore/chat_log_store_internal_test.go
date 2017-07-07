@@ -51,7 +51,7 @@ func TestChatLogStoreGetMessage(t *testing.T) {
         t.Error("Invalid message", msg)
     }
 
-    if _, ok := msg.(*ChatMessage); !ok {
+    if _, ok := msg.(*RecipientMessage); !ok {
         t.Error("Invalid message type deserialized")
     }
 }
@@ -64,10 +64,10 @@ func BenchmarkChatLogStoreDeserialize(b *testing.B) {
     origMsg.Id = 1
     origMsg.EventName = "sample"
     origMsg.UTCTimestamp = 1
-    serializedMsg := serialize(&origMsg)
+    serializedMsg, _ := serializeMessage(&origMsg)
 
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
-        deserialize(serializedMsg)
+        deserializeMessage(serializedMsg)
     }
 }

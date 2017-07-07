@@ -4,7 +4,6 @@ import (
     "bytes"
     "encoding/binary"
     "errors"
-    "fmt"
     "path"
 
     "github.com/dgraph-io/badger"
@@ -51,11 +50,11 @@ func idToBytes(id uint64) []byte {
 }
 
 // Save saves a given message to given group with given id
-func (c *ChatLogStore) Save(group string, id uint64, msg IMarshalableMessage) error {
-    bytesMsg := serialize(msg)
+func (c *ChatLogStore) Save(group string, id uint64, msg IEventMessage) error {
+    bytesMsg, err := serializeMessage(msg)
 
-    if bytesMsg == nil {
-        return errors.New("Unable to serialize msg")
+    if err != nil {
+        return err
     }
 
     bytesID := idToBytes(id)
@@ -84,7 +83,7 @@ func (c *ChatLogStore) Save(group string, id uint64, msg IMarshalableMessage) er
 }
 
 // GetMessagesFor returns messages for given group starting at start_id
-// Resultset is governed by offset and limit passed
+// result-set shape is governed by offset and limit passed
 func (c *ChatLogStore) GetMessagesFor(group, startID string, offset, limit uint) ([]IEventMessage, error) {
     var ret []IEventMessage
 
@@ -123,9 +122,9 @@ func (c *ChatLogStore) GetMessagesFor(group, startID string, offset, limit uint)
             break
         }
 
-        msg := deserialize(v)
-        if msg == nil {
-            continue
+        msg, err := deserializeMessage(v)
+        if err != nil {
+            return nil, err
         }
 
         ret = append(ret, msg)
@@ -161,9 +160,9 @@ func (c *ChatLogStore) GetMessage(id uint64) (IEventMessage, error) {
         return nil, errors.New("Unable to locate message value")
     }
 
-    m := deserialize(kvItem.Value())
-    if m == nil {
-        return nil, fmt.Errorf("Unable to deserialize message %v", id)
+    m, err := deserializeMessage(kvItem.Value())
+    if err != nil {
+        return nil, err
     }
 
     return m, nil
@@ -174,35 +173,17 @@ func (c *ChatLogStore) Close() error {
     return c.store.Close()
 }
 
-func serialize(v IMarshalableMessage) []byte {
-    buffer := make([]byte, v.Msgsize(), v.Msgsize())
-    if ret, err := v.MarshalMsg(buffer); err != nil {
-        return ret
-    }
-
-    return nil
+func serializeMessage(valueMsg IEventMessage) ([]byte, error) {
+    msg := NewCompositeMessage(valueMsg)
+    buffer := make([]byte, 0)
+    return msg.MarshalMsg(buffer)
 }
 
-func deserialize(b []byte) IEventMessage {
-    chM := ChatMessage{}
-    if _, err := chM.UnmarshalMsg(b); err != nil {
-        return &chM
+func deserializeMessage(bytes []byte) (IEventMessage, error) {
+    msg := NewCompositeMessage(nil)
+    if _, err := msg.UnmarshalMsg(bytes); err != nil {
+        return nil, err
     }
 
-    rpCM := RecipientContentMessage{}
-    if _, err := rpCM.UnmarshalMsg(b); err != nil {
-        return &rpCM
-    }
-
-    rpM := RecipientMessage{}
-    if _, err := rpM.UnmarshalMsg(b); err != nil {
-        return &rpM
-    }
-
-    bMsg := BaseMessage{}
-    if _, err := bMsg.UnmarshalMsg(b); err != nil {
-        return &bMsg
-    }
-
-    return nil
+    return msg.Message(), nil
 }
