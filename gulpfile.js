@@ -33,6 +33,7 @@ var Settings = {
             'static/js/peer_negotiator.js',
             'static/js/file_transfer.js',
             'static/js/components/*.js',
+            'static/js/vendor/*.js',
             'static/js/chat.js'
         ],
         clientFile: 'client.js',
@@ -45,6 +46,7 @@ var Settings = {
            '/static/js/client.min.js': [
                 '/static/js/core.js', 
                 '/static/js/components/*.js',
+                '/static/js/vendor/*.js',
                 '/static/js/chat.js'
            ],
 

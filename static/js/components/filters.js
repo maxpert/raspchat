@@ -51,6 +51,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   });
 
   vue.filter('avatar_url', function (value) {
-    return '//sigil.cupcake.io/'+value+'.png';
+    var type = CRC32.str(value) % 2 ? 'male' : 'female';
+
+    return '//avatars.dicebear.com/v1/'+type+'/'+value+'/128.png';
   });
 })(window.Vue, window, window.document);
