@@ -5,48 +5,48 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-(function (vue, win, doc) {
-  "use strict";
-  vue.component('settings-dialog', vue.extend({
-    template: '#settings-dialog',
-    props: {
-        visible: {
-            type: Boolean,
-            twoWay: true,
-        }
-    },
-    data: function () {
-      return {};
-    },
-    ready: function () {
-        this.$watch("visible", this.hookEscape);
-    },
-    methods: {
-        ignoreClose: function () {
-        },
-        
-        closeDialog: function () {
-            this.$set('visible', false);
-        },
+var vue = require('vue');
+var doc = window.document;
 
-        /* jshint unused: false */
-        hookEscape: function(newVal, oldVal) 
-        {
-            if (newVal === true) {
-                doc.addEventListener("keyup", this.closeIfEscaped, false);
-            } else {
-                doc.removeEventListener("keyup", this.closeIfEscaped);
-            }
-        },
-
-        closeIfEscaped: function(e) {
-            if (this.visible && e.keyCode == 27) {
-                this.closeDialog();
-            }
-
-            e.preventDefault();
-            e.stopPropagation();
-        }
+vue.component('settings-dialog', vue.extend({
+template: '#settings-dialog',
+props: {
+    visible: {
+        type: Boolean,
+        twoWay: true,
     }
-  }));
-})(window.Vue, window, window.document);
+},
+data: function () {
+    return {};
+},
+ready: function () {
+    this.$watch("visible", this.hookEscape);
+},
+methods: {
+    ignoreClose: function () {
+    },
+    
+    closeDialog: function () {
+        this.$set('visible', false);
+    },
+
+    /* jshint unused: false */
+    hookEscape: function(newVal, oldVal) 
+    {
+        if (newVal === true) {
+            doc.addEventListener("keyup", this.closeIfEscaped, false);
+        } else {
+            doc.removeEventListener("keyup", this.closeIfEscaped);
+        }
+    },
+
+    closeIfEscaped: function(e) {
+        if (this.visible && e.keyCode == 27) {
+            this.closeDialog();
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+    }
+}
+}));

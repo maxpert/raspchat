@@ -5,45 +5,43 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-(function (vue) {
-  "use strict";
+var vue = require('vue');
 
-  vue.component('chat-message', vue.extend({
-    props: ['message'],
-    template: '#chat-message',
-    ready: function () {
+vue.component('chat-message', vue.extend({
+  props: ['message'],
+  template: '#chat-message',
+  ready: function () {
+    this.hookImageLoads();
+    this.$dispatch("chat-message-added", this.message);
+
+    this.$watch("message.msg", function () {
       this.hookImageLoads();
       this.$dispatch("chat-message-added", this.message);
-
-      this.$watch("message.msg", function () {
-        this.hookImageLoads();
-        this.$dispatch("chat-message-added", this.message);
-      }.bind(this));
+    }.bind(this));
+  },
+  methods: {
+    imageLoaded: function (ev) {
+      var me = this;
+      me.$dispatch('chat-image-loaded', {loadedEventImage: ev});
     },
-    methods: {
-      imageLoaded: function (ev) {
-        var me = this;
-        me.$dispatch('chat-image-loaded', {loadedEventImage: ev});
-      },
-      hookImageLoads: function () {
-        var imgs = this.$el.parentNode.querySelectorAll("img");
-        for(var i in imgs){
-          var img = imgs[i];
-          if (this._hasClass(img, "avatar")) {
-            continue;
-          }
-
-          if (img.addEventListener) {
-            img.removeEventListener("load", this.imageLoaded);
-            img.addEventListener("load", this.imageLoaded, false);
-          }
+    hookImageLoads: function () {
+      var imgs = this.$el.parentNode.querySelectorAll("img");
+      for(var i in imgs){
+        var img = imgs[i];
+        if (this._hasClass(img, "avatar")) {
+          continue;
         }
-      },
 
-      _hasClass: function (element, selectorClass) {
-        var idx = (" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(selectorClass);
-        return  idx > -1;
+        if (img.addEventListener) {
+          img.removeEventListener("load", this.imageLoaded);
+          img.addEventListener("load", this.imageLoaded, false);
+        }
       }
+    },
+
+    _hasClass: function (element, selectorClass) {
+      var idx = (" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(selectorClass);
+      return  idx > -1;
     }
-  }));
-})(window.Vue, window, window.document);
+  }
+}));

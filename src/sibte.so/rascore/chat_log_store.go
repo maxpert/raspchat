@@ -88,7 +88,6 @@ func (c *ChatLogStore) GetMessagesFor(group, startID string, offset, limit uint)
     var ret []IEventMessage
 
     opts := badger.DefaultIteratorOptions
-    opts.FetchValues = true
     opts.Reverse = true
     csr := c.store.NewIterator(opts)
     if csr == nil {
@@ -104,6 +103,7 @@ func (c *ChatLogStore) GetMessagesFor(group, startID string, offset, limit uint)
     }
 
     i := uint(0)
+
     for csr.Seek(endBytesID); csr.Valid(); csr.Next() {
         tuple := csr.Item()
         k := tuple.Key()
@@ -114,7 +114,7 @@ func (c *ChatLogStore) GetMessagesFor(group, startID string, offset, limit uint)
             break
         }
 
-        if i < offset {
+        if i < offset || bytes.Equal(endBytesID, k) {
             continue
         }
 

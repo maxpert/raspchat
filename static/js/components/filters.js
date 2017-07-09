@@ -5,54 +5,54 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-(function (vue, win) {
-  "use strict";
+var markdownit = require('markdown-it');
+var markdownitHTML5Embed = require('markdown-it-html5-embed');
+var moment = require('moment');
+var he = require('he');
+var vue = require('vue');
+var emojify = require('emojify.js');
+var CRC32 = require('../vendor/crc32');
 
-  var md = new win.markdownit("default", {
-    linkify: true
-  }).use(markdownitHTML5Embed);
+var md = new markdownit("default", {
+  linkify: true
+}).use(markdownitHTML5Embed);
 
-  vue.filter('markdown', function (value) {
-    return md.render(value);
-  });
+vue.filter('markdown', function (value) {
+  return md.render(value);
+});
 
-  vue.filter('better_date', function (value) {
-    return win.moment(value).calendar();
-  });
+vue.filter('better_date', function (value) {
+  return moment(value).calendar();
+});
 
-  vue.filter('escape_html', function (value) {
-    return win.he.encode(value);
-  });
+vue.filter('escape_html', function (value) {
+  return he.encode(value);
+});
 
-  vue.filter('falsy_to_block_display', function (value) {
-    return value ? 'block' : 'none';
-  });
+vue.filter('falsy_to_block_display', function (value) {
+  return value ? 'block' : 'none';
+});
 
-  vue.filter('friendly_progress', function (value) {
-    if (~~value >= 100) {
-      return 'almost done...';
-    }
+vue.filter('friendly_progress', function (value) {
+  if (~~value >= 100) {
+    return 'almost done...';
+  }
 
-    return 'uploaded ' + value + '%';
-  });
+  return 'uploaded ' + value + '%';
+});
 
 
-  var fragmentNode = document.createDocumentFragment();
-  var virtualDiv = document.createElement('div');
-  fragmentNode.appendChild(virtualDiv);
-  vue.filter('emojify', function (value) {
-    if (!win.emojify) {
-      return value;
-    }
+var fragmentNode = document.createDocumentFragment();
+var virtualDiv = document.createElement('div');
+fragmentNode.appendChild(virtualDiv);
+vue.filter('emojify', function (value) {
+  virtualDiv.innerHTML = value;
+  emojify.run(virtualDiv);
+  return virtualDiv.innerHTML;
+});
 
-    virtualDiv.innerHTML = value;
-    win.emojify.run(virtualDiv);
-    return virtualDiv.innerHTML;
-  });
+vue.filter('avatar_url', function (value) {
+  var type = CRC32.str(value) % 2 ? 'male' : 'female';
 
-  vue.filter('avatar_url', function (value) {
-    var type = CRC32.str(value) % 2 ? 'male' : 'female';
-
-    return '//avatars.dicebear.com/v1/'+type+'/'+value+'/128.png';
-  });
-})(window.Vue, window, window.document);
+  return '//avatars.dicebear.com/v1/'+type+'/'+value+'/128.png';
+});

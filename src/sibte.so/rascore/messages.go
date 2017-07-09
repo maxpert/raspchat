@@ -99,6 +99,7 @@ type compositeMessage struct {
     Nick             *NickMessage                `json:"nick,omitempty"`
     String           *StringMessage              `json:"str,omitempty"`
     Error            *ErrorMessage               `json:"error,omitempty"`
+    Chat             *ChatMessage                `json:"chat,omitempty"`
 }
 
 // NewCompositeMessage returns a wrapper serializable message that
@@ -130,6 +131,7 @@ func (r *compositeMessage) Set(m IEventMessage)  {
     r.Nick = nil
     r.String = nil
     r.Error = nil
+    r.Chat = nil
 
     if m == nil {
         return
@@ -146,6 +148,8 @@ func (r *compositeMessage) Set(m IEventMessage)  {
         r.Recipient = v
     case *RecipientContentMessage:
         r.RecipientContent = v
+    case *ChatMessage:
+        r.Chat = v
     case *NickMessage:
         r.Nick = v
     case *StringMessage:
@@ -158,6 +162,10 @@ func (r *compositeMessage) Set(m IEventMessage)  {
 func (r *compositeMessage) Message() IEventMessage {
     if r.Base != nil {
         return r.Base
+    }
+
+    if r.Chat != nil {
+        return r.Chat
     }
 
     if r.Ping != nil {

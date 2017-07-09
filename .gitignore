@@ -36,4 +36,8 @@ _testmain.go
 /pkg/
 /src/vendor/
 /src/github.com/
+/.vscode
+/src/sibte.so/debug
+.yarnclean
+
 !/src/sibte.so/

@@ -5,33 +5,31 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-(function (vue) {
-  "use strict";
+var vue = require('vue');
 
-  vue.component('chrome-bar', vue.extend({
-    template: '#chrome-bar',
-    props: {
-      title: {
-        type: String,
-        required: true
-      },
-      userId: {
-        type: String,
-        required: true
-      },
-      hamburgerEnabled: {
-        type: Boolean,
-        required: true,
-        twoWay: true
-      }
+vue.component('chrome-bar', vue.extend({
+  template: '#chrome-bar',
+  props: {
+    title: {
+      type: String,
+      required: true
     },
-    data: function() {
-      return {};
+    userId: {
+      type: String,
+      required: true
     },
-    methods: {
-      hamburgerClicked: function () {
-        this.$set('hamburgerEnabled', !this.hamburgerEnabled);
-      }
+    hamburgerEnabled: {
+      type: Boolean,
+      required: true,
+      twoWay: true
     }
-  }));
-})(window.Vue, window, window.document);
+  },
+  data: function() {
+    return {};
+  },
+  methods: {
+    hamburgerClicked: function () {
+      this.$set('hamburgerEnabled', !this.hamburgerEnabled);
+    }
+  }
+}));

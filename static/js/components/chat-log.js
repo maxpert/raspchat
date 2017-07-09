@@ -5,49 +5,48 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-(function (vue, win) {
-  "use strict";
+var vue = require('vue');
+var win = window;
 
-  vue.component('chat-log', vue.extend({
-    props: ['messages'],
-    template: '#chat-messages',
-    ready: function () {
-      this.$el.addEventListener("click", function (event) {
-        event = event || win.event;
+vue.component('chat-log', vue.extend({
+  props: ['messages'],
+  template: '#chat-messages',
+  ready: function () {
+    this.$el.addEventListener("click", function (event) {
+      event = event || win.event;
 
-        if (event.target.tagName == "A") {
-          win.open(event.target.href, "_blank");
-          event.preventDefault();
-          event.stopPropagation();
-        }
-      }, false);
-
-      this.userScrolled = false;
-      this.selfScroll = false;
-      this.cont = this.cont || this.$el.querySelector(".chat-messages");
-      this.timer = win.setInterval(this.scrollToBottom, 500);
-    },
-    methods: {
-      onScroll: function () {
-        if (this.selfScroll) {
-          this.selfScroll = false;
-          return;
-        }
-
-        var container = this.cont;
-        this.userScrolled = container.scrollHeight - container.offsetHeight - container.scrollTop > 50;
-      },
-
-      scrollToBottom: function (e) {
-        if (this.userScrolled) {
-          return;
-        }
-
-        var container = this.cont;
-        var loadedEventImage = e && e.loadedEventImage; // jshint ignore: line
-        container.scrollTop = container.scrollHeight;
-        this.selfScroll = true;
+      if (event.target.tagName == "A") {
+        win.open(event.target.href, "_blank");
+        event.preventDefault();
+        event.stopPropagation();
       }
+    }, false);
+
+    this.userScrolled = false;
+    this.selfScroll = false;
+    this.cont = this.cont || this.$el.querySelector(".chat-messages");
+    this.timer = win.setInterval(this.scrollToBottom, 500);
+  },
+  methods: {
+    onScroll: function () {
+      if (this.selfScroll) {
+        this.selfScroll = false;
+        return;
+      }
+
+      var container = this.cont;
+      this.userScrolled = container.scrollHeight - container.offsetHeight - container.scrollTop > 50;
     },
-  }));
-})(window.Vue, window, window.document);
+
+    scrollToBottom: function (e) {
+      if (this.userScrolled) {
+        return;
+      }
+
+      var container = this.cont;
+      var loadedEventImage = e && e.loadedEventImage; // jshint ignore: line
+      container.scrollTop = container.scrollHeight;
+      this.selfScroll = true;
+    }
+  },
+}));

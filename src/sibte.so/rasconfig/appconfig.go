@@ -3,6 +3,8 @@ package rasconfig
 import (
     "io/ioutil"
     "log"
+    "path"
+    "os"
 
     "encoding/json"
 )
@@ -25,10 +27,7 @@ type ApplicationConfig struct {
 var CurrentAppConfig ApplicationConfig
 
 func LoadApplicationConfig(filePath string) {
-    dir, err := ioutil.TempDir("", "raspchat")
-    if err != nil {
-        log.Fatal(err)
-    }
+    dir := path.Join(os.TempDir(), "raspchat")
 
     conf := &CurrentAppConfig
     if filePath == "" {
