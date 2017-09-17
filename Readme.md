@@ -24,11 +24,10 @@ Basic demo is available [Here](http://beta.raspchat.com).
  * GCM push notification support (incomplete)
 
 
-## Coming soon:
+## Pending:
 
  * Improve build and deploy script
  * Introduce admin panel with:
    * Reserved alias authorization
    * IP limiting/banning
    * Channel management and permissions
- * Scheduled chat log exports (TBD)
