@@ -14,7 +14,6 @@ type ApplicationConfig struct {
     LogFilePath        string            `json:"log_file"`
     DBPath             string            `json:"db_path"`
     AllowHotRestart    bool              `json:"allow_hot_reboot"`
-    GCMToken           string            `json:"gcm_token"`
     AllowedOrigins     []string          `json:"allowed_origins"`
     ExternalSignIn     map[string]string `json:"external_sign_in"`
     WebSocketURL       string            `json:"websocket_url"`

@@ -8,6 +8,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 import (
+    "encoding/json"
     "fmt"
     "io/ioutil"
     "log"
@@ -100,30 +101,35 @@ func (h *ChatHandler) recoverFromErrors(tag string) {
     }
 }
 
-func (h *ChatHandler) socketReaderLoop(socketChannel chan interface{}, errorChannel chan error) {
+func (h *ChatHandler) socketReaderLoop(socketChannel chan interface{}, errorChannel chan error, maxRetry uint) {
     defer h.recoverFromErrors("socketReaderLoop")
+    readRetry := uint(0)
 
     for {
+        if readRetry > maxRetry {
+            break
+        }
+        
         msg, err := h.transport.ReadMessage()
+
+        if err != nil {
+            log.Println("Error reading socket message", err)
+            readRetry = readRetry + 1
+            time.Sleep(time.Duration(readRetry * 100) * time.Millisecond)
+            continue
+        }
 
         // If id blacklisted kill the channel
         if _, ok := h.blackList[h.id]; ok {
             h.blackList[h.outgoingInfo.ip] = struct {}{}
-            delete(h.blackList, h.id)
-            h.Stop()
-            return
+            errorChannel <- fmt.Errorf("User with %v and IP %v is banned", h.id, h.outgoingInfo.ip)
+            break
         }
 
         // If ip is blacklisted just stop and return
         if _, ok := h.blackList[h.outgoingInfo.ip]; ok {
-            h.Stop()
-            return
-        }
-
-        // If message type was invalid
-        if err != nil && err.Error() == rasconsts.ERROR_INVALID_MSGTYPE_ERR {
-            log.Println("Skipping message....")
-            continue
+            errorChannel <- fmt.Errorf("User with %v and IP %v is banned", h.id, h.outgoingInfo.ip)
+            break
         }
 
         if err != nil {
@@ -131,7 +137,20 @@ func (h *ChatHandler) socketReaderLoop(socketChannel chan interface{}, errorChan
             break
         }
 
-        socketChannel <- msg
+        // Decode and send messages to pipe
+        var decMsg IEventMessage
+        decMsg, err = transportDecodeMessage(msg)
+        if err != nil && err.Error() == rasconsts.ERROR_INVALID_MSGTYPE_ERR {
+            log.Println("Invalid message sent, skipping message....", err)
+            continue
+        }
+
+        if err != nil {
+            log.Println("Unable to decode message", err)
+            continue
+        }
+
+        socketChannel <- decMsg
     }
 }
 
@@ -162,6 +181,20 @@ func (h *ChatHandler) socketWriterLoop() {
     }
 }
 
+func (h *ChatHandler) writeMessage(m IEventMessage) error {
+    mbytes, err := json.Marshal(m)
+    if err == nil {
+        log.Println("Writing message ", string(mbytes))
+        err = h.transport.WriteMessage(m.Identity(), mbytes)
+    }
+
+    if err != nil {
+        log.Println("Unable to write socket message", err)
+    }
+
+    return err
+}
+
 func (h *ChatHandler) sendWelcome() {
     msg := "# Welcome to server"
     if f, e := ioutil.ReadFile("/proc/cpuinfo"); e == nil {
@@ -171,7 +204,8 @@ func (h *ChatHandler) sendWelcome() {
         BaseMessage: messageOf(rasconsts.FROM_SERVER),
         Message:     msg,
     }
-    h.transport.WriteMessage(welcomeMsg.Id, welcomeMsg)
+
+    h.writeMessage(welcomeMsg)
 
     nickMsg := &NickMessage{
         BaseMessage: messageOf(rasconsts.SET_NICK_REPLY),
@@ -179,7 +213,7 @@ func (h *ChatHandler) sendWelcome() {
         NewNick:     h.id,
     }
 
-    h.transport.WriteMessage(nickMsg.Id, nickMsg)
+    h.writeMessage(nickMsg)
 }
 
 func (h *ChatHandler) handleOutgoingMessage(msg interface{}) {
@@ -191,8 +225,7 @@ func (h *ChatHandler) handleOutgoingMessage(msg interface{}) {
 
     timer := StartStopWatch("handleInternnalMessage:" + h.id)
     defer timer.LogDuration()
-    if err := h.transport.WriteMessage(baseMsg.Identity(), baseMsg); err != nil {
-        log.Println("Unable to write socket message", err)
+    if err := h.writeMessage(baseMsg); err != nil {
         h.Stop()
     }
 }
@@ -320,7 +353,7 @@ func (h *ChatHandler) onSetNick(msg *StringMessage) {
             OldNick:     oldNick,
             NewNick:     newNick,
         }
-        err = h.transport.WriteMessage(nickMsg.Id, nickMsg)
+        err = h.writeMessage(nickMsg)
 
         if err == nil {
             h.publishOnJoinedChannels(nickMsg.EventName, nickMsg)
@@ -359,15 +392,12 @@ func (h *ChatHandler) publish(groupName string, msg IEventMessage) {
     defer timer.LogDuration()
 
     msg.Stamp()
-    h.transport.BeginBatch(msg.Identity(), msg)
     h.chatStore.Save(groupName, msg.Identity(), msg)
 
     groupMembers := h.groupInfoManager.GetUsers(groupName)
     for _, id := range groupMembers {
         h.sendTo(groupName, id, msg)
     }
-
-    h.transport.FlushBatch(msg.Identity())
 }
 
 func (h *ChatHandler) sendTo(groupName, name string, msg interface{}) {
@@ -399,7 +429,7 @@ func (h *ChatHandler) Loop() {
     readErrorChannel := make(chan error)
     sockChannel := make(chan interface{}, 32)
 
-    go h.socketReaderLoop(sockChannel, readErrorChannel)
+    go h.socketReaderLoop(sockChannel, readErrorChannel, 3)
     go h.socketWriterLoop()
     defer func() {
         close(readErrorChannel)

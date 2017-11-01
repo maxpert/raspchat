@@ -3,7 +3,6 @@ package rascore
 import (
     "encoding/json"
     "fmt"
-    "io/ioutil"
     "log"
     "net/http"
     "strconv"
@@ -22,7 +21,6 @@ type ChatService struct {
     chatStore    *ChatLogStore
     nickRegistry *NickRegistry
     upgrader     *websocket.Upgrader
-    gcmWorker    *GCMWorker
     httpMux      *http.ServeMux
     blackList    map[string]interface{}
 }
@@ -67,10 +65,6 @@ func NewChatService(appConfig rasconfig.ApplicationConfig) *ChatService {
         blackList:    make(map[string]interface{}),
     }
 
-    if len(rasconfig.CurrentAppConfig.GCMToken) > 1 {
-        ret.gcmWorker = NewGCMWorker(rasconfig.CurrentAppConfig.GCMToken)
-    }
-
     return ret
 }
 
@@ -91,11 +85,6 @@ func (c *ChatService) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (c *ChatService) httpRoutes(prefix string, router *httprouter.Router) http.Handler {
-    if c.gcmWorker != nil {
-        router.POST(prefix+"/push", c.onPushPost)
-        router.POST(prefix+"/register", c.onPushSubscribe)
-    }
-
     router.GET(prefix+"/channel/:id/message", c.onGetChatHistory)
     router.GET(prefix+"/channel/:id/message/:msg_id", c.onGetChatMessage)
     router.GET(prefix+"/channel", c.onGetChannels)
@@ -116,31 +105,6 @@ func (c *ChatService) upgradeConnectionToWebSocket(w http.ResponseWriter, req *h
 
     log.Println("Error upgrading connection...", err)
     return false
-}
-
-func (c *ChatService) onPushSubscribe(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-    token := req.FormValue("gcm_sub_token")
-    if token == "" {
-        fmt.Fprintf(w, "false")
-        return
-    }
-
-    transporter := NewGCMTransport(token, c.gcmWorker)
-    handler := NewChatHandler(c.nickRegistry, c.groupInfo, transporter, c.chatStore, req.RemoteAddr, c.blackList)
-    go handler.Loop()
-    fmt.Fprintf(w, "true")
-}
-
-func (c *ChatService) onPushPost(w http.ResponseWriter, req *http.Request, _ httprouter.Params) {
-    token := req.FormValue("gcm_sub_token")
-    t := NewGCMTransport(token, c.gcmWorker)
-    if msg, err := ioutil.ReadAll(req.Body); req.Method == "POST" && err == nil {
-        t.PostMessage(string(msg))
-        fmt.Fprintf(w, "true")
-        return
-    }
-
-    fmt.Fprintf(w, "false")
 }
 
 func (c *ChatService) onGetChatHistory(w http.ResponseWriter, req *http.Request, p httprouter.Params) {

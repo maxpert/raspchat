@@ -9,12 +9,14 @@ import (
     "github.com/gorilla/websocket"
 )
 
+// WebsocketMessageTransport go routine safe transport connection
 type WebsocketMessageTransport struct {
     connection          *websocket.Conn
     connectionReadLock  *sync.Mutex
     connectionWriteLock *sync.Mutex
 }
 
+// NewWebsocketMessageTransport creates a new websocket connection transport
 func NewWebsocketMessageTransport(conn *websocket.Conn) *WebsocketMessageTransport {
     return &WebsocketMessageTransport{
         connection:          conn,
@@ -23,7 +25,8 @@ func NewWebsocketMessageTransport(conn *websocket.Conn) *WebsocketMessageTranspo
     }
 }
 
-func (h *WebsocketMessageTransport) ReadMessage() (IEventMessage, error) {
+// ReadMessage from transport
+func (h *WebsocketMessageTransport) ReadMessage() ([]byte, error) {
     h.connectionReadLock.Lock()
     msgType, msg, err := h.connection.ReadMessage()
     h.connectionReadLock.Unlock()
@@ -36,25 +39,25 @@ func (h *WebsocketMessageTransport) ReadMessage() (IEventMessage, error) {
         return nil, errors.New(rasconsts.ERROR_INVALID_MSGTYPE_ERR)
     }
 
-    if jsonMsg, e := transportDecodeMessage(msg); e == nil {
-        return jsonMsg, nil
-    }
-
-    return nil, err
+    return msg, nil
 }
 
-func (h *WebsocketMessageTransport) WriteMessage(id uint64, msg IEventMessage) error {
+// WriteMessage to transport
+func (h *WebsocketMessageTransport) WriteMessage(id uint64, msg []byte) error {
     return h.writeMessageOnSocket(msg)
 }
 
-func (h *WebsocketMessageTransport) writeMessageOnSocket(msg IEventMessage) error {
+func (h *WebsocketMessageTransport) writeMessageOnSocket(msg []byte) error {
     h.connectionWriteLock.Lock()
     defer h.connectionWriteLock.Unlock()
-    return h.connection.WriteJSON(msg)
+    return h.connection.WriteMessage(websocket.TextMessage, msg)
 }
 
+// FlushBatch of messages
 func (h *WebsocketMessageTransport) FlushBatch(id uint64) {
 }
 
-func (h *WebsocketMessageTransport) BeginBatch(id uint64, msg IEventMessage) {
+// BeginBatch of messages to be written on transport
+func (h *WebsocketMessageTransport) BeginBatch(id uint64) {
+    // Ignore since it's not buffered
 }
