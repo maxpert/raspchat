@@ -4,7 +4,9 @@ var gulp = require('gulp'),
     uglify = require('gulp-uglify'),
     concat = require('gulp-concat'),
     derequire = require('gulp-derequire'),
-    htmlmin = require('gulp-htmlmin');
+    browserify = require('gulp-browserify'),
+    htmlmin = require('gulp-htmlmin'),
+    argv = require('yargs').alias('d', 'debug').argv;
 
 var Settings = {
     assets: {
@@ -24,46 +26,37 @@ var Settings = {
         output: 'dist/static'
     },
     js: {
-        clientSourceFiles: [
-            'static/js/core.js', 
-            'static/js/rtc.js', 
-            'static/js/peer_negotiator.js',
-            'static/js/file_transfer.js',
-            'static/js/components/*.js',
-            'static/js/vendor/*.js',
-            'static/js/chat.js'
-        ],
-        clientFile: 'client.js',
-        librariesFile: 'libraries.js',
-        source: 'static',
-        output: 'dist/static/js'
+        sourceFile: 'chat.js',
+        outputFile: 'app.js',
+        static: 'static',
+        source: 'static/js',
+        output: 'dist/static'
     },
     html: {
         minify: {
             collapseWhitespace: true,
             conservativeCollapse: true,
         },
+        source: 'static',
         output: 'dist/static'
     }
 };
 
 gulp.task('process-htmls', function () {
-    return gulp.src(Settings.js.source + '/chat.html')
+    return gulp.src( Settings.html.source + '/chat.html')
                .pipe(htmlmin(Settings.html.minify))
                .pipe(rename('chat.html'))
                .pipe(gulp.dest(Settings.html.output));
 });
 
-gulp.task('bower-assemble', function() {
-  return gulp.src(bower())
-             .pipe(concat(Settings.js.librariesFile))
-             .pipe(gulp.dest(Settings.js.output));
-});
-
-gulp.task('assemble', ['bower-assemble'], function () {
-    return gulp.src(Settings.js.clientSourceFiles)
-               .pipe(concat(Settings.js.clientFile))
-               .pipe(gulp.dest(Settings.js.output));
+gulp.task('compile-js', function () {
+    return gulp.src(Settings.js.source + '/' + Settings.js.sourceFile)
+        .pipe(browserify({
+            insertGlobals : true,
+            debug : !argv.p
+        }))
+        .pipe(rename(Settings.js.outputFile))
+        .pipe(gulp.dest(Settings.js.static));
 });
 
 gulp.task('copy-assets', function () {
@@ -71,16 +64,9 @@ gulp.task('copy-assets', function () {
                .pipe(gulp.dest(Settings.assets.output));
 });
 
-gulp.task('compile-assets', ['copy-assets', 'assemble', 'process-htmls'], function () {
-    var librariesStream = gulp.src(Settings.js.output + '/' + Settings.js.librariesFile)
-                              .pipe(uglify())
-                              .pipe(rename({suffix: '.min'}))
-                              .pipe(gulp.dest(Settings.js.output));
-
-    var clientStream = gulp.src(Settings.js.output + '/' + Settings.js.clientFile)
-                              .pipe(uglify())
-                              .pipe(rename({suffix: '.min'}))
-                              .pipe(gulp.dest(Settings.js.output));
-
-    return pump([librariesStream, clientStream]);
+gulp.task('compile-assets', ['copy-assets', 'compile-js', 'process-htmls'], function () {
+    return gulp.src(Settings.js.static + '/' + Settings.js.outputFile)
+                .pipe(uglify())
+                .pipe(rename(Settings.js.outputFile))
+                .pipe(gulp.dest(Settings.js.output));
 });

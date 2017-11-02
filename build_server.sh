@@ -15,9 +15,6 @@ env GOPATH=`pwd` GOOS=darwin GOARCH=386 go build -o macos-chat-server-32 sibte.s
 echo "Compiling MacOS 64-bit"
 env GOPATH=`pwd` GOOS=darwin GOARCH=amd64 go build -o macos-chat-server sibte.so
 
-echo "Compiling Windows 32-bit"
-env GOPATH=`pwd` GOOS=windows GOARCH=386 go build -o windows-chat-server-32.exe sibte.so
-
 echo "Compiling Windows 64-bit"
 env GOPATH=`pwd` GOOS=windows GOARCH=amd64 go build -o windows-chat-server.exe sibte.so
 
@@ -26,5 +23,4 @@ mv chat-server-32 ./dist
 mv chat-server ./dist
 mv macos-chat-server-32 ./dist
 mv macos-chat-server ./dist
-mv windows-chat-server-32.exe ./dist
 mv windows-chat-server.exe ./dist

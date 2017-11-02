@@ -184,7 +184,6 @@ func (h *ChatHandler) socketWriterLoop() {
 func (h *ChatHandler) writeMessage(m IEventMessage) error {
     mbytes, err := json.Marshal(m)
     if err == nil {
-        log.Println("Writing message ", string(mbytes))
         err = h.transport.WriteMessage(m.Identity(), mbytes)
     }
 

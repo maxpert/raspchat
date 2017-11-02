@@ -12,7 +12,6 @@
     "moment": "^2.14.1",
     "notification-polyfill": "https://github.com/MrSwitch/notification.js",
     "vue": "^1.0.26",
-    "watchify": "^3.9.0",
     "xhr": "^2.4.0"
   },
   "devDependencies": {
@@ -22,6 +21,7 @@
     "browserify": "^14.4.0",
     "eslint": "^4.1.1",
     "gulp": "^3.9.1",
+    "gulp-browserify": "^0.5.1",
     "gulp-concat": "^2.6.0",
     "gulp-derequire": "^2.1.0",
     "gulp-htmlmin": "^3.0.0",
@@ -33,7 +33,9 @@
     "jshint": "^2.9.2",
     "merge-stream": "^1.0.0",
     "pump": "^1.0.1",
-    "uglify-js": "^3.0.23"
+    "uglify-js": "^3.0.23",
+    "yargs": "^10.0.3",
+    "watchify": "^3.9.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

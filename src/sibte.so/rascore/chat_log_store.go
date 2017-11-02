@@ -13,7 +13,7 @@ import (
 
 // ChatLogStore represents abstraction for chat log store
 type ChatLogStore struct {
-    store       *badger.KV
+    store       *badger.DB
     cMaxIDBytes []byte
 }
 
@@ -32,7 +32,7 @@ func NewChatLogStore(dataPath string) (*ChatLogStore, error) {
         return nil, err
     }
 
-    db, err := badger.NewKV(&opts)
+    db, err := badger.Open(opts)
     if err != nil {
         return nil, err
     }
@@ -63,23 +63,12 @@ func (c *ChatLogStore) Save(group string, id uint64, msg IEventMessage) error {
     // <group-name><id> -> <msg>
     // <id> -> <group-name>
     // <group-name><MAX_ID> -> byte[0]
-    entries := make([]*badger.Entry, 3)
-    entries[0] = &badger.Entry{
-        Key:   append([]byte(group), bytesID...),
-        Value: bytesMsg,
-    }
+    tnx := c.store.NewTransaction(true)
+    tnx.Set(append([]byte(group), bytesID...), bytesMsg)
+    tnx.Set(bytesID, []byte(group))
+    tnx.Set(append([]byte(group), maxIDBytes...), make([]byte, 0))
 
-    entries[1] = &badger.Entry{
-        Key:   bytesID,
-        Value: []byte(group),
-    }
-
-    entries[2] = &badger.Entry{
-        Key:   append([]byte(group), maxIDBytes...),
-        Value: make([]byte, 0),
-    }
-
-    return c.store.BatchSet(entries)
+    return tnx.Commit(nil)
 }
 
 // GetMessagesFor returns messages for given group starting at start_id
@@ -89,7 +78,10 @@ func (c *ChatLogStore) GetMessagesFor(group, startID string, offset, limit uint)
 
     opts := badger.DefaultIteratorOptions
     opts.Reverse = true
-    csr := c.store.NewIterator(opts)
+    tnx := c.store.NewTransaction(false)
+    defer tnx.Discard()
+
+    csr := tnx.NewIterator(opts)
     if csr == nil {
         return ret, nil
     }
@@ -107,7 +99,11 @@ func (c *ChatLogStore) GetMessagesFor(group, startID string, offset, limit uint)
     for csr.Seek(endBytesID); csr.Valid(); csr.Next() {
         tuple := csr.Item()
         k := tuple.Key()
-        v := tuple.Value()
+        v, err := tuple.Value()
+        if err != nil {
+            return nil, err
+        }
+
         i++
 
         if k == nil || bytes.HasPrefix(k, []byte(group)) == false {
@@ -138,29 +134,32 @@ func (c *ChatLogStore) GetMessage(id uint64) (IEventMessage, error) {
     // <group-name><id> -> <msg>
     // <id> -> <group-name>
     // <group-name><MAX_ID> -> byte[0]
-    kvItem := badger.KVItem{}
-    err := c.store.Get(idToBytes(id), &kvItem)
+    tnx := c.store.NewTransaction(false)
+    defer tnx.Discard()
+
+    kvItem, err := tnx.Get(idToBytes(id))
     if err != nil {
         return nil, err
     }
 
-    if kvItem.Value() == nil {
+    val, err := kvItem.Value()
+    if err == nil {
         return nil, nil
     }
 
     // Create copy of array since we should not modify the values returned
-    groupName := append([]byte(nil), kvItem.Value()...)
-    kvItem = badger.KVItem{}
-    err = c.store.Get(append(groupName, idToBytes(id)...), &kvItem)
+    groupName := append([]byte(nil), val...)
+    kvItem, err = tnx.Get(append(groupName, idToBytes(id)...))
     if err != nil {
         return nil, err
     }
 
-    if kvItem.Value() == nil {
+    val, err = kvItem.Value()
+    if err == nil {
         return nil, errors.New("Unable to locate message value")
     }
 
-    m, err := deserializeMessage(kvItem.Value())
+    m, err := deserializeMessage(val)
     if err != nil {
         return nil, err
     }

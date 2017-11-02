@@ -52,7 +52,5 @@ vue.filter('emojify', function (value) {
 });
 
 vue.filter('avatar_url', function (value) {
-  var type = CRC32.str(value) % 2 ? 'male' : 'female';
-
-  return '//avatars.dicebear.com/v1/'+type+'/'+value+'/128.png';
+  return '//invatar.ga/img/'+value+'?size=128';
 });

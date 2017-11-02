@@ -403,15 +403,15 @@ var _globalTransport = {};
 var giffer = {
   search: function (keywords, url_callback) {
     keywords = encodeURIComponent(keywords);
-    Atomic.setContentType('application/json');
-    /* jshint unused: false */
-    Atomic.get("/gif?q="+keywords)
-          .success(function (response, xhr) {
-            url_callback(response.url, response);
-          })
-          .error(function (response, xhr) {
-            url_callback(null, null);
-          });
+    xhr.get("/gif?q="+encodeURIComponent(keywords),{
+       json: true,
+       headers: {
+           "Content-Type": "application/json"
+       }
+     }, function (err, body, response) {
+        if (err) return url_callback(null, null);
+        url_callback(response.url, response);
+    });
   }
 };
 

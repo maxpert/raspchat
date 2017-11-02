@@ -8,7 +8,7 @@ vendors:
 - path: github.com/davecgh/go-spew
   rev: ecdeabc65495df2dec95d7c4a4c3e021903035e5
 - path: github.com/dgraph-io/badger
-  rev: 72f341103a2d17f80806943de48b246496800837
+  rev: 5ad4981c9a2940efe8bd052a2bda2d7a508d90c8
 - path: github.com/dgryski/go-farm
   rev: e2d0fe22b456fa0a35cd883ba355ecfcf1881490
 - path: github.com/golang/protobuf

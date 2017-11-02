@@ -15,7 +15,7 @@ import (
 )
 
 type atomicStore struct {
-    store *badger.KV
+    store *badger.DB
 }
 
 type gifRouteHandler struct {
@@ -44,17 +44,19 @@ func (h *gifRouteHandler) findGifHandler(w http.ResponseWriter, r *http.Request,
         return
     }
 
-    qreader := strings.NewReader("text=" + q)
-    resp, err := http.Post("https://rightgif.com/search/web", "application/x-www-form-urlencoded", qreader)
+    qReader := strings.NewReader("text=" + q)
+    resp, err := http.Post("https://rightgif.com/search/web", "application/x-www-form-urlencoded", qReader)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         log.Println("Error", err)
     }
 
+    log.Println("Saving back gif...")
     buf := bytes.NewBuffer(make([]byte, 0))
     io.Copy(buf, resp.Body)
     h.kvStore.set(q, string(buf.Bytes()))
 
+    log.Println("Streaming back gif...")
     io.Copy(w, buf)
 }
 
@@ -71,7 +73,7 @@ func (h *gifRouteHandler) initGifCache() error {
         return err
     }
 
-    if db, err := badger.NewKV(&opts); err != nil {
+    if db, err := badger.Open(opts); err != nil {
         return err
     } else if db != nil {
         h.kvStore = &atomicStore{
@@ -83,15 +85,28 @@ func (h *gifRouteHandler) initGifCache() error {
 }
 
 func (s *atomicStore) get(key string) (string, bool) {
-    pair := badger.KVItem{}
-    err := s.store.Get([]byte(key), &pair)
-    if err != nil || pair.Value() == nil {
+    tnx := s.store.NewTransaction(false)
+    defer tnx.Discard()
+    pair, err := tnx.Get([]byte(key))
+    var val []byte
+    if pair != nil {
+        val, err = pair.Value()
+    }
+
+    if err != nil {
         return "", false
     }
 
-    return string(pair.Value()), true
+    return string(append([]byte(nil), val...)), true
 }
 
 func (s *atomicStore) set(key, value string) bool {
-    return s.store.Set([]byte(key), []byte(value)) == nil
+    tnx := s.store.NewTransaction(true)
+    defer tnx.Discard()
+    tnx.Set([]byte(key), []byte(value))
+    if err := tnx.Commit(nil); err != nil {
+        return false
+    }
+
+    return true
 }
