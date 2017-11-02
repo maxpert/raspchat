@@ -11,7 +11,6 @@ var moment = require('moment');
 var he = require('he');
 var vue = require('vue');
 var emojify = require('emojify.js');
-var CRC32 = require('../vendor/crc32');
 
 var md = new markdownit("default", {
   linkify: true
