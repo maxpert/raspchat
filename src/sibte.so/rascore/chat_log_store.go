@@ -3,36 +3,22 @@ package rascore
 import (
     "bytes"
     "encoding/binary"
-    "errors"
-    "path"
+    "fmt"
 
-    "github.com/dgraph-io/badger"
-
-    "sibte.so/rascore/utils"
+    "github.com/boltdb/bolt"
 )
+
+var _DefaultBucket []byte = []byte("messages")
 
 // ChatLogStore represents abstraction for chat log store
 type ChatLogStore struct {
-    store       *badger.DB
+    store       *bolt.DB
     cMaxIDBytes []byte
 }
 
 // NewChatLogStore creates a chat log store for passed dataPath
 func NewChatLogStore(dataPath string) (*ChatLogStore, error) {
-    opts := badger.DefaultOptions
-    opts.Dir = path.Join(dataPath, "keys")
-    opts.ValueDir = path.Join(dataPath, "values")
-    opts.SyncWrites = true // Messages are something we don't want to loose
-
-    if err := rasutils.CreatePathIfMissing(opts.Dir); err != nil {
-        return nil, err
-    }
-
-    if err := rasutils.CreatePathIfMissing(opts.ValueDir); err != nil {
-        return nil, err
-    }
-
-    db, err := badger.Open(opts)
+    db, err := bolt.Open(dataPath, 0660, nil)
     if err != nil {
         return nil, err
     }
@@ -60,15 +46,24 @@ func (c *ChatLogStore) Save(group string, id uint64, msg IEventMessage) error {
     bytesID := idToBytes(id)
     maxIDBytes := c.cMaxIDBytes
 
+    tnx, err := c.store.Begin(true)
+    if err != nil {
+        return err
+    }
+
+    buck, err := tnx.CreateBucketIfNotExists(_DefaultBucket)
+    if err != nil {
+        return err
+    }
+
     // <group-name><id> -> <msg>
     // <id> -> <group-name>
     // <group-name><MAX_ID> -> byte[0]
-    tnx := c.store.NewTransaction(true)
-    tnx.Set(append([]byte(group), bytesID...), bytesMsg)
-    tnx.Set(bytesID, []byte(group))
-    tnx.Set(append([]byte(group), maxIDBytes...), make([]byte, 0))
+    buck.Put(append([]byte(group), bytesID...), bytesMsg)
+    buck.Put(bytesID, []byte(group))
+    buck.Put(append([]byte(group), maxIDBytes...), make([]byte, 0))
 
-    return tnx.Commit(nil)
+    return tnx.Commit()
 }
 
 // GetMessagesFor returns messages for given group starting at start_id
@@ -76,17 +71,21 @@ func (c *ChatLogStore) Save(group string, id uint64, msg IEventMessage) error {
 func (c *ChatLogStore) GetMessagesFor(group, startID string, offset, limit uint) ([]IEventMessage, error) {
     var ret []IEventMessage
 
-    opts := badger.DefaultIteratorOptions
-    opts.Reverse = true
-    tnx := c.store.NewTransaction(false)
-    defer tnx.Discard()
+    tnx, err := c.store.Begin(false)
+    if err != nil {
+        return nil, err
+    }
 
-    csr := tnx.NewIterator(opts)
+    defer tnx.Rollback()
+    buck := tnx.Bucket(_DefaultBucket)
+    if buck == nil {
+        return make([]IEventMessage, 0), nil
+    }
+
+    csr := buck.Cursor()
     if csr == nil {
         return ret, nil
     }
-
-    defer csr.Close()
 
     maxIDBytes := idToBytes(^uint64(0))
     endBytesID := append([]byte(group), maxIDBytes...)
@@ -96,22 +95,17 @@ func (c *ChatLogStore) GetMessagesFor(group, startID string, offset, limit uint)
 
     i := uint(0)
 
-    for csr.Seek(endBytesID); csr.Valid(); csr.Next() {
-        tuple := csr.Item()
-        k := tuple.Key()
-        v, err := tuple.Value()
-        if err != nil {
-            return nil, err
-        }
+    k, v := csr.Seek(endBytesID)
+    if k == nil || !bytes.Equal(endBytesID, k) {
+        return make([]IEventMessage, 0), nil
+    }
 
+    for true {
+        k, v = csr.Prev()
         i++
 
         if k == nil || bytes.HasPrefix(k, []byte(group)) == false {
             break
-        }
-
-        if i < offset || bytes.Equal(endBytesID, k) {
-            continue
         }
 
         if i > limit {
@@ -134,29 +128,28 @@ func (c *ChatLogStore) GetMessage(id uint64) (IEventMessage, error) {
     // <group-name><id> -> <msg>
     // <id> -> <group-name>
     // <group-name><MAX_ID> -> byte[0]
-    tnx := c.store.NewTransaction(false)
-    defer tnx.Discard()
-
-    kvItem, err := tnx.Get(idToBytes(id))
+    tnx, err := c.store.Begin(false)
     if err != nil {
         return nil, err
     }
 
-    val, err := kvItem.Value()
-    if err == nil {
+    defer tnx.Rollback()
+
+    buck := tnx.Bucket(_DefaultBucket)
+    if buck == nil {
+        return nil, nil
+    }
+
+    val := buck.Get(idToBytes(id))
+    if val == nil {
         return nil, nil
     }
 
     // Create copy of array since we should not modify the values returned
     groupName := append([]byte(nil), val...)
-    kvItem, err = tnx.Get(append(groupName, idToBytes(id)...))
-    if err != nil {
-        return nil, err
-    }
-
-    val, err = kvItem.Value()
-    if err == nil {
-        return nil, errors.New("Unable to locate message value")
+    val = buck.Get(append(groupName, idToBytes(id)...))
+    if val != nil {
+        return nil, fmt.Errorf("Unable to group message entry for id %v", id)
     }
 
     m, err := deserializeMessage(val)

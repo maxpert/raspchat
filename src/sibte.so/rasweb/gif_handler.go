@@ -6,16 +6,19 @@ import (
     "log"
     "net/http"
     "strings"
-    "github.com/julienschmidt/httprouter"
-    "github.com/dgraph-io/badger"
-    "path"
 
-    "sibte.so/rascore/utils"
+    "github.com/boltdb/bolt"
+    "github.com/julienschmidt/httprouter"
+
     "sibte.so/rasconfig"
+    "sibte.so/rascore/utils"
+    "path"
 )
 
+var _DefaultBucket []byte = []byte("gif")
+
 type atomicStore struct {
-    store *badger.DB
+    store *bolt.DB
 }
 
 type gifRouteHandler struct {
@@ -61,19 +64,13 @@ func (h *gifRouteHandler) findGifHandler(w http.ResponseWriter, r *http.Request,
 }
 
 func (h *gifRouteHandler) initGifCache() error {
-    opts := badger.DefaultOptions
-    opts.Dir = path.Join(rasconfig.CurrentAppConfig.DBPath, "gifstore", "keys")
-    opts.ValueDir = path.Join(rasconfig.CurrentAppConfig.DBPath, "gifstore", "values")
-
-    if err := rasutils.CreatePathIfMissing(opts.Dir); err != nil {
+    err := rasutils.CreatePathIfMissing(rasconfig.CurrentAppConfig.DBPath)
+    if err != nil {
         return err
     }
 
-    if err := rasutils.CreatePathIfMissing(opts.ValueDir); err != nil {
-        return err
-    }
-
-    if db, err := badger.Open(opts); err != nil {
+    dbPath := path.Join(rasconfig.CurrentAppConfig.DBPath, "gif.db")
+    if db, err := bolt.Open(dbPath, 0660, nil); err != nil {
         return err
     } else if db != nil {
         h.kvStore = &atomicStore{
@@ -85,15 +82,19 @@ func (h *gifRouteHandler) initGifCache() error {
 }
 
 func (s *atomicStore) get(key string) (string, bool) {
-    tnx := s.store.NewTransaction(false)
-    defer tnx.Discard()
-    pair, err := tnx.Get([]byte(key))
-    var val []byte
-    if pair != nil {
-        val, err = pair.Value()
+    tnx, err := s.store.Begin(false)
+    if err != nil {
+        return "", false
+    }
+    defer tnx.Rollback()
+
+    buck := tnx.Bucket(_DefaultBucket)
+    if buck == nil {
+        return "", false
     }
 
-    if err != nil {
+    val := buck.Get([]byte(key))
+    if val == nil {
         return "", false
     }
 
@@ -101,10 +102,19 @@ func (s *atomicStore) get(key string) (string, bool) {
 }
 
 func (s *atomicStore) set(key, value string) bool {
-    tnx := s.store.NewTransaction(true)
-    defer tnx.Discard()
-    tnx.Set([]byte(key), []byte(value))
-    if err := tnx.Commit(nil); err != nil {
+    tnx, err := s.store.Begin(true)
+    if err != nil {
+        return false
+    }
+
+    defer tnx.Commit()
+    buck, err := tnx.CreateBucketIfNotExists(_DefaultBucket)
+    if err != nil {
+        return false
+    }
+
+    err = buck.Put([]byte(key), []byte(value))
+    if err != nil {
         return false
     }
 

@@ -13,6 +13,7 @@ import (
     "github.com/julienschmidt/httprouter"
 
     "sibte.so/rasconfig"
+    "sibte.so/rascore/utils"
 )
 
 type ChatService struct {
@@ -27,6 +28,11 @@ type ChatService struct {
 
 func NewChatService(appConfig rasconfig.ApplicationConfig) *ChatService {
     initChatHandlerTypes()
+    e := rasutils.CreatePathIfMissing(rasconfig.CurrentAppConfig.DBPath)
+    if e != nil {
+        log.Panic(e)
+    }
+
     store, e := NewChatLogStore(rasconfig.CurrentAppConfig.DBPath+"/chats.db")
     allowedOrigins := appConfig.AllowedOrigins
 
