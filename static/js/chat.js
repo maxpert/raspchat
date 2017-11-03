@@ -210,10 +210,14 @@ new vue({
               case 'leave':
                   groupLog.push({isMeta: true, msg: m.from + ' has left'});
                   break;
+              case 'nick-set':
+                  groupLog.push({isMeta: true, msg: m.from + ' changed nick to ' + (m.pack_msg && m.pack_msg.NewNick)});
+                  break;
               }
             }
           }
 
+          window.debug && window.debug.chat && console.log(groupLog)
           me.$broadcast('history-added', historyObj.id);
       }, 100);
     },

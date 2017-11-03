@@ -17,22 +17,27 @@ var md = new markdownit("default", {
 }).use(markdownitHTML5Embed);
 
 vue.filter('markdown', function (value) {
+  window.debug && window.debug.filters && console.log(value);
   return md.render(value);
 });
 
 vue.filter('better_date', function (value) {
+  window.debug && window.debug.filters && console.log(value);
   return moment(value).calendar();
 });
 
 vue.filter('escape_html', function (value) {
+  window.debug && window.debug.filters && console.log(value);
   return he.encode(value);
 });
 
 vue.filter('falsy_to_block_display', function (value) {
+  window.debug && window.debug.filters && console.log(value);
   return value ? 'block' : 'none';
 });
 
 vue.filter('friendly_progress', function (value) {
+  window.debug && window.debug.filters && console.log(value);
   if (~~value >= 100) {
     return 'almost done...';
   }

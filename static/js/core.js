@@ -349,6 +349,9 @@ Transport.prototype = {
         case 'group-leave':
           ret.meta = {action: 'leave'};
           break;
+        case 'member-nick-set':
+          ret.meta = {action: 'nick-set'};
+          break;
         default:
           ret.meta = null;
       }
