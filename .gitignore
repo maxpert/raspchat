@@ -39,5 +39,5 @@ _testmain.go
 /.vscode
 /src/sibte.so/debug
 .yarnclean
-
-!/src/sibte.so/
+.tern-project
+chat-log.db*

@@ -7,113 +7,112 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 var vue = require('vue');
 var utils = require('../vendor/utils');
-var win = window;
 var doc = window.document;
 
 function s4() {
-  return Math.floor((1 + Math.random()) * 0x10000)
-    .toString(16)
-    .substring(1);
+    return Math.floor((1 + Math.random()) * 0x10000)
+        .toString(16)
+        .substring(1);
 }
 
 vue.component('files-upload', vue.extend({
-  template: '#files-upload',
-  props: {
-  },
-  data: function() {
-    return {
-      pendingFiles: [],
-      hasPendingUploads: false,
-      isDragActive: false
-    };
-  },
-  ready: function () {
-    if (!('FormData' in window)) {
-      return;
-    }
-
-    doc.body.addEventListener("dragenter", this._activateDrag);
-    doc.body.addEventListener("dragover", this._activateDrag);
-    doc.body.addEventListener("dragleave", this._deactivateDrag);
-    doc.body.addEventListener("dragend", this._deactivateDrag);
-    doc.body.addEventListener("drop", this._deactivateDrag);
-
-    doc.body.addEventListener("drop", this._droppedFiles);
-
-    doc.body.addEventListener("drag", this._preventDragEvents);
-    doc.body.addEventListener("dragstart", this._preventDragEvents);
-    doc.body.addEventListener("dragend", this._preventDragEvents);
-    doc.body.addEventListener("dragover", this._preventDragEvents);
-    doc.body.addEventListener("dragenter", this._preventDragEvents);
-    doc.body.addEventListener("dragleave", this._preventDragEvents);
-    doc.body.addEventListener("drop", this._preventDragEvents);
-
-    this._filesMap = {};
-  },
-  methods: {
-    onFileStateChanged: function() {
+    template: '#files-upload',
+    props: {
     },
-
-    onFileUploaded: function(fileInfo, response) {
-      if (!this._filesMap[fileInfo.id]) {
-        return;
-      }
-
-      delete this._filesMap[fileInfo.id];
-      var foundIndex = this.pendingFiles.indexOf(fileInfo);
-      if (foundIndex < 0) {
-        return;
-      }
-
-      this.pendingFiles.splice(foundIndex, 1);
-      if (response.failed === false && response.complete === true) {
-        this._notifyUploaded(fileInfo, response);
-      }
-      else if (response.failed === true && response.complete === true) {
-        this._notifyUploadFailed(fileInfo, response);
-      }
-    },
-
-    _notifyUploaded: function(fileInfo, uploadedInfo) {
-      this.$dispatch('uploaded', fileInfo, uploadedInfo);
-    },
-
-    _notifyUploadFailed: function(fileInfo, uploadedInfo) {
-      this.$dispatch('failed', fileInfo, uploadedInfo);
-    },
-
-    _activateDrag: function() {
-      this.$set('isDragActive', true);
-    },
-
-    _deactivateDrag: function() {
-      this.$set('isDragActive', false);
-    },
-
-    _droppedFiles: function(e) {
-      var files = utils.Arrayify(e.dataTransfer.files);
-      var me = this;
-      var selectedFiles = files.map(function(f) { 
-        var fid = me._uuid();
-        me._filesMap[fid] = f;
-
-        return { 
-          id: fid,
-          file: f 
+    data: function () {
+        return {
+            pendingFiles: [],
+            hasPendingUploads: false,
+            isDragActive: false
         };
-      });
-
-      this.pendingFiles = this.pendingFiles.concat(selectedFiles);
     },
+    ready: function () {
+        if (!('FormData' in window)) {
+            return;
+        }
 
-    _preventDragEvents: function(e) {
-      e.preventDefault();
-      e.stopPropagation();
+        doc.body.addEventListener('dragenter', this._activateDrag);
+        doc.body.addEventListener('dragover', this._activateDrag);
+        doc.body.addEventListener('dragleave', this._deactivateDrag);
+        doc.body.addEventListener('dragend', this._deactivateDrag);
+        doc.body.addEventListener('drop', this._deactivateDrag);
+
+        doc.body.addEventListener('drop', this._droppedFiles);
+
+        doc.body.addEventListener('drag', this._preventDragEvents);
+        doc.body.addEventListener('dragstart', this._preventDragEvents);
+        doc.body.addEventListener('dragend', this._preventDragEvents);
+        doc.body.addEventListener('dragover', this._preventDragEvents);
+        doc.body.addEventListener('dragenter', this._preventDragEvents);
+        doc.body.addEventListener('dragleave', this._preventDragEvents);
+        doc.body.addEventListener('drop', this._preventDragEvents);
+
+        this._filesMap = {};
     },
+    methods: {
+        onFileStateChanged: function () {
+        },
 
-    _uuid: function() {
-      return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-              s4() + '-' + s4() + s4() + s4();
+        onFileUploaded: function (fileInfo, response) {
+            if (!this._filesMap[fileInfo.id]) {
+                return;
+            }
+
+            delete this._filesMap[fileInfo.id];
+            var foundIndex = this.pendingFiles.indexOf(fileInfo);
+            if (foundIndex < 0) {
+                return;
+            }
+
+            this.pendingFiles.splice(foundIndex, 1);
+            if (response.failed === false && response.complete === true) {
+                this._notifyUploaded(fileInfo, response);
+            }
+            else if (response.failed === true && response.complete === true) {
+                this._notifyUploadFailed(fileInfo, response);
+            }
+        },
+
+        _notifyUploaded: function (fileInfo, uploadedInfo) {
+            this.$dispatch('uploaded', fileInfo, uploadedInfo);
+        },
+
+        _notifyUploadFailed: function (fileInfo, uploadedInfo) {
+            this.$dispatch('failed', fileInfo, uploadedInfo);
+        },
+
+        _activateDrag: function () {
+            this.$set('isDragActive', true);
+        },
+
+        _deactivateDrag: function () {
+            this.$set('isDragActive', false);
+        },
+
+        _droppedFiles: function (e) {
+            var files = utils.Arrayify(e.dataTransfer.files);
+            var me = this;
+            var selectedFiles = files.map(function (f) {
+                var fid = me._uuid();
+                me._filesMap[fid] = f;
+
+                return {
+                    id: fid,
+                    file: f
+                };
+            });
+
+            this.pendingFiles = this.pendingFiles.concat(selectedFiles);
+        },
+
+        _preventDragEvents: function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        },
+
+        _uuid: function () {
+            return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+                s4() + '-' + s4() + s4() + s4();
+        }
     }
-  }
 }));

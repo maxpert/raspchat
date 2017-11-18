@@ -9,44 +9,42 @@ var vue = require('vue');
 var doc = window.document;
 
 vue.component('settings-dialog', vue.extend({
-template: '#settings-dialog',
-props: {
-    visible: {
-        type: Boolean,
-        twoWay: true,
-    }
-},
-data: function () {
-    return {};
-},
-ready: function () {
-    this.$watch("visible", this.hookEscape);
-},
-methods: {
-    ignoreClose: function () {
-    },
-    
-    closeDialog: function () {
-        this.$set('visible', false);
-    },
-
-    /* jshint unused: false */
-    hookEscape: function(newVal, oldVal) 
-    {
-        if (newVal === true) {
-            doc.addEventListener("keyup", this.closeIfEscaped, false);
-        } else {
-            doc.removeEventListener("keyup", this.closeIfEscaped);
+    template: '#settings-dialog',
+    props: {
+        visible: {
+            type: Boolean,
+            twoWay: true,
         }
     },
+    data: function () {
+        return {};
+    },
+    ready: function () {
+        this.$watch('visible', this.hookEscape);
+    },
+    methods: {
+        ignoreClose: function () {
+        },
 
-    closeIfEscaped: function(e) {
-        if (this.visible && e.keyCode == 27) {
-            this.closeDialog();
+        closeDialog: function () {
+            this.$set('visible', false);
+        },
+        
+        hookEscape: function (newVal) {
+            if (newVal === true) {
+                doc.addEventListener('keyup', this.closeIfEscaped, false);
+            } else {
+                doc.removeEventListener('keyup', this.closeIfEscaped);
+            }
+        },
+
+        closeIfEscaped: function (e) {
+            if (this.visible && e.keyCode == 27) {
+                this.closeDialog();
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
         }
-
-        e.preventDefault();
-        e.stopPropagation();
     }
-}
 }));

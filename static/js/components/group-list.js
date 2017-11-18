@@ -8,63 +8,63 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 var vue = require('vue');
 
 vue.component('groups-list', vue.extend({
-  template: '#groups-list',
-  data: function () {
-    return {
-      groups: [],
-      selected: "",
-    };
-  },
-  ready: function () {
-    this.groupsInfo = {};
-    this.$on("group_joined", this.groupJoined);
-    this.$on("group_switched", this.groupSwitch);
-    this.$on("group_left", this.groupLeft);
-    this.$on("message_new", this.newMessage);
-  },
-  methods: {
-    selectGroup: function (id) {
-      this._setUnread(id, 0);
-      this.$set("selected", id);
-      this.$dispatch("switch", id);
+    template: '#groups-list',
+    data: function () {
+        return {
+            groups: [],
+            selected: '',
+        };
     },
-
-    leaveGroup: function (id) {
-      this.$dispatch("leave", id);
+    ready: function () {
+        this.groupsInfo = {};
+        this.$on('group_joined', this.groupJoined);
+        this.$on('group_switched', this.groupSwitch);
+        this.$on('group_left', this.groupLeft);
+        this.$on('message_new', this.newMessage);
     },
+    methods: {
+        selectGroup: function (id) {
+            this._setUnread(id, 0);
+            this.$set('selected', id);
+            this.$dispatch('switch', id);
+        },
 
-    groupSwitch: function (group) {
-      this.selectGroup(group);
-    },
+        leaveGroup: function (id) {
+            this.$dispatch('leave', id);
+        },
 
-    groupJoined: function (group) {
-      var groupInfo = this.groupsInfo[group] = this.groupsInfo[group] || {name: group, unread: 0, index: this.groups.length};
-      this.groups.push(groupInfo);
-    },
+        groupSwitch: function (group) {
+            this.selectGroup(group);
+        },
 
-    groupLeft: function (group) {
-      var g = this.groupsInfo[group] || {index: -1};
-      if (g.index != -1){
-        this.groups.splice(g.index, 1);
-      }
-    },
+        groupJoined: function (group) {
+            var groupInfo = this.groupsInfo[group] = this.groupsInfo[group] || { name: group, unread: 0, index: this.groups.length };
+            this.groups.push(groupInfo);
+        },
 
-    newMessage: function (msg) {
-      if (this.selected == msg.to || !this.groupsInfo[msg.to]) {
-        return true;
-      }
+        groupLeft: function (group) {
+            var g = this.groupsInfo[group] || { index: -1 };
+            if (g.index != -1) {
+                this.groups.splice(g.index, 1);
+            }
+        },
 
-      this._setUnread(msg.to, this._getUnread(msg.to) + 1);
-      return true;
-    },
+        newMessage: function (msg) {
+            if (this.selected == msg.to || !this.groupsInfo[msg.to]) {
+                return true;
+            }
 
-    _getUnread: function (g) {
-      return (this.groupsInfo[g] && this.groupsInfo[g].unread) || 0;
-    },
+            this._setUnread(msg.to, this._getUnread(msg.to) + 1);
+            return true;
+        },
 
-    _setUnread: function (g, count) {
-      vue.set(this.groupsInfo[g], "unread", count);
-      return true;
+        _getUnread: function (g) {
+            return (this.groupsInfo[g] && this.groupsInfo[g].unread) || 0;
+        },
+
+        _setUnread: function (g, count) {
+            vue.set(this.groupsInfo[g], 'unread', count);
+            return true;
+        }
     }
-  }
 }));

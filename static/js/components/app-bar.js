@@ -9,27 +9,27 @@ var vue = require('vue');
 vue.component('app-bar', vue.extend({
     template: '#app-bar',
     props: {
-      userId: {
-        type: String,
-        required: true,
-      },
+        userId: {
+            type: String,
+            required: true,
+        },
 
-      settingsEnabled: {
-        type: Boolean,
-        twoWay: true,
-      }
+        settingsEnabled: {
+            type: Boolean,
+            twoWay: true,
+        }
     },
 
     data: function () {
-      return {};
+        return {};
     },
 
     ready: function () {
     },
-    
+
     methods: {
-      toggleSettingsEnabled: function () {
-        this.$set('settingsEnabled', !this.settingsEnabled);
-      }
+        toggleSettingsEnabled: function () {
+            this.$set('settingsEnabled', !this.settingsEnabled);
+        }
     }
-  }));
+}));

@@ -8,47 +8,47 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 var vue = require('vue');
 
 vue.component('chat-compose', vue.extend({
-  template: '#chat-compose',
-  data: function () {
-    return {
-      message: '',
-    };
-  },
-  methods: {
-    enterPressed: function (e) {
-      var msg = this.message;
-      if (e.shiftKey){
-        this.$set('message', msg+'\n');
-        return;
-      }
-
-      this.$set('message', '');
-      this.$dispatch('send-message', msg);
-      this.$el.querySelector(".msg").focus();
+    template: '#chat-compose',
+    data: function () {
+        return {
+            message: '',
+        };
     },
+    methods: {
+        enterPressed: function (e) {
+            var msg = this.message;
+            if (e.shiftKey) {
+                this.$set('message', msg + '\n');
+                return;
+            }
 
-    tabPressed: function () {
-      var msg = this.$get('message');
-      this.$set('message', msg+'  ');
+            this.$set('message', '');
+            this.$dispatch('send-message', msg);
+            this.$el.querySelector('.msg').focus();
+        },
+
+        tabPressed: function () {
+            var msg = this.$get('message');
+            this.$set('message', msg + '  ');
+        },
+
+        onFileUploaded: function (fileInfo, uploadInfo) {
+            var message = '[' + fileInfo.file.name + '](' + uploadInfo.url + ')';
+            if (fileInfo.file.type.startsWith('image/')) {
+                message = '!' + message + '\n\n **IMAGE** ' + message;
+            } else if (fileInfo.file.type.startsWith('video/')) {
+                message = '!' + message + '\n\n **VIDEO** ' + message;
+            } else {
+                message = '**FILE** ' + message;
+            }
+
+            this.$dispatch('send-message', message);
+            this.$el.querySelector('.msg').focus();
+        },
+
+        onFileUploadFailed: function (fileInfo) {
+            window.alert('Unable to upload file ' + fileInfo.file.name);
+            this.$el.querySelector('.msg').focus();
+        }
     },
-
-    onFileUploaded: function(fileInfo, uploadInfo) {
-      var message = '['+ fileInfo.file.name +']('+uploadInfo.url+')';
-      if (fileInfo.file.type.startsWith("image/")) {
-        message = "!"+message+"\n\n **IMAGE** "+message;
-      } else if (fileInfo.file.type.startsWith("video/")) {
-        message = "!"+message+"\n\n **VIDEO** "+message;
-      } else {
-        message = "**FILE** "+message;
-      }
-
-      this.$dispatch('send-message', message);
-      this.$el.querySelector(".msg").focus();
-    },
-
-    onFileUploadFailed: function(fileInfo, uploadInfo) {
-      win.alert("Unable to upload file "+fileInfo.file.name);
-      this.$el.querySelector(".msg").focus();
-    }
-  },
 }));
