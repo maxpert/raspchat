@@ -3,6 +3,7 @@ var gulp = require('gulp'),
     uglify = require('gulp-uglify'),
     browserify = require('gulp-browserify'),
     htmlmin = require('gulp-htmlmin'),
+    rev = require('gulp-rev-append'),
     argv = require('yargs').alias('p', 'production').argv;
 
 var Settings = {
@@ -45,6 +46,7 @@ var Settings = {
 
 gulp.task('process-htmls', function () {
     return gulp.src( Settings.html.source + '/chat.html')
+        .pipe(rev())
         .pipe(htmlmin(Settings.html.minify))
         .pipe(rename('chat.html'))
         .pipe(gulp.dest(Settings.html.output));

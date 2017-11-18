@@ -1,11 +1,28 @@
-var http = require('http');
-var debug = require('debug')('raspchat:upgrade-middleware');
+const http = require('http');
+const debug = require('debug')('raspchat:upgrade-middleware');
 
-module.exports = function (app, wss) {
+let wss = null;
+
+module.exports = function (app, WebSocketServer) {
     debug('Upgrade middleware...');
-    if (!wss || !app) {
+    if (!WebSocketServer || !app) {
         throw new Error('Websocket upgrade middleware requires Express app and WebSocket object');
     }
+
+    wss = wss || new WebSocketServer({
+        noServer: true,
+        verifyClient: (info) => {
+            const corsConfig = process.env.CORS_DOMAINS;
+            debug('Verifying client...',  info);
+            if (!corsConfig || corsConfig === '*') {
+                debug('=== Allowing all CORS');
+                return true;
+            }
+    
+            const headers = new Set(process.env.CORS_DOMAINS.split(/[,;]/).map(v => v.trim()));
+            return headers.has(info.origin);
+        }
+    });
 
     return function (req, socket, upgradeHead) {
         debug('Upgrading middleware for req', req.url);

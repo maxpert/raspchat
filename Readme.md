@@ -39,13 +39,13 @@ You can read about `.env` file [here](https://www.npmjs.com/package/dotenv)
 
  * Basic GIF support
  * Basic nick support
- * Channel support
+ * Channel (join/leave/list-members) support
  * Markdown support
- * Message history support
- * File upload support
+ * Message history on group join
 
 ## Pending:
 
+ * File upload support
  * Refactor frontend to Vue2 and cleanup frontend
  * Unit tests
  * Introduce admin panel with:
