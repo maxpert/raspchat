@@ -12,37 +12,37 @@ var he = require('he');
 var vue = require('vue');
 var emojify = require('emojify.js');
 
-var md = new markdownit("default", {
-  linkify: true
+var md = new markdownit('default', {
+    linkify: true
 }).use(markdownitHTML5Embed);
 
 vue.filter('markdown', function (value) {
-  window.debug && window.debug.filters && console.log(value);
-  return md.render(value);
+    window.debug && window.debug.filters && console.log(value);
+    return md.render(value);
 });
 
 vue.filter('better_date', function (value) {
-  window.debug && window.debug.filters && console.log(value);
-  return moment(value).calendar();
+    window.debug && window.debug.filters && console.log(value);
+    return moment(value).calendar();
 });
 
 vue.filter('escape_html', function (value) {
-  window.debug && window.debug.filters && console.log(value);
-  return he.encode(value);
+    window.debug && window.debug.filters && console.log(value);
+    return he.encode(value);
 });
 
 vue.filter('falsy_to_block_display', function (value) {
-  window.debug && window.debug.filters && console.log(value);
-  return value ? 'block' : 'none';
+    window.debug && window.debug.filters && console.log(value);
+    return value ? 'block' : 'none';
 });
 
 vue.filter('friendly_progress', function (value) {
-  window.debug && window.debug.filters && console.log(value);
-  if (~~value >= 100) {
-    return 'almost done...';
-  }
+    window.debug && window.debug.filters && console.log(value);
+    if (~~value >= 100) {
+        return 'almost done...';
+    }
 
-  return 'uploaded ' + value + '%';
+    return 'uploaded ' + value + '%';
 });
 
 
@@ -50,11 +50,11 @@ var fragmentNode = document.createDocumentFragment();
 var virtualDiv = document.createElement('div');
 fragmentNode.appendChild(virtualDiv);
 vue.filter('emojify', function (value) {
-  virtualDiv.innerHTML = value;
-  emojify.run(virtualDiv);
-  return virtualDiv.innerHTML;
+    virtualDiv.innerHTML = value;
+    emojify.run(virtualDiv);
+    return virtualDiv.innerHTML;
 });
 
 vue.filter('avatar_url', function (value) {
-  return '//invatar.ga/img/'+value+'?size=128';
+    return '//invatar.ga/img/' + value + '?size=128';
 });

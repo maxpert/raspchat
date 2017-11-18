@@ -9,112 +9,112 @@ var vue = require('vue');
 var utils = require('../vendor/utils');
 
 var uploadViaXHR = function (file, progressCallback, successCallback, failCallback) {
-  var fd = new FormData();
-  fd.append("file", file);
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/file', true);
-  
-  xhr.upload.onprogress = function(e) {
-    if (e.lengthComputable) {
-      var done = e.position || e.loaded, total = e.totalSize || e.total;
-      progressCallback && progressCallback(done, total); // jshint ignore: line
-    }
-  };
+    var fd = new FormData();
+    fd.append('file', file);
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/file', true);
 
-  xhr.onload = function() {
-    if (this.status == 200) {
-      successCallback && successCallback(xhr); // jshint ignore: line
-    }
-    else {
-      failCallback && failCallback(xhr.status, xhr); // jshint ignore: line
-    }
-  };
+    xhr.upload.onprogress = function (e) {
+        if (e.lengthComputable) {
+            var done = e.position || e.loaded, total = e.totalSize || e.total;
+            progressCallback && progressCallback(done, total); // jshint ignore: line
+        }
+    };
 
-  xhr.send(fd);
+    xhr.onload = function () {
+        if (this.status == 200) {
+            successCallback && successCallback(xhr); // jshint ignore: line
+        }
+        else {
+            failCallback && failCallback(xhr.status, xhr); // jshint ignore: line
+        }
+    };
+
+    xhr.send(fd);
 };
 
 vue.component('file-uploader', vue.extend({
-  template: '#file-uploader',
-  props: {
-    pending: {
-      type: Boolean
+    template: '#file-uploader',
+    props: {
+        pending: {
+            type: Boolean
+        },
+
+        failed: {
+            type: Boolean
+        },
+
+        complete: {
+            type: Boolean
+        },
+
+        fileInfo: {
+            required: true
+        }
+    },
+    data: function () {
+        return {
+            totalBytes: 0,
+            uploadedBytes: 0
+        };
+    },
+    computed: {
+        percentComplete: function () {
+            if (this.totalBytes === 0 || this.uploadedBytes === 0) {
+                return 0;
+            }
+
+            return Math.floor(this.uploadedBytes * 100.0 / this.totalBytes) + '';
+        }
+    },
+    ready: function () {
+        this.$set('pending', true);
+        this.$set('complete', false);
+        this.$set('failed', true);
+
+        vue.nextTick(this._startUpload);
     },
 
-    failed: {
-      type: Boolean
-    },
+    methods: {
+        _notifyStatusChanged: function (data) {
+            var eventParams = utils.Mix({
+                pending: this.pending,
+                failed: this.failed,
+                complete: this.complete
+            }, data);
 
-    complete: {
-      type: Boolean
-    },
+            this.$dispatch('state-changed', this.fileInfo, eventParams);
+            if (this.complete && data) {
+                this.$dispatch('file-uploaded', this.fileInfo, eventParams);
+            }
+        },
 
-    fileInfo: {
-      required: true
+        _startUpload: function () {
+            this.$set('pending', true);
+            uploadViaXHR(this.fileInfo.file, this._uploadProgress, this._uploadSuccess, this._uploadError);
+        },
+
+        _uploadProgress: function (uploaded, total) {
+            this.$set('pending', true);
+            this.$set('complete', false);
+            this.$set('failed', false);
+            this.$set('totalBytes', total);
+            this.$set('uploadedBytes', uploaded);
+            this._notifyStatusChanged({});
+        },
+
+        _uploadSuccess: function (xhr) {
+            this.$set('pending', false);
+            this.$set('complete', true);
+            this.$set('failed', false);
+            this._notifyStatusChanged(JSON.parse(xhr.responseText));
+        },
+
+        _uploadError: function (errorCode, xhr) {
+            this.$set('pending', false);
+            this.$set('complete', true);
+            this.$set('failed', true);
+            this._notifyStatusChanged({ errorCode: errorCode, error: xhr.responseText });
+        }
     }
-  },
-  data: function() {
-    return {
-      totalBytes: 0, 
-      uploadedBytes: 0
-    };
-  },
-  computed: {
-    percentComplete: function () {
-      if (this.totalBytes === 0 || this.uploadedBytes === 0) {
-        return 0;
-      }
-
-      return Math.floor(this.uploadedBytes * 100.0 / this.totalBytes) + '';  
-    }
-  },
-  ready: function() {
-    this.$set("pending", true);
-    this.$set("complete", false);
-    this.$set("failed", true);
-
-    vue.nextTick(this._startUpload);
-  },
-
-  methods: {
-    _notifyStatusChanged: function (data) {
-      var eventParams = utils.Mix({
-        pending: this.pending,
-        failed: this.failed,
-        complete: this.complete
-      }, data);
-
-      this.$dispatch("state-changed", this.fileInfo, eventParams);
-      if (this.complete && data) {
-        this.$dispatch("file-uploaded", this.fileInfo, eventParams);
-      }
-    },
-
-    _startUpload: function() {
-      this.$set("pending", true);
-      uploadViaXHR(this.fileInfo.file, this._uploadProgress, this._uploadSuccess, this._uploadError);
-    },
-
-    _uploadProgress: function(uploaded, total) {
-      this.$set("pending", true);
-      this.$set("complete", false);
-      this.$set("failed", false);
-      this.$set("totalBytes", total);
-      this.$set("uploadedBytes", uploaded);
-      this._notifyStatusChanged({});
-    },
-
-    _uploadSuccess: function(xhr) {
-      this.$set("pending", false);
-      this.$set("complete", true);
-      this.$set("failed", false);
-      this._notifyStatusChanged(JSON.parse(xhr.responseText));
-    },
-
-    _uploadError: function(errorCode, xhr) {
-      this.$set("pending", false);
-      this.$set("complete", true);
-      this.$set("failed", true);
-      this._notifyStatusChanged({errorCode: errorCode, error: xhr.responseText});
-    }
-  }
 }));

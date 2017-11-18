@@ -9,44 +9,43 @@ var vue = require('vue');
 var win = window;
 
 vue.component('chat-log', vue.extend({
-  props: ['messages'],
-  template: '#chat-messages',
-  ready: function () {
-    this.$el.addEventListener("click", function (event) {
-      event = event || win.event;
+    props: ['messages'],
+    template: '#chat-messages',
+    ready: function () {
+        this.$el.addEventListener('click', function (event) {
+            event = event || win.event;
 
-      if (event.target.tagName == "A") {
-        win.open(event.target.href, "_blank");
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    }, false);
+            if (event.target.tagName == 'A') {
+                win.open(event.target.href, '_blank');
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        }, false);
 
-    this.userScrolled = false;
-    this.selfScroll = false;
-    this.cont = this.cont || this.$el.querySelector(".chat-messages");
-    this.timer = win.setInterval(this.scrollToBottom, 500);
-  },
-  methods: {
-    onScroll: function () {
-      if (this.selfScroll) {
+        this.userScrolled = false;
         this.selfScroll = false;
-        return;
-      }
-
-      var container = this.cont;
-      this.userScrolled = container.scrollHeight - container.offsetHeight - container.scrollTop > 50;
+        this.cont = this.cont || this.$el.querySelector('.chat-messages');
+        this.timer = win.setInterval(this.scrollToBottom, 500);
     },
+    methods: {
+        onScroll: function () {
+            if (this.selfScroll) {
+                this.selfScroll = false;
+                return;
+            }
 
-    scrollToBottom: function (e) {
-      if (this.userScrolled) {
-        return;
-      }
+            var container = this.cont;
+            this.userScrolled = container.scrollHeight - container.offsetHeight - container.scrollTop > 50;
+        },
 
-      var container = this.cont;
-      var loadedEventImage = e && e.loadedEventImage; // jshint ignore: line
-      container.scrollTop = container.scrollHeight;
-      this.selfScroll = true;
-    }
-  },
+        scrollToBottom: function () {
+            if (this.userScrolled) {
+                return;
+            }
+
+            var container = this.cont;
+            container.scrollTop = container.scrollHeight;
+            this.selfScroll = true;
+        }
+    },
 }));

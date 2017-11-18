@@ -8,40 +8,40 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 var vue = require('vue');
 
 vue.component('chat-message', vue.extend({
-  props: ['message'],
-  template: '#chat-message',
-  ready: function () {
-    this.hookImageLoads();
-    this.$dispatch("chat-message-added", this.message);
+    props: ['message'],
+    template: '#chat-message',
+    ready: function () {
+        this.hookImageLoads();
+        this.$dispatch('chat-message-added', this.message);
 
-    this.$watch("message.msg", function () {
-      this.hookImageLoads();
-      this.$dispatch("chat-message-added", this.message);
-    }.bind(this));
-  },
-  methods: {
-    imageLoaded: function (ev) {
-      var me = this;
-      me.$dispatch('chat-image-loaded', {loadedEventImage: ev});
+        this.$watch('message.msg', function () {
+            this.hookImageLoads();
+            this.$dispatch('chat-message-added', this.message);
+        }.bind(this));
     },
-    hookImageLoads: function () {
-      var imgs = this.$el.parentNode.querySelectorAll("img");
-      for(var i in imgs){
-        var img = imgs[i];
-        if (this._hasClass(img, "avatar")) {
-          continue;
-        }
+    methods: {
+        imageLoaded: function (ev) {
+            var me = this;
+            me.$dispatch('chat-image-loaded', { loadedEventImage: ev });
+        },
+        hookImageLoads: function () {
+            var imgs = this.$el.parentNode.querySelectorAll('img');
+            for (var i in imgs) {
+                var img = imgs[i];
+                if (this._hasClass(img, 'avatar')) {
+                    continue;
+                }
 
-        if (img.addEventListener) {
-          img.removeEventListener("load", this.imageLoaded);
-          img.addEventListener("load", this.imageLoaded, false);
-        }
-      }
-    },
+                if (img.addEventListener) {
+                    img.removeEventListener('load', this.imageLoaded);
+                    img.addEventListener('load', this.imageLoaded, false);
+                }
+            }
+        },
 
-    _hasClass: function (element, selectorClass) {
-      var idx = (" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(selectorClass);
-      return  idx > -1;
+        _hasClass: function (element, selectorClass) {
+            var idx = (' ' + element.className + ' ').replace(/[\n\t]/g, ' ').indexOf(selectorClass);
+            return idx > -1;
+        }
     }
-  }
 }));

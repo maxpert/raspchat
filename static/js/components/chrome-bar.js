@@ -8,28 +8,28 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 var vue = require('vue');
 
 vue.component('chrome-bar', vue.extend({
-  template: '#chrome-bar',
-  props: {
-    title: {
-      type: String,
-      required: true
+    template: '#chrome-bar',
+    props: {
+        title: {
+            type: String,
+            required: true
+        },
+        userId: {
+            type: String,
+            required: true
+        },
+        hamburgerEnabled: {
+            type: Boolean,
+            required: true,
+            twoWay: true
+        }
     },
-    userId: {
-      type: String,
-      required: true
+    data: function () {
+        return {};
     },
-    hamburgerEnabled: {
-      type: Boolean,
-      required: true,
-      twoWay: true
+    methods: {
+        hamburgerClicked: function () {
+            this.$set('hamburgerEnabled', !this.hamburgerEnabled);
+        }
     }
-  },
-  data: function() {
-    return {};
-  },
-  methods: {
-    hamburgerClicked: function () {
-      this.$set('hamburgerEnabled', !this.hamburgerEnabled);
-    }
-  }
 }));
