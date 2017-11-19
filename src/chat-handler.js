@@ -1,12 +1,13 @@
-const FlakeId = require('flake-idgen');
 const Inflector = require('inflected');
-const IntFormat = require('biguint-format');
+const bluebird = require('bluebird');
+const Figlet = bluebird.promisifyAll(require('figlet'));
 
 const ChatUser = require('./chat-user');
 const ChatRoom = require('./chat-room');
 const JSONMessage = require('./json-message');
 const CommandHandlers = require('./command-handlers');
 const NickRegistery = require('./nick-registery');
+const {genId} = require('./utils');
 
 const DefaultConfig = {
     commandRoom: 'SERVER'
@@ -14,11 +15,6 @@ const DefaultConfig = {
 
 const Rooms = new Map();
 const Users = new Map();
-const IdGen = new FlakeId();
-
-function genId() {
-    return IntFormat(IdGen.next(), 'hex');
-}
 
 function GetRoom(maybeName) {
     const name = maybeName || DefaultConfig.commandRoom;
@@ -57,16 +53,21 @@ function ServerPinger() {
         'utc_timestamp': 0,
         't': new Date().getTime()
     }));
-    setTimeout(ServerPinger, 10000 + Math.random() * 15000);
+    setTimeout(ServerPinger, 5000 + Math.random() * 20000);
 }
 
-function SendWelcome(user) {
+async function SendWelcome(user) {
     const serverRoom = GetRoom();
+    const normalized_nick = user.nick.replace(/[^\d\w]/, ' ');
+    const message = '```\n'+ await Figlet.textAsync('Hi ' + normalized_nick, {
+        font: 'The Edge'
+    }) + '\n```';
+    
     user.send(JSONMessage.fromObject({
         '@': serverRoom.roomName,
         '!id': genId(),
         'utc_timestamp': new Date().getTime(),
-        'msg': 'Welcome...'
+        'msg': message
     }));
 }
 
@@ -79,9 +80,9 @@ module.exports = function () {
             return;
         }
 
-        let id = genId();
+        let id = genId({short: true});
         while (Users.has(id)) {
-            id = genId();
+            id = genId({short: true});
         }
 
         res.websocket(function (ws) {

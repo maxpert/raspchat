@@ -1,17 +1,18 @@
-const ShortId = require('shortid');
 const NameGen = require('project-name-generator');
+const {genId} = require('./utils');
+
 const NickIdMap = new Map();
 
 const NickRegistry = {
     create: function (id) {
-        let nick = NameGen({number: true}).raw.join('_');
+        let nick = NameGen({number: false}).raw.join('-');
         while (NickIdMap.has(`@${nick}`)) {
-            nick = NameGen({number: true}).raw.join('_');
+            nick = NameGen({number: true}).raw.join('-');
         }
 
         NickIdMap.set(`@${nick}`, id);
         NickIdMap.set(id, nick);
-        return id;
+        return nick;
     },
 
     read: function (id) {
@@ -39,7 +40,7 @@ const NickRegistry = {
     update: function (id, nick) {
         // Nick is already taken
         if (NickIdMap.has(`@${nick}`) && NickIdMap.get(`@${nick}`) !== id) {
-            nick = nick + '_' + ShortId();
+            nick = nick + '-' + genId({short: true});
         }
 
         if (!NickRegistry.delete(id)) {

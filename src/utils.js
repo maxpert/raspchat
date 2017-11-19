@@ -1,12 +1,22 @@
 const IntFormat = require('biguint-format');
 const FlakeId = require('flake-idgen');
+const ShortId = require('shortid');
 
 const JSONMessage = require('./json-message');
 
 const IdGen = new FlakeId();
+const DefaultGenIdOptions = {
+    short: false,
+    encoding: 'hex'
+};
 
-function genId() {
-    return IntFormat(IdGen.next(), 'hex');
+function genId(opts) {
+    opts = Object.assign({}, DefaultGenIdOptions, opts);
+    if (opts.short) {
+        return ShortId();
+    }
+
+    return IntFormat(IdGen.next(), opts.encoding);
 }
 
 function buildMessage(type, extra) {

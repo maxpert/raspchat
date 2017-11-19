@@ -76,6 +76,7 @@ class ChatRoom {
             queue.immediate = null;
 
             for (const [id ,eventEmitter] of users) {
+                debug(`Publishing to ${id}`);
                 eventEmitter.emit('send', allMessages);
             }
         };

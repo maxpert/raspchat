@@ -1,12 +1,12 @@
 const NickRegistery = require('./nick-registery');
 const { buildMessage } = require('./utils');
 
-const ValidGroupName = /^[\w\d][\w\d_-]*$/i;
+const ValidNameRegex = /^[\w\d][\w\d_-]*$/i;
 
 function updateRoomMembership(user, getRoom, payload, callback) {
     const serverRoom = getRoom();
     const targetRoom = getRoom(payload.msg);
-    if (!targetRoom.roomName.match(ValidGroupName) || targetRoom === serverRoom) {
+    if (!targetRoom.roomName.match(ValidNameRegex) || targetRoom === serverRoom) {
         return Promise.reject(new Error(`${targetRoom.roomName} is not a valid room name`));
     }
 
@@ -20,7 +20,15 @@ function updateRoomMembership(user, getRoom, payload, callback) {
 module.exports = {
     setNick(user, getRoom, payload) {
         const oldNick = user.nick;
+        if (!payload.msg.match(ValidNameRegex)) {
+            return Promise.reject(new Error(`${payload.msg} is an invalid nick`));
+        }
+
+        // Set new nick
         const newNick = NickRegistery.update(user.id, payload.msg);
+        if (!newNick) {
+            return Promise.reject(new Error(`Unable to change nick to ${payload.msg}`));
+        }
 
         // Let user know
         const resp = buildMessage('nick-set', {

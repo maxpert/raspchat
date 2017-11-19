@@ -857,6 +857,13 @@ img{
     max-width: 100%;
 }
 
+.markdown-container pre code {
+    font-size: 10pt;
+    font-family: "Courier New", Monospace;
+    white-space: pre;
+    line-height: 10pt;
+}
+
 /** 
 !!!!!!!!!!NOTE DO NOT MOVE MEDIA QUERIES ANYWHERE ON TOP!!!!!!!!!!!!!
 They are supposed to override default styles and puttin them on top might cause issues 

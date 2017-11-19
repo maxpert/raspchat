@@ -88,7 +88,7 @@ class ChatUser {
                 shutdownIfError(e);
             }
         }
-        debug('Sending payload completed...')
+        debug('Sending payload completed...');
     }
 
     /**
