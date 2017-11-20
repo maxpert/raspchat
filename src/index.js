@@ -12,7 +12,7 @@ const chatAPI = require('./api');
 
 const app = express();
 const server = http.createServer(app);
-const rcUrl = url.parse(process.env.RC_URL || 'http://localhost:3000/');
+const rcUrl = url.parse(process.env.RC_URL || 'http://localhost:3030/');
 
 chatAPI(app, rcUrl);
 app.use('/chat', chatHandler());

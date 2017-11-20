@@ -228,7 +228,8 @@ Transport.prototype = {
         this.events.fire('connected');
     },
 
-    _on_disconnect: function () {
+    _on_disconnect: function (e) {
+        console.log('Connection closed', e);
         this.handshakeCompleted = false;
         this.events.fire('disconnected');
         var me = this;

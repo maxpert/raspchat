@@ -10,19 +10,11 @@ module.exports = function (app, WebSocketServer) {
     }
 
     wss = wss || new WebSocketServer({
-        noServer: true,
-        verifyClient: (info) => {
-            const corsConfig = process.env.CORS_DOMAINS;
-            debug('Verifying client...',  info);
-            if (!corsConfig || corsConfig === '*') {
-                debug('=== Allowing all CORS');
-                return true;
-            }
-    
-            const headers = new Set(process.env.CORS_DOMAINS.split(/[,;]/).map(v => v.trim()));
-            return headers.has(info.origin);
-        }
+        noServer: true
     });
+
+    wss.on('error', console.error);
+    wss.on('headers', h => debug(h));
 
     return function (req, socket, upgradeHead) {
         debug('Upgrading middleware for req', req.url);

@@ -35,7 +35,8 @@ class ChatUser {
                 this);
         });
 
-        this._ws.on('close', () => {
+        this._ws.on('close', (num, reason) => {
+            debug('Closing connection', num, reason);
             this.leaveAll();
             this._ws.removeAllListeners('message');
             this._ws.removeAllListeners('close');
@@ -67,6 +68,7 @@ class ChatUser {
 
         const shutdownIfError = (err) => {
             if (!err) {
+                debug('Sending complete...');
                 return;
             }
 
@@ -81,7 +83,6 @@ class ChatUser {
                 const payload = msg.serialized || msg;
                 this._ws.send(
                     payload,
-                    { compress: false },
                     shutdownIfError
                 );
             } catch (e) {
