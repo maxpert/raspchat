@@ -78,7 +78,7 @@ var utcTimestampToLocalDate = function (timestamp) {
         return new Date();
     }
 
-    return new Date(timestamp * 1000);
+    return new Date(timestamp);
 };
 
 var EventEmitter = function () {
