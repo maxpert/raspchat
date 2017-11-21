@@ -101,8 +101,9 @@ module.exports = {
         return Promise.resolve(resp);
     },
 
-    pong(user) {
+    ping(user) {
+        user.send(buildMessage('pong'));
         user.lastSeen = new Date().getTime();
-        return Promise.resolve(user);
+        return Promise.resolve();
     }
 };

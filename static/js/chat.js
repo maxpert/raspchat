@@ -73,9 +73,8 @@ new vue({
         this.$on('leave', function (group) {
             this.transport.send(group, '/leave ' + group);
         });
-
-        /* jshint unused: false */
-        this.$watch('currentGroup.name', function (newVal, oldVal) {
+        
+        this.$watch('currentGroup.name', function (newVal) {
             this.$broadcast('group_switched', newVal);
         });
     },

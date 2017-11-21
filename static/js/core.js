@@ -224,7 +224,20 @@ Transport.prototype = {
         this.events.fire('connecting');
     },
 
+    _pinger: function(sock) {
+        if (!sock || sock.readyState !== 1) {
+            return;
+        }
+
+        sock.send(JSON.stringify({'@': 'ping', 't': new Date().getTime()}));
+        var me = this;
+        win.setTimeout(function () {
+            me._pinger(sock);
+        }, 30000);
+    },
+
     _on_connect: function () {
+        this._pinger(this.sock);
         this.events.fire('connected');
     },
 

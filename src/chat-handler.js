@@ -45,17 +45,6 @@ function UserMessage(message, user) {
     commandMethod(user, GetRoom, message.parsed).catch(console.error);
 }
 
-function ServerPinger() {
-    const serverRoom = GetRoom();
-    serverRoom.publish(JSONMessage.fromObject({
-        '@': 'ping',
-        '!id': genId(),
-        'utc_timestamp': 0,
-        't': new Date().getTime()
-    }));
-    setTimeout(ServerPinger, 5000 + Math.random() * 20000);
-}
-
 async function SendWelcome(user) {
     const serverRoom = GetRoom();
     const normalized_nick = user.nick.replace(/[^\d\w]/, ' ');
@@ -72,8 +61,6 @@ async function SendWelcome(user) {
 }
 
 module.exports = function () {
-    ServerPinger();
-
     return function (req, res) {
         if (!res.websocket) {
             res.status(500).send('Not a websocket connection');
