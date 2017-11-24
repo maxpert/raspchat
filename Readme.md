@@ -7,7 +7,7 @@
 Basic demo is available [Here](http://raspchat.com).
 
 ## Why?
-I had a spare Raspberry Pi and I wanted to use it! One of ideas in my head was to have your own on premis chat server that you can use for cheap and own your data (< $50 hardware) forever and free!
+I had a spare Raspberry Pi and I wanted to use it! One of ideas in my head was to have your own on-premise chat server that you can use for cheap and own your data (< $50 hardware) forever and free!
 
 ## Requirements
 For compiling you need:
