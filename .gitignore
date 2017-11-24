@@ -32,12 +32,9 @@ _testmain.go
 /static/bower_components/
 /.idea/
 /static/*.min.js
-/rica.config.*.json
 /pkg/
-/src/vendor/
-/src/github.com/
 /.vscode
-/src/sibte.so/debug
-.yarnclean
 .tern-project
 chat-log.db*
+.DS_Store
+*.map

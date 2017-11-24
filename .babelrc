@@ -1,0 +1,29 @@
+{
+    "presets": [
+        [
+            "env",
+            {
+                "targets": {
+                    "browsers": "since 2013"
+                },
+                "modules": false,
+                "loose": true
+            }
+        ]
+    ],
+    "plugins": [
+        [
+            "transform-react-jsx",
+            {
+                "pragma": "h"
+            }
+        ],
+        [
+            "transform-object-rest-spread",
+            {
+                "useBuiltIns": true
+            }
+        ],
+        "external-helpers"
+    ]
+}

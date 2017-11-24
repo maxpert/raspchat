@@ -1,10 +1,8 @@
 var gulp = require('gulp'),
     rename = require('gulp-rename'),
     uglify = require('gulp-uglify'),
-    browserify = require('gulp-browserify'),
     htmlmin = require('gulp-htmlmin'),
-    rev = require('gulp-rev-append'),
-    argv = require('yargs').alias('p', 'production').argv;
+    rev = require('gulp-rev-append');
 
 var Settings = {
     assets: {
@@ -52,22 +50,12 @@ gulp.task('process-htmls', function () {
         .pipe(gulp.dest(Settings.html.output));
 });
 
-gulp.task('compile-js', function () {
-    return gulp.src(Settings.js.source + '/' + Settings.js.sourceFile)
-        .pipe(browserify({
-            insertGlobals : true,
-            debug : !argv.p
-        }))
-        .pipe(rename(Settings.js.outputFile))
-        .pipe(gulp.dest(Settings.js.static));
-});
-
 gulp.task('copy-assets', function () {
     return gulp.src(Settings.assets.source, {base: Settings.assets.sourceBase})
         .pipe(gulp.dest(Settings.assets.output));
 });
 
-gulp.task('compile-assets', ['copy-assets', 'compile-js', 'process-htmls'], function () {
+gulp.task('compile-assets', ['copy-assets', 'process-htmls'], function () {
     return gulp.src(Settings.js.static + '/' + Settings.js.outputFile)
         .pipe(uglify())
         .pipe(rename(Settings.js.outputFile))

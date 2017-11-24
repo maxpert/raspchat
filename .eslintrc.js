@@ -5,7 +5,12 @@ module.exports = {
         "node": true
     },
     "parserOptions": {
-        "ecmaVersion": 2017
+        "ecmaVersion": 2017,
+        "sourceType": "module",
+        "ecmaFeatures": {
+            "experimentalObjectRestSpread": true,
+            "jsx": true
+        }
     },
     "extends": "eslint:recommended",
     "rules": {
@@ -15,6 +20,7 @@ module.exports = {
                 allow: ["warn", "error"] 
             }
         ],
+        "no-unused-vars": "off",
         "indent": [
             "error",
             4
