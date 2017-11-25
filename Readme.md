@@ -45,10 +45,10 @@ You can read about `.env` file [here](https://www.npmjs.com/package/dotenv)
 
 ## Pending:
 
- * File upload support
- * Refactor frontend to Vue2 and cleanup frontend
+ * Refactor frontend using hyperapp
+ * Scrollable history
  * Unit tests
  * Introduce admin panel with:
    * Reserved alias authorization
    * IP limiting/banning
-   * Channel management and permissions
+   * Fixed alias with passwords
