@@ -206,7 +206,7 @@ new vue({
                             groupLog.push({ isMeta: true, msg: m.from + ' has left' });
                             break;
                         case 'nick-set':
-                            groupLog.push({ isMeta: true, msg: m.from + ' changed nick to ' + (m.pack_msg && m.pack_msg.NewNick) });
+                            groupLog.push({ isMeta: true, msg: m.from + ' changed nick to ' + (m.pack_msg && m.pack_msg.newNick) });
                             break;
                         }
                     }
