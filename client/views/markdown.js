@@ -10,7 +10,7 @@ const applyMarkdownHtml = text => e => {
 };
 
 export default (props) => (
-    <div class={props.class + ' markdown'} 
-        oncreate={applyMarkdownHtml(props.text || '')}>
+    <div class={props.type + '-markdown'} 
+        oncreate={applyMarkdownHtml(props.md || '')}>
     </div>
 );

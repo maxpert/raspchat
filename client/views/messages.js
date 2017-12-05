@@ -2,7 +2,12 @@ import { h } from 'hyperapp';
 import Markdown from './markdown';
 
 export const Message = (props, children) => {
-    return <Markdown class={props['@']} text={props.msg}></Markdown>;
+    return <div class={`${props.command}-message message-log`}>
+        <div class="from-container">{props.from}</div>
+        <div class="message-container">
+            <Markdown type={props.command} md={props.message}></Markdown>
+        </div>
+    </div>;
 };
 
 export default (props, children) => {
@@ -10,7 +15,7 @@ export default (props, children) => {
         return null;
     }
 
-    return <div>
-        { props.messages.map(m => <Message id={m['!id']} {...m}></Message>) }
+    return <div class={'log-messages ' + (props.class || '')}>
+        { props.messages.map(m => <Message id={m.id} {...m}></Message>) }
     </div>;
 };

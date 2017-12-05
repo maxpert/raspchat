@@ -4,9 +4,10 @@ export default {
         soundEnabled: true,
         notificationEnabled: true
     },
-    channels: {
-        connected: false,
+    chat: {
+        connectionAttempts: 0,
         connection: null,
+        view: {},
         logs: {}
     }
 };

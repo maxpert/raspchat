@@ -1,2 +1,967 @@
-!function(n,e){"object"==typeof exports&&"undefined"!=typeof module?e():"function"==typeof define&&define.amd?define(e):e()}(0,function(){"use strict";function n(n,e){for(var t,r=[],o=[],c=arguments.length;c-- >2;)r.push(arguments[c]);for(;r.length;)if(Array.isArray(t=r.pop()))for(c=t.length;c--;)r.push(t[c]);else null!=t&&!0!==t&&!1!==t&&o.push("number"==typeof t?t+="":t);return"string"==typeof n?{type:n,props:e||{},children:o}:n(e||{},o)}function e(n){return n.replace(RegExp("^"+(n.match(/^(\t| )+/)||"")[0],"gm"),"")}function t(n){return(n+"").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}function r(n){function o(n){var e=u[n.replace(/\*/g,"_")[1]||""],t=d[d.length-1]==n;return e?e[1]?(d[t?"pop":"push"](n),e[0|t]):e[0]:n}function c(){for(var n="";d.length;)n+=o(d[d.length-1]);return n}var i,a,s,l,f,p=/((?:^|\n+)(?:\n---+|\* \*(?: \*)+)\n)|(?:^```(\w*)\n([\s\S]*?)\n```$)|((?:(?:^|\n+)(?:\t|  {2,}).+)+\n*)|((?:(?:^|\n)([>*+-]|\d+\.)\s+.*)+)|(?:\!\[([^\]]*?)\]\(([^\)]+?)\))|(\[)|(\](?:\(([^\)]+?)\))?)|(?:(?:^|\n+)([^\s].*)\n(\-{3,}|={3,})(?:\n+|$))|(?:(?:^|\n+)(#{1,3})\s*(.+)(?:\n+|$))|(?:`([^`].*?)`)|(  \n\n*|\n{2,}|__|\*\*|[_*])/gm,d=[],g="",h=0,v={};for(n=n.replace(/^\[(.+?)\]:\s*(.+)$/gm,function(n,e,t){return v[e.toLowerCase()]=t,""}).replace(/^\n+|\n+$/g,"");s=p.exec(n);)a=n.substring(h,s.index),h=p.lastIndex,i=s[0],a.match(/[^\\](\\\\)*\\$/)||(s[3]||s[4]?i='<pre class="code '+(s[4]?"poetry":s[2].toLowerCase())+'">'+e(t(s[3]||s[4]).replace(/^\n+|\n+$/g,""))+"</pre>":s[6]?((f=s[6]).match(/\./)&&(s[5]=s[5].replace(/^\d+/gm,"")),l=r(e(s[5].replace(/^\s*[>*+.-]/gm,""))),">"===f?f="blockquote":(f=f.match(/\./)?"ol":"ul",l=l.replace(/^(.*)(\n|$)/gm,"<li>$1</li>")),i="<"+f+">"+l+"</"+f+">"):s[8]?i='<img src="'+t(s[8])+'" alt="'+t(s[7])+'">':s[10]?(g=g.replace("<a>",'<a href="'+t(s[11]||v[a.toLowerCase()])+'">'),i=c()+"</a>"):s[9]?i="<a>":s[12]||s[14]?i="<"+(f="h"+(s[14]?s[14].length:"="===s[13][0]?1:2))+">"+r(s[12]||s[15])+"</"+f+">":s[16]?i="<code>"+t(s[16])+"</code>":(s[17]||s[1])&&(i=o(s[17]||"--"))),g+=a,g+=i;return(g+n.substring(h)+c()).trim()}var o={toggleSound:function(n,e){return function(t){var r=void 0===t?!n.soundEnabled:t;return Promise.resolve({soundEnabled:r}).then(e.applyState)}},toggleNotification:function(n,e){return function(t){var r=void 0===t?!n.soundEnabled:t;return Promise.resolve({notificationEnabled:r}).then(e.applyState)}},applyState:function(n,e){return function(n){return n}}},c={connect:function(n,e){return function(n){var t=new WebSocket(n.webSocketConnectionUri);t.onopen=e.onOpen(t),t.onclose=e.onClose(t),t.onmessage=e.onMessage(t)}},onOpen:function(n,e){return function(n){return function(e){return{connection:n,connected:!0}}}},onClose:function(n,e){return function(n){return function(n){return{connection:null,connected:!1}}}},onMessage:function(n,e){return function(n){return function(n){try{var t=JSON.parse(n.data);return e.addMessage(t)}catch(e){console.warn("Error while parsing message",n.data)}return{}}}},addMessage:function(n,e){return function(e){e["@"].toLowerCase();var t,r=e.to||"SERVER",o=n.logs[r]||[];return o.push(e),{logs:(t={},t[r]=o,t)}}}},i=function(e,t){return n("div",{onclick:e.onClick,oncreate:e.init},t)},u={"":["<em>","</em>"],_:["<strong>","</strong>"],"\n":["<br />"]," ":["<br />"],"-":["<hr />"]},a=function(e){return n("div",{class:e.class+" markdown",oncreate:function(n){return function(e){n&&(e.innerHTML=r(n))}}(e.text||"")})},s=function(e,t){return n(a,{class:e["@"],text:e.msg})},l=function(e,t){return e.messages?n("div",null,e.messages.map(function(e){return n(s,e)})):null};(function(e,t){function r(e,t){return e&&n(e.tagName.toLowerCase(),{},t.call(e.childNodes,function(n){return 3===n.nodeType?n.nodeValue:r(n,t)}))}function o(){e.view&&!v&&setTimeout(c,v=!v)}function c(n){for(v=!v,(n=e.view(w,b))&&!v&&(m=h(t,m,y,y=n));n=E.pop();)n()}function i(n,e,t,r){var o=t.modules;u(n,e,t.actions,r),s(n,t.state);for(var c in o)i(n[c]={},e[c]={},o[c],r.concat(c))}function u(n,e,t,r){Object.keys(t||{}).map(function(c){"function"==typeof t[c]?e[c]=function(i){var u=t[c](n=function(n,e){for(var t=0;t<n.length;t++)e=e[n[t]];return e}(r,w),e);return"function"==typeof u&&(u=u(i)),u&&u!==n&&!u.then&&o(w=l(r,a(n,u),w)),u}:u(n[c]||(n[c]={}),e[c]={},t[c],r.concat(c))})}function a(n,e){return s(s({},n),e)}function s(n,e){for(var t in e)n[t]=e[t];return n}function l(n,e,t){var r={};return 0===n.length?e:(r[n[0]]=1<n.length?l(n.slice(1),e,t[n[0]]):e,a(t,r))}function f(n,e){if("string"==typeof n)t=document.createTextNode(n);else{var t=(e=e||"svg"===n.type)?document.createElementNS("http://www.w3.org/2000/svg",n.type):document.createElement(n.type);for(n.props.oncreate&&E.push(function(){n.props.oncreate(t)}),r=0;r<n.children.length;r++)t.appendChild(f(n.children[r],e));for(var r in n.props)p(t,r,n.props[r])}return t}function p(n,e,t,r){if("key"===e);else if("style"===e)for(var e in a(r,t=t||{}))n.style[e]=t[e]||"";else{try{n[e]=null==t?"":t}catch(n){}"function"!=typeof t&&(null==t||!1===t?n.removeAttribute(e):n.setAttribute(e,t))}}function d(n,e,t){function r(){n.removeChild(e)}t&&t.onremove?t.onremove(e,r):r()}function g(n){if(n&&n.props)return n.props.key}function h(n,e,t,r,o,c){if(t===r);else if(null==t)e=n.insertBefore(f(r,o),e);else if(null!=r.type&&r.type===t.type){!function(n,e,t){for(var r in a(e,t)){var o=t[r],c="value"===r||"checked"===r?n[r]:e[r];o!==c&&p(n,r,o,c)}t.onupdate&&E.push(function(){t.onupdate(n,e)})}(e,t.props,r.props),o=o||"svg"===r.type;for(var i=r.children.length,u=t.children.length,s={},l=[],v={},m=0;m<u;m++)w=l[m]=e.childNodes[m],null!=($=g(b=t.children[m]))&&(s[$]=[w,b]);for(var m=0,y=0;y<i;){var w=l[m],b=t.children[m],C=r.children[y];if(v[$=g(b)])m++;else{var k=g(C),S=s[k]||[];null==k?(null==$&&(h(e,w,b,C,o),y++),m++):($===k?(h(e,S[0],S[1],C,o),m++):S[0]?(e.insertBefore(S[0],w),h(e,S[0],S[1],C,o)):h(e,w,null,C,o),y++,v[k]=C)}}for(;m<u;){var $=g(b=t.children[m]);null==$&&d(e,l[m],b.props),m++}for(var m in s){var x=(S=s[m])[1];v[x.props.key]||d(e,S[0],x.props)}}else e&&r!==e.nodeValue&&("string"==typeof r&&"string"==typeof t?e.nodeValue=r:(e=n.insertBefore(f(r,o),c=e),d(n,c,t.props)));return e}var v,m=(t=t||document.body).children[0],y=r(m,[].map),w={},b={},E=[];return o(i(w,b,e,[])),b})({state:{config:{},settings:{soundEnabled:!0,notificationEnabled:!0},channels:{connected:!1,connection:null,logs:{}}},actions:{config:{load:function(n,e){return function(n){return n}}},settings:o,channels:c},view:function(e,t){return n(i,{init:function(n){return t.channels.connect(e.config)}},n(l,{messages:e.channels.logs.SERVER}))}}).config.load(window.RaspConfig)});
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory() :
+	typeof define === 'function' && define.amd ? define(factory) :
+	(factory());
+}(this, (function () { 'use strict';
+
+function app(props, container) {
+  var root = (container = container || document.body).children[0];
+  var node = vnode(root, [].map);
+  var appState = {};
+  var appActions = {};
+  var lifecycle = [];
+  var patchLock;
+
+  repaint(init(appState, appActions, props, []));
+
+  return appActions;
+
+  function vnode(element, map) {
+    return element && h(element.tagName.toLowerCase(), {}, map.call(element.childNodes, function (element) {
+      return element.nodeType === 3 ? element.nodeValue : vnode(element, map);
+    }));
+  }
+
+  function repaint() {
+    if (props.view && !patchLock) {
+      setTimeout(render, patchLock = !patchLock);
+    }
+  }
+
+  function render(next) {
+    patchLock = !patchLock;
+    if ((next = props.view(appState, appActions)) && !patchLock) {
+      root = patch(container, root, node, node = next);
+    }
+    while (next = lifecycle.pop()) {
+      next();
+    }
+  }
+
+  function init(state, actions, from, path) {
+    var modules = from.modules;
+
+    initDeep(state, actions, from.actions, path);
+    set(state, from.state);
+
+    for (var i in modules) {
+      init(state[i] = {}, actions[i] = {}, modules[i], path.concat(i));
+    }
+  }
+
+  function initDeep(state, actions, from, path) {
+    Object.keys(from || {}).map(function (key) {
+      if (typeof from[key] === "function") {
+        actions[key] = function (data) {
+          var result = from[key](state = get(path, appState), actions);
+
+          if (typeof result === "function") {
+            result = result(data);
+          }
+
+          if (result && result !== state && !result.then) {
+            repaint(appState = setDeep(path, merge(state, result), appState));
+          }
+
+          return result;
+        };
+      } else {
+        initDeep(state[key] || (state[key] = {}), actions[key] = {}, from[key], path.concat(key));
+      }
+    });
+  }
+
+  function merge(to, from) {
+    return set(set({}, to), from);
+  }
+
+  function set(to, from) {
+    for (var i in from) {
+      to[i] = from[i];
+    }
+    return to;
+  }
+
+  function setDeep(path, value, from) {
+    var to = {};
+    return path.length === 0 ? value : (to[path[0]] = 1 < path.length ? setDeep(path.slice(1), value, from[path[0]]) : value, merge(from, to));
+  }
+
+  function get(path, from) {
+    for (var i = 0; i < path.length; i++) {
+      from = from[path[i]];
+    }
+    return from;
+  }
+
+  function createElement(node, isSVG) {
+    if (typeof node === "string") {
+      var element = document.createTextNode(node);
+    } else {
+      var element = (isSVG = isSVG || node.type === "svg") ? document.createElementNS("http://www.w3.org/2000/svg", node.type) : document.createElement(node.type);
+
+      if (node.props.oncreate) {
+        lifecycle.push(function () {
+          node.props.oncreate(element);
+        });
+      }
+
+      for (var i = 0; i < node.children.length; i++) {
+        element.appendChild(createElement(node.children[i], isSVG));
+      }
+
+      for (var i in node.props) {
+        setElementProp(element, i, node.props[i]);
+      }
+    }
+    return element;
+  }
+
+  function setElementProp(element, name, value, oldValue) {
+    if (name === "key") {} else if (name === "style") {
+      for (var name in merge(oldValue, value = value || {})) {
+        element.style[name] = value[name] || "";
+      }
+    } else {
+      try {
+        element[name] = null == value ? "" : value;
+      } catch (_) {}
+
+      if (typeof value !== "function") {
+        if (null == value || false === value) {
+          element.removeAttribute(name);
+        } else {
+          element.setAttribute(name, value);
+        }
+      }
+    }
+  }
+
+  function updateElement(element, oldProps, props) {
+    for (var i in merge(oldProps, props)) {
+      var value = props[i];
+      var oldValue = i === "value" || i === "checked" ? element[i] : oldProps[i];
+
+      if (value !== oldValue) {
+        setElementProp(element, i, value, oldValue);
+      }
+    }
+
+    if (props.onupdate) {
+      lifecycle.push(function () {
+        props.onupdate(element, oldProps);
+      });
+    }
+  }
+
+  function removeElement(parent, element, props) {
+    if (props && props.onremove) {
+      props.onremove(element, done);
+    } else {
+      done();
+    }
+
+    function done() {
+      parent.removeChild(element);
+    }
+  }
+
+  function getKey(node) {
+    if (node && node.props) {
+      return node.props.key;
+    }
+  }
+
+  function patch(parent, element, oldNode, node, isSVG, nextSibling) {
+    if (oldNode === node) {} else if (oldNode == null) {
+      element = parent.insertBefore(createElement(node, isSVG), element);
+    } else if (node.type != null && node.type === oldNode.type) {
+      updateElement(element, oldNode.props, node.props);
+
+      isSVG = isSVG || node.type === "svg";
+
+      var len = node.children.length;
+      var oldLen = oldNode.children.length;
+      var oldKeyed = {};
+      var oldElements = [];
+      var keyed = {};
+
+      for (var i = 0; i < oldLen; i++) {
+        var oldElement = oldElements[i] = element.childNodes[i];
+        var oldChild = oldNode.children[i];
+        var oldKey = getKey(oldChild);
+
+        if (null != oldKey) {
+          oldKeyed[oldKey] = [oldElement, oldChild];
+        }
+      }
+
+      var i = 0;
+      var j = 0;
+
+      while (j < len) {
+        var oldElement = oldElements[i];
+        var oldChild = oldNode.children[i];
+        var newChild = node.children[j];
+
+        var oldKey = getKey(oldChild);
+        if (keyed[oldKey]) {
+          i++;
+          continue;
+        }
+
+        var newKey = getKey(newChild);
+        var keyedNode = oldKeyed[newKey] || [];
+
+        if (null == newKey) {
+          if (null == oldKey) {
+            patch(element, oldElement, oldChild, newChild, isSVG);
+            j++;
+          }
+          i++;
+        } else {
+          if (oldKey === newKey) {
+            patch(element, keyedNode[0], keyedNode[1], newChild, isSVG);
+            i++;
+          } else if (keyedNode[0]) {
+            element.insertBefore(keyedNode[0], oldElement);
+            patch(element, keyedNode[0], keyedNode[1], newChild, isSVG);
+          } else {
+            patch(element, oldElement, null, newChild, isSVG);
+          }
+
+          j++;
+          keyed[newKey] = newChild;
+        }
+      }
+
+      while (i < oldLen) {
+        var oldChild = oldNode.children[i];
+        var oldKey = getKey(oldChild);
+        if (null == oldKey) {
+          removeElement(element, oldElements[i], oldChild.props);
+        }
+        i++;
+      }
+
+      for (var i in oldKeyed) {
+        var keyedNode = oldKeyed[i];
+        var reusableNode = keyedNode[1];
+        if (!keyed[reusableNode.props.key]) {
+          removeElement(element, keyedNode[0], reusableNode.props);
+        }
+      }
+    } else if (element && node !== element.nodeValue) {
+      if (typeof node === "string" && typeof oldNode === "string") {
+        element.nodeValue = node;
+      } else {
+        element = parent.insertBefore(createElement(node, isSVG), nextSibling = element);
+        removeElement(parent, nextSibling, oldNode.props);
+      }
+    }
+
+    return element;
+  }
+}
+
+function h(type, props) {
+  var node;
+  var stack = [];
+  var children = [];
+
+  for (var i = arguments.length; i-- > 2;) {
+    stack.push(arguments[i]);
+  }
+
+  while (stack.length) {
+    if (Array.isArray(node = stack.pop())) {
+      for (i = node.length; i--;) {
+        stack.push(node[i]);
+      }
+    } else if (node != null && node !== true && node !== false) {
+      children.push(typeof node === "number" ? node = node + "" : node);
+    }
+  }
+
+  return typeof type === "string" ? {
+    type: type,
+    props: props || {},
+    children: children
+  } : type(props || {}, children);
+}
+
+var settings = {
+    toggleSound: function toggleSound(state, actions) {
+        return function (value) {
+            var soundEnabled = value === undefined ? !state.soundEnabled : value;
+            return Promise.resolve({ soundEnabled: soundEnabled }).then(actions.applyState);
+        };
+    },
+
+    toggleNotification: function toggleNotification(state, actions) {
+        return function (value) {
+            var notificationEnabled = value === undefined ? !state.soundEnabled : value;
+            return Promise.resolve({ notificationEnabled: notificationEnabled }).then(actions.applyState);
+        };
+    },
+
+    applyState: function applyState(state, actions) {
+        return function (state) {
+            return state;
+        };
+    }
+};
+
+var config = {
+    load: function load(state, actions) {
+        return function (c) {
+            return c;
+        };
+    }
+};
+
+var DEFAULT_CHANNEL = 'SERVER';
+
+var MessageCommonProperties = function MessageCommonProperties(m) {
+    return {
+        id: m['!id'],
+        timestamp: m.utc_timestamp,
+        command: m['@'].toLowerCase()
+    };
+};
+
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
+var _LogStateCommands;
+
+var LogStateCommands = (_LogStateCommands = {
+    'pong': function pong(m) {
+        return null;
+    },
+    'nick-set': function nickSet(m) {
+        return null;
+    },
+
+    'default': function _default(message) {
+        console.error('Invalid message', message);
+        return null;
+    },
+
+    'client-meta': function clientMeta(m) {
+        return _extends({}, MessageCommonProperties(m), {
+            to: DEFAULT_CHANNEL,
+            from: DEFAULT_CHANNEL,
+            type: 'meta',
+            command: 'client-meta',
+            message: m.msg
+        });
+    }
+
+}, _LogStateCommands[DEFAULT_CHANNEL.toLowerCase()] = function (m) {
+    return _extends({}, MessageCommonProperties(m), {
+        to: DEFAULT_CHANNEL,
+        from: DEFAULT_CHANNEL,
+        message: m.msg,
+        type: 'meta'
+    });
+}, _LogStateCommands['group-list'] = function groupList(m) {
+    return _extends({}, MessageCommonProperties(m), {
+        to: m.to,
+        from: m.from,
+        message: 'members: ' + m.pack_msg.join(', '),
+        type: 'meta'
+    });
+}, _LogStateCommands['group-join'] = function groupJoin(m) {
+    return _extends({}, MessageCommonProperties(m), {
+        to: m.to,
+        from: m.from,
+        message: m.from + ' has joined ' + m.to,
+        type: 'meta'
+    });
+}, _LogStateCommands['group-leave'] = function groupLeave(m) {
+    return _extends({}, MessageCommonProperties(m), {
+        to: m.to,
+        from: m.from,
+        message: m.from + ' has left ' + m.to,
+        type: 'meta'
+    });
+}, _LogStateCommands['member-nick-set'] = function memberNickSet(m) {
+    return _extends({}, MessageCommonProperties(m), {
+        to: m.to,
+        from: DEFAULT_CHANNEL,
+        message: m.pack_msg.oldNick + ' changed nick to ' + m.pack_msg.newNick,
+        type: 'meta'
+    });
+}, _LogStateCommands['group-message'] = function groupMessage(m) {
+    return _extends({}, MessageCommonProperties(m), {
+        to: m.to,
+        from: m.from,
+        message: m.msg
+    });
+}, _LogStateCommands);
+
+var messageParser = function (logs, message) {
+    var _ref2;
+
+    var command = message['@'].toLowerCase();
+    var targetChannel = message.to || DEFAULT_CHANNEL;
+    var channelLog = logs[targetChannel] || [];
+    var parser = LogStateCommands[command] || LogStateCommands['default'];
+    var parsedMessage = parser(message);
+
+    if (!parsedMessage) {
+        var _ref;
+
+        return _ref = {}, _ref[targetChannel] = channelLog, _ref;
+    }
+
+    return _ref2 = {}, _ref2[targetChannel] = channelLog.concat([_extends({}, parsedMessage, {
+        _raw: message
+    })]), _ref2;
+};
+
+var DefaultViewState = { active: false, userInput: '' };
+
+var view = {
+    init: function init(state, actions) {
+        return function (name) {
+            var _babelHelpers$extends;
+
+            return _extends({}, state, (_babelHelpers$extends = {}, _babelHelpers$extends[name] = _extends({}, DefaultViewState), _babelHelpers$extends));
+        };
+    },
+
+    clear: function clear(state, actions) {
+        return function (name) {
+            var _babelHelpers$extends2;
+
+            return _extends({}, state, (_babelHelpers$extends2 = {}, _babelHelpers$extends2[name] = null, _babelHelpers$extends2));
+        };
+    },
+
+    reset: function reset(state, actions) {
+        return function (name) {
+            return actions.update({ name: name, userInput: '' });
+        };
+    },
+
+    update: function update(state, actions) {
+        return function (_ref) {
+            var _babelHelpers$extends3;
+
+            var name = _ref.name,
+                userInput = _ref.userInput,
+                active = _ref.active;
+
+            var old = state[name] || _extends({}, DefaultViewState);
+            if (userInput === undefined) userInput = old.userInput;
+            if (active === undefined) active = old.active;
+
+            var newState = _extends({}, state, (_babelHelpers$extends3 = {}, _babelHelpers$extends3[name] = { userInput: userInput, active: active }, _babelHelpers$extends3));
+
+            return newState;
+        };
+    }
+};
+
+var logs = {
+    add: function add(state, actions) {
+        return function (message) {
+            return messageParser(state, message);
+        };
+    },
+    clear: function clear(state, actions) {
+        return function (name) {
+            var _babelHelpers$extends;
+
+            return _extends({}, state, (_babelHelpers$extends = {}, _babelHelpers$extends[name] = null, _babelHelpers$extends));
+        };
+    }
+};
+
+var messageId = 0;
+
+function serverCommandMessage(command, msg) {
+    return {
+        '@': command,
+        to: DEFAULT_CHANNEL,
+        msg: msg
+    };
+}
+
+function meta(msg, extra) {
+    extra = extra || {};
+
+    return _extends({
+        '@': 'client-meta',
+        '!id': 'm' + messageId++,
+        'utc_timestamp': new Date().getTime(),
+        to: DEFAULT_CHANNEL,
+        msg: msg
+    }, extra);
+}
+
+function join(room, extra) {
+    extra = extra || {};
+    return _extends({}, serverCommandMessage('join-group', room), extra);
+}
+
+function leave(room, extra) {
+    extra = extra || {};
+    return _extends({}, serverCommandMessage('leave-group', room), extra);
+}
+
+function nick(nick, extra) {
+    extra = extra || {};
+    return _extends({}, serverCommandMessage('set-nick', nick), extra);
+}
+
+function list(room, extra) {
+    extra = extra || {};
+    return _extends({}, serverCommandMessage('list-group', room), extra);
+}
+
+function message(room, message, extra) {
+    extra = extra || {};
+    return _extends({
+        '@': 'send-msg',
+        to: room,
+        msg: message
+    }, extra);
+}
+
+var commandRegex = /^\/(join|leave|nick)\s+(.+)$/i;
+var commandTransformMap = {
+    'join': function join$$1(r) {
+        return join(r);
+    },
+    'leave': function leave$$1(r) {
+        return leave(r);
+    },
+    'nick': function nick$$1(r) {
+        return nick(r);
+    }
+};
+
+var UserInputParser = function (roomName, text) {
+    var regexMatch = commandRegex.exec(text);
+    if (regexMatch && commandTransformMap[regexMatch[1]]) {
+        return commandTransformMap[regexMatch[1]](regexMatch[2].trim());
+    }
+
+    var trimmedText = text.trim().toLowerCase();
+    if (trimmedText === '/leave') {
+        return leave(roomName);
+    }
+
+    if (trimmedText === '/list') {
+        return list(roomName);
+    }
+
+    // Parse rest of commands here...
+    return message(roomName, text);
+};
+
+var HelpMessage = '\n```\nSystem connected, valid commands:\n\n/join <room> - to join a room\n/leave <room> - to leave a room \n/nick <name> -  to set your nick\n/list - to list room members\n\n```\n\n# \xA0\n# Welcome to RaspChat\n\xA0\xA0\xA0\n';
+
+var chat = {
+    view: view,
+    logs: logs,
+
+    connect: function connect(state, actions) {
+        return function (config) {
+            var connection = new WebSocket(config.webSocketConnectionUri);
+            connection.onopen = actions.onOpen(connection);
+            connection.onclose = actions.onClose(connection);
+            connection.onmessage = actions.onMessage(connection);
+
+            return { connectionAttempts: state.connectionAttempts + 1, connection: connection };
+        };
+    },
+
+    sendMessageObject: function sendMessageObject(state, actions) {
+        return function (message$$1) {
+            if (!state.connection) {
+                return {};
+            }
+
+            try {
+                state.connection.send(JSON.stringify(message$$1));
+            } catch (e) {
+                console.error('Unable to send message', e);
+            }
+
+            return {};
+        };
+    },
+
+    sendToRoom: function sendToRoom(state, actions) {
+        return function (_ref) {
+            var roomName = _ref.name,
+                text = _ref.text;
+
+            return Promise.resolve(UserInputParser(roomName, text)).then(function (m) {
+                actions.view.reset(roomName);
+                actions.sendMessageObject(m);
+                return m;
+            }).then(function (_ref2) {
+                var command = _ref2['@'],
+                    group = _ref2['msg'];
+
+                if (command === 'leave-group') {
+                    actions.logs.clear(group);
+                    actions.view.clear(group);
+                }
+            });
+        };
+    },
+
+    stayConnected: function stayConnected(state, actions) {
+        return function (_ref3) {
+            var timeout = _ref3.timeout,
+                config = _ref3.config;
+            return function () {
+                var c = state.connection;
+                var alreadyConnected = c && (c.readyState === 1 || c.readyState === 0);
+
+                // Do not retry if already connected or a connection was never attempted
+                if (state.connectionAttempts === 0 || alreadyConnected) {
+                    window.setTimeout(actions.stayConnected({ config: config, timeout: timeout }), timeout);
+                    return {};
+                }
+
+                var ret = actions.connect(config);
+                window.setTimeout(actions.stayConnected({ config: config, timeout: timeout }), timeout);
+                return ret;
+            };
+        };
+    },
+
+    onOpen: function onOpen(state, actions) {
+        return function (connection) {
+            return function (event) {
+                actions.logs.add(meta(HelpMessage));
+                window.setTimeout(function () {
+                    actions.sendMessageObject(join('Lounge'));
+                }, 1);
+                return { connectionAttempts: 1, connection: connection };
+            };
+        };
+    },
+
+    onClose: function onClose(state, actions) {
+        return function (connection) {
+            return function (event) {
+                console.error('Connection closed', event);
+                return { connection: connection };
+            };
+        };
+    },
+
+    onMessage: function onMessage(state, actions) {
+        return function (connection) {
+            return function (event) {
+                try {
+                    var msg = JSON.parse(event.data);
+                    actions.logs.add(msg);
+                } catch (e) {
+                    console.warn('Error while parsing message', e, event.data);
+                }
+
+                return { connection: connection };
+            };
+        };
+    }
+};
+
+var actions = {
+    config: config,
+    settings: settings,
+    chat: chat
+};
+
+var state = {
+    config: {},
+    settings: {
+        soundEnabled: true,
+        notificationEnabled: true
+    },
+    chat: {
+        connectionAttempts: 0,
+        connection: null,
+        view: {},
+        logs: {}
+    }
+};
+
+var Panel = (function (props, children) {
+    return h(
+        "div",
+        { "class": "panel" },
+        h(
+            "div",
+            { "class": "panel-content-container" },
+            children
+        )
+    );
+});
+
+var TAGS = {
+	'': ['<em>', '</em>'],
+	_: ['<strong>', '</strong>'],
+	'\n': ['<br />'],
+	' ': ['<br />'],
+	'-': ['<hr />']
+};
+
+/** Outdent a string based on the first indented line's leading whitespace
+ *	@private
+ */
+function outdent(str) {
+	return str.replace(RegExp('^' + (str.match(/^(\t| )+/) || '')[0], 'gm'), '');
+}
+
+/** Encode special attribute characters to HTML entities in a String.
+ *	@private
+ */
+function encodeAttr(str) {
+	return (str + '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/** Parse Markdown into an HTML String. */
+function parse(md) {
+	var tokenizer = /((?:^|\n+)(?:\n---+|\* \*(?: \*)+)\n)|(?:^```(\w*)\n([\s\S]*?)\n```$)|((?:(?:^|\n+)(?:\t|  {2,}).+)+\n*)|((?:(?:^|\n)([>*+-]|\d+\.)\s+.*)+)|(?:\!\[([^\]]*?)\]\(([^\)]+?)\))|(\[)|(\](?:\(([^\)]+?)\))?)|(?:(?:^|\n+)([^\s].*)\n(\-{3,}|={3,})(?:\n+|$))|(?:(?:^|\n+)(#{1,3})\s*(.+)(?:\n+|$))|(?:`([^`].*?)`)|(  \n\n*|\n{2,}|__|\*\*|[_*])/gm,
+	    context = [],
+	    out = '',
+	    last = 0,
+	    links = {},
+	    chunk,
+	    prev,
+	    token,
+	    inner,
+	    t;
+
+	function tag(token) {
+		var desc = TAGS[token.replace(/\*/g, '_')[1] || ''],
+		    end = context[context.length - 1] == token;
+		if (!desc) {
+			return token;
+		}
+		if (!desc[1]) {
+			return desc[0];
+		}
+		context[end ? 'pop' : 'push'](token);
+		return desc[end | 0];
+	}
+
+	function flush() {
+		var str = '';
+		while (context.length) {
+			str += tag(context[context.length - 1]);
+		}
+		return str;
+	}
+
+	md = md.replace(/^\[(.+?)\]:\s*(.+)$/gm, function (s, name, url) {
+		links[name.toLowerCase()] = url;
+		return '';
+	}).replace(/^\n+|\n+$/g, '');
+
+	while (token = tokenizer.exec(md)) {
+		prev = md.substring(last, token.index);
+		last = tokenizer.lastIndex;
+		chunk = token[0];
+		if (prev.match(/[^\\](\\\\)*\\$/)) {}
+		// escaped
+
+		// Code/Indent blocks:
+		else if (token[3] || token[4]) {
+				chunk = '<pre class="code ' + (token[4] ? 'poetry' : token[2].toLowerCase()) + '">' + outdent(encodeAttr(token[3] || token[4]).replace(/^\n+|\n+$/g, '')) + '</pre>';
+			}
+			// > Quotes, -* lists:
+			else if (token[6]) {
+					t = token[6];
+					if (t.match(/\./)) {
+						token[5] = token[5].replace(/^\d+/gm, '');
+					}
+					inner = parse(outdent(token[5].replace(/^\s*[>*+.-]/gm, '')));
+					if (t === '>') {
+						t = 'blockquote';
+					} else {
+						t = t.match(/\./) ? 'ol' : 'ul';
+						inner = inner.replace(/^(.*)(\n|$)/gm, '<li>$1</li>');
+					}
+					chunk = '<' + t + '>' + inner + '</' + t + '>';
+				}
+				// Images:
+				else if (token[8]) {
+						chunk = "<img src=\"" + encodeAttr(token[8]) + "\" alt=\"" + encodeAttr(token[7]) + "\">";
+					}
+					// Links:
+					else if (token[10]) {
+							out = out.replace('<a>', "<a href=\"" + encodeAttr(token[11] || links[prev.toLowerCase()]) + "\">");
+							chunk = flush() + '</a>';
+						} else if (token[9]) {
+							chunk = '<a>';
+						}
+						// Headings:
+						else if (token[12] || token[14]) {
+								t = 'h' + (token[14] ? token[14].length : token[13][0] === '=' ? 1 : 2);
+								chunk = '<' + t + '>' + parse(token[12] || token[15]) + '</' + t + '>';
+							}
+							// `code`:
+							else if (token[16]) {
+									chunk = '<code>' + encodeAttr(token[16]) + '</code>';
+								}
+								// Inline formatting: *em*, **strong** & friends
+								else if (token[17] || token[1]) {
+										chunk = tag(token[17] || '--');
+									}
+		out += prev;
+		out += chunk;
+	}
+
+	return (out + md.substring(last) + flush()).trim();
+}
+
+
+//# sourceMappingURL=snarkdown.es.js.map
+
+var applyMarkdownHtml = function applyMarkdownHtml(text) {
+    return function (e) {
+        if (!text) {
+            return;
+        }
+
+        e.innerHTML = parse(text);
+    };
+};
+
+var Markdown = (function (props) {
+    return h('div', { 'class': props.type + '-markdown',
+        oncreate: applyMarkdownHtml(props.md || '') });
+});
+
+var Message = function Message(props, children) {
+    return h(
+        'div',
+        { 'class': props.command + '-message message-log' },
+        h(
+            'div',
+            { 'class': 'from-container' },
+            props.from
+        ),
+        h(
+            'div',
+            { 'class': 'message-container' },
+            h(Markdown, { type: props.command, md: props.message })
+        )
+    );
+};
+
+var Messages = (function (props, children) {
+    if (!props.messages) {
+        return null;
+    }
+
+    return h(
+        'div',
+        { 'class': 'log-messages ' + (props.class || '') },
+        props.messages.map(function (m) {
+            return h(Message, _extends({ id: m.id }, m));
+        })
+    );
+});
+
+var sendWhenCommited = function sendWhenCommited(onSend) {
+    return function (ev) {
+        if (ev.keyCode == 13 && !ev.shiftKey) {
+            var val = ev.target.value.trim();
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (val && onSend) {
+                onSend(val, ev);
+            }
+        }
+    };
+};
+
+var notifyInputChange = function notifyInputChange(cb) {
+    return function (ev) {
+        return cb(ev.target.value);
+    };
+};
+
+var ChatPanel = (function (props, children) {
+    return h(
+        Panel,
+        null,
+        h(
+            'div',
+            { 'class': 'panel-title' },
+            props.name
+        ),
+        h(Messages, { messages: props.logs }),
+        h('textarea', {
+            oninput: notifyInputChange(props.onchange),
+            onchange: notifyInputChange(props.onchange),
+            onkeydown: sendWhenCommited(props.onsend),
+            value: props.view.userInput,
+            'class': 'user-message' })
+    );
+});
+
+var RenderChatPanel = function RenderChatPanel(state, actions) {
+    return function (name) {
+        if (!state.chat.view[name]) {
+            actions.chat.view.init(name);
+            return null;
+        }
+
+        return h(ChatPanel, {
+            name: name,
+            onchange: function onchange(userInput) {
+                return actions.chat.view.update({ name: name, userInput: userInput });
+            },
+            onsend: function onsend(text) {
+                return actions.chat.sendToRoom({ name: name, text: text });
+            },
+            logs: state.chat.logs[name],
+            view: state.chat.view[name] });
+    };
+};
+
+var view$1 = (function (state, actions) {
+    return h(
+        'div',
+        { 'class': 'root-container', oncreate: function oncreate(e) {
+                return actions.chat.connect(state.config);
+            } },
+        h(
+            'div',
+            { 'class': 'panel-container' },
+            Object.getOwnPropertyNames(state.chat.logs).filter(function (name) {
+                return state.chat.logs[name];
+            }).map(RenderChatPanel(state, actions))
+        )
+    );
+});
+
+var boundActions = app({ state: state, actions: actions, view: view$1 });
+boundActions.config.load(window['RaspConfig']);
+boundActions.chat.stayConnected({ timeout: 2000, config: window['RaspConfig'] })();
+
+})));
 //# sourceMappingURL=app.js.map

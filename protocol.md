@@ -24,6 +24,7 @@ Everything server wants to send is wrapped under SERVER meta command. This might
 ```json
 {"@":"set-nick","to":"SERVER","msg":"<<nick>>"}
 {"@":"nick-set","!id":<<id>>,"utc_timestamp":0,"oldNick":"<<nick>>","newNick":"<<nick>>"}
+{"@":"member-nick-set","!id":<<id>>,"utc_timestamp":<<ts>>,"from":<<nick>>,"to":<<group_id>>,"pack_msg":{"@":"nick-set","!id":<<id>>,"utc_timestamp":0,"oldNick":<<nick>>,"newNick":<<nick>>}}
 ```
 
 ### Join/Leave group

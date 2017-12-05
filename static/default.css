@@ -20,18 +20,20 @@ textarea {
     padding: 5px 2px;
 }
 
-html {
+html, body {
     height: 100%;
+    width: 100%; 
+    margin: 0;
+    font-family: 'Ropa Sans', sans-serif;
+    font-size: 14px;
 }
 
 body {
-    height: 100%;
     display: block;
-    overflow: hidden;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-weight: 400;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 img{
@@ -52,7 +54,103 @@ img{
     font-style: normal;
 }
 
-/*Icons*/
+.root-container {
+    height:100%; 
+    display: table;
+}
 
+.panel-container {
+    height:100%;
+    display: table-row;
+}
+
+.panel {
+    display: table-cell;
+    height: 100%;
+}
+
+.panel .panel-content-container {
+    width: 350px;
+    height: 100%;
+    position: relative;
+    overflow: auto;
+    border: 1px solid gray;
+}
+
+.panel .panel-content-container .log-messages {
+    position: absolute;
+    overflow: auto;
+    left: 0;
+    right: 0;
+    bottom: 64px;
+    max-height: calc(100% - 100px);
+}
+
+.panel .panel-content-container .user-message {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 64px;
+    resize: none;
+    border-width: 1px 0 0 0;
+    border-color: #8e8e8e;
+}
+
+.panel .panel-content-container .panel-title {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    border-bottom-width: 1px;
+    border-style: solid;
+    border-color: #8e8e8e;
+    text-align: center;
+}
+
+.message-log {
+    width: 100%;
+    display: block;
+    position: relative;
+    padding-bottom: 2px;
+}
+
+.message-log .from-container {
+    display: inline-block;
+    width: 20%;
+    height: 100%;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    vertical-align: top;
+    text-align: right;
+    padding: 0 4px;
+}
+
+.message-log .message-container {
+    display: inline-block;
+    width: 80%;
+    padding-left: 5px;
+    border-left: 1px solid rgb(219, 132, 0);
+}
+
+.server-markdown pre {
+    font-size: 5px;
+    font-family: "Courier New", Monospace;
+    white-space: pre;
+    line-height: 5px;
+    width: 100%;
+    overflow: auto;
+}
+
+.client-meta-markdown {
+    padding-bottom: 20px;
+}
+
+.client-meta-markdown pre {
+    margin-bottom: 10px;
+}
+
+/*Icons*/
 @media only screen and (max-width: 599px) {
 }

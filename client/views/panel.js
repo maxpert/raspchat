@@ -1,7 +1,9 @@
 import { h } from 'hyperapp';
 
 export default (props, children) => {
-    return <div onclick={props.onClick} oncreate={props.init}>
-        {children}
+    return <div class="panel">
+        <div class="panel-content-container">
+            {children}
+        </div>
     </div>;
 };

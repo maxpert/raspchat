@@ -70,13 +70,13 @@ module.exports = {
 
     listGroup(user, getRoom, payload) {
         const commandRoom = getRoom();
-        const targetRoom = getRoom(payload.to);
+        const targetRoom = getRoom(payload.msg);
         const nicks = targetRoom.userIds
             .map(id => NickRegistery.read(id))
             .filter(n => !!n);
         const msg = buildMessage('group-list', {
             to: targetRoom.roomName,
-            from: commandRoom.roomName,
+            from: targetRoom.roomName,
             pack_msg: nicks
         });
 

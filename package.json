@@ -32,6 +32,7 @@
     "babelrc-rollup": "^3.0.0",
     "eslint": "^4.11.0",
     "flow-bin": "^0.49.1",
+    "node-sass": "^4.7.2",
     "rollup": "^0.51.8",
     "rollup-plugin-babel": "^3.0.2",
     "rollup-plugin-commonjs": "^8.2.6",
@@ -40,7 +41,9 @@
     "uglify-js": "^3.1.10"
   },
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "js-watch": "node_modules/.bin/rollup -c -w",
+    "js-compile": "node_modules/.bin/rollup -c --environment COMPRESS"
   },
   "repository": {
     "type": "git",
