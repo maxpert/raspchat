@@ -55,6 +55,20 @@ vue.filter('emojify', function (value) {
     return virtualDiv.innerHTML;
 });
 
+function hashFnv32a(str, seed) {
+    /*jshint bitwise:false */
+    var i, l,
+        hval = (seed === undefined) ? 0x811c9dc5 : seed;
+
+    for (i = 0, l = str.length; i < l; i++) {
+        hval ^= str.charCodeAt(i);
+        hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
+    }
+
+    return hval >>> 0;
+}
+
 vue.filter('avatar_url', function (value) {
-    return '//invatar.ga/img/' + value + '?size=128';
+    var type = hashFnv32a(value) % 2 ? 'female' : 'male';
+    return '//avatars.dicebear.com/v1/'+type+'/'+value+'/128.png';
 });

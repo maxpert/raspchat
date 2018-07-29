@@ -67,12 +67,12 @@ gulp.task('copy-assets', function () {
         .pipe(gulp.dest(Settings.assets.output));
 });
 
-gulp.task('compile-assets', ['copy-assets', 'compile-js', 'process-htmls'], function () {
+gulp.task('compile-assets', gulp.series('copy-assets', 'compile-js', 'process-htmls', function () {
     return gulp.src(Settings.js.static + '/' + Settings.js.outputFile)
         .pipe(uglify())
         .pipe(rename(Settings.js.outputFile))
         .pipe(gulp.dest(Settings.js.output));
-});
+}));
 
 gulp.task('dist-package', function() {
     return gulp.src('package*.json')
@@ -84,4 +84,4 @@ gulp.task('dist-src', function() {
         .pipe(gulp.dest(Settings.js.server.dest));
 });
 
-gulp.task('default', ['compile-assets', 'dist-src', 'dist-package']);
+gulp.task('default', gulp.series('compile-assets', 'dist-src', 'dist-package'));
