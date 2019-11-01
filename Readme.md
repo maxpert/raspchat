@@ -2,9 +2,9 @@
 
 [![Build Status](https://semaphoreci.com/api/v1/projects/bb232bf4-f866-4d30-a526-218e9f3aed5b/647934/badge.svg)](https://semaphoreci.com/maxpert/raspchat)
 
-# Demo
+# Project Status
 
-Basic demo is available [Here](http://raspchat.com).
+ > The original goal of the project was to build fun little project to let people build their local communities. It was fun talking to many folks, getting contributions, and a journey from Go to Node. Maintaining an opensource project, is not an easy chore. It requires immense energy, and hours of careful thinking. Unfortunately I no longer have the time or energy to continue doing that. With the limited success, I feel leaving this project in it's current state is the most prudent thing I can do. I am still reachable by email, and maintainance PRs are welcome.
 
 ## Why?
 I had a spare Raspberry Pi and I wanted to use it! One of ideas in my head was to have your own on-premise chat server that you can use for cheap and own your data (< $50 hardware) forever and free!
