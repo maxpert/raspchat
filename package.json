@@ -17,7 +17,7 @@
     "inflected": "^2.0.2",
     "markdown-it": "^7.0.0",
     "markdown-it-html5-embed": "^0.3.2",
-    "moment": "^2.22.2",
+    "moment": "^2.29.4",
     "notification-polyfill": "git+https://github.com/MrSwitch/notification.js.git",
     "project-name-generator": "^2.1.4",
     "request": "^2.87.0",
