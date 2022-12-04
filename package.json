@@ -46,7 +46,7 @@
     "gulp-uglify": "^3.0.0",
     "gulp-vueify": "0.0.3",
     "html-entities": "^1.2.0",
-    "jshint": "^2.9.2",
+    "jshint": "^2.13.6",
     "merge-stream": "^1.0.0",
     "pump": "^1.0.3",
     "uglify-js": "^3.1.9",
