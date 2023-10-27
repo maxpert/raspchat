@@ -15,7 +15,7 @@
     "flake-idgen": "^1.1.0",
     "he": "^1.1.0",
     "inflected": "^2.0.2",
-    "markdown-it": "^7.0.0",
+    "markdown-it": "^12.3.2",
     "markdown-it-html5-embed": "^0.3.2",
     "moment": "^2.29.4",
     "notification-polyfill": "git+https://github.com/MrSwitch/notification.js.git",
